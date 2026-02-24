@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth status)",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__list_projects",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__list_tables",
+      "Bash(npx --version)",
+      "Bash(node --version)",
+      "Bash(gh --version)",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__list_migrations",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__list_extensions",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__get_project",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__get_project_url",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__search_docs",
+      "mcp__1f16a6af-5e76-4028-9361-616cba025a36__get_publishable_keys",
+      "Bash(ls -la \"/Users/ada/Documents/Documents \\(1\\)/Personal/Draft Projects/gamers.com/\")",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack)"
+    ]
+  }
+}
