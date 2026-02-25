@@ -52,6 +52,28 @@ export function useCreateGame() {
   });
 }
 
+export function useGamePlayCounts(groupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["game_play_counts", groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("game_id, meetups!inner(group_id)")
+        .eq("meetups.group_id", groupId!)
+        .eq("status", "finalized");
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        counts[row.game_id] = (counts[row.game_id] ?? 0) + 1;
+      }
+      return counts;
+    },
+    enabled: !!groupId,
+  });
+}
+
 export function useGameLeaderboard(groupId: string | null) {
   const supabase = createClient();
   return useQuery({
