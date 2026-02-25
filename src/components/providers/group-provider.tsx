@@ -14,11 +14,13 @@ import { useUser } from "./supabase-provider";
 interface GroupContext {
   groupId: string | null;
   loading: boolean;
+  setGroupId: (id: string) => void;
 }
 
 const Context = createContext<GroupContext>({
   groupId: null,
   loading: true,
+  setGroupId: () => {},
 });
 
 export function GroupProvider({ children }: { children: ReactNode }) {
@@ -83,7 +85,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   }, [user, supabase]);
 
   return (
-    <Context.Provider value={{ groupId, loading }}>{children}</Context.Provider>
+    <Context.Provider value={{ groupId, loading, setGroupId }}>{children}</Context.Provider>
   );
 }
 

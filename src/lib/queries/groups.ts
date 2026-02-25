@@ -35,6 +35,34 @@ export function useGroup(groupId: string | null) {
   });
 }
 
+export function useUpdateGroup() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      groupId,
+      updates,
+    }: {
+      groupId: string;
+      updates: { name?: string; description?: string | null };
+    }) => {
+      const { data, error } = await supabase
+        .from("groups")
+        .update(updates)
+        .eq("id", groupId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["groups", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
+}
+
 export function useCreateGroup() {
   const supabase = createClient();
   const queryClient = useQueryClient();

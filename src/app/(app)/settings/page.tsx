@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Settings,
   Copy,
   Check,
   LogOut,
@@ -11,10 +10,13 @@ import {
   Shield,
   Share2,
   Mail,
+  Pencil,
+  Plus,
+  ChevronLeft,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
-import { useGroup } from "@/lib/queries/groups";
+import { useGroup, useUpdateGroup, useCreateGroup } from "@/lib/queries/groups";
 import { useGroupMembers } from "@/lib/queries/members";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -30,14 +32,69 @@ function SkeletonBlock({ className }: { className?: string }) {
 export default function SettingsPage() {
   const router = useRouter();
   const { user } = useUser();
-  const { groupId, loading: groupLoading } = useGroupId();
+  const { groupId, loading: groupLoading, setGroupId } = useGroupId();
   const { data: group, isLoading: groupLoadingData } = useGroup(groupId);
   const { data: members, isLoading: membersLoading } =
     useGroupMembers(groupId);
+  const updateGroup = useUpdateGroup();
+  const createGroup = useCreateGroup();
 
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+
+  // Group editing state
+  const [editingGroup, setEditingGroup] = useState(false);
+  const [editGroupName, setEditGroupName] = useState("");
+  const [editGroupDescription, setEditGroupDescription] = useState("");
+
+  // Group creation state
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+
+  // Check if current user is admin
+  const isAdmin = useMemo(() => {
+    if (!members || !user) return false;
+    const me = members.find((m: any) => m.user_id === user.id);
+    return me?.role === "owner";
+  }, [members, user]);
+
+  function startEditingGroup() {
+    setEditGroupName(group?.name ?? "");
+    setEditGroupDescription(group?.description ?? "");
+    setEditingGroup(true);
+  }
+
+  async function handleSaveGroup() {
+    if (!groupId) return;
+    try {
+      await updateGroup.mutateAsync({
+        groupId,
+        updates: {
+          name: editGroupName.trim() || group?.name,
+          description: editGroupDescription.trim() || null,
+        },
+      });
+      setEditingGroup(false);
+    } catch {
+      // Error shown via mutation state
+    }
+  }
+
+  async function handleCreateGroup() {
+    if (!newGroupName.trim()) return;
+    try {
+      const newGroup = await createGroup.mutateAsync({
+        name: newGroupName.trim(),
+      });
+      setGroupId(newGroup.id);
+      setShowCreateGroup(false);
+      setNewGroupName("");
+      router.push("/dashboard");
+    } catch {
+      // Error shown via mutation state
+    }
+  }
 
   async function handleCopyCode() {
     if (!group?.invite_code) return;
@@ -112,6 +169,15 @@ export default function SettingsPage() {
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
+        <div className="flex items-center gap-2 mb-1">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-[#007AFF] -ml-1.5 active:opacity-60 transition-opacity"
+          >
+            <ChevronLeft className="h-6 w-6" />
+            <span className="text-[17px]">Back</span>
+          </button>
+        </div>
         <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
           Settings
         </h1>
@@ -129,15 +195,80 @@ export default function SettingsPage() {
                 <SkeletonBlock className="h-4 w-16" />
                 <SkeletonBlock className="h-6 w-48" />
               </div>
+            ) : editingGroup ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                    Group Name
+                  </label>
+                  <input
+                    value={editGroupName}
+                    onChange={(e) => setEditGroupName(e.target.value)}
+                    className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                    placeholder="Group name"
+                  />
+                </div>
+                <div>
+                  <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                    Description
+                  </label>
+                  <textarea
+                    value={editGroupDescription}
+                    onChange={(e) => setEditGroupDescription(e.target.value)}
+                    className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] resize-none focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                    placeholder="What's your group about?"
+                    rows={2}
+                    maxLength={200}
+                  />
+                </div>
+                {updateGroup.error && (
+                  <p className="text-[15px] text-red-600">
+                    {(updateGroup.error as Error).message ?? "Failed to save"}
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setEditingGroup(false)}
+                    className="flex-1 bg-gray-200 text-gray-900 rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveGroup}
+                    disabled={updateGroup.isPending}
+                    className={cn(
+                      "flex-1 bg-black text-white rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform",
+                      updateGroup.isPending && "opacity-50"
+                    )}
+                  >
+                    {updateGroup.isPending ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
             ) : (
-              <>
-                <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  Group Name
-                </p>
-                <p className="text-[17px] font-semibold text-gray-900">
-                  {group?.name ?? "Unknown Group"}
-                </p>
-              </>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    Group Name
+                  </p>
+                  <p className="text-[17px] font-semibold text-gray-900">
+                    {group?.name ?? "Unknown Group"}
+                  </p>
+                  {group?.description && (
+                    <p className="text-[15px] text-gray-500 mt-1">
+                      {group.description}
+                    </p>
+                  )}
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={startEditingGroup}
+                    className="text-[#007AFF] active:opacity-60 transition-opacity p-1"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -304,6 +435,63 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Create New Group */}
+        <div>
+          <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
+            Groups
+          </p>
+          {showCreateGroup ? (
+            <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-5 space-y-4">
+              <div>
+                <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                  New Group Name
+                </label>
+                <input
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  placeholder="e.g. Friday Night Games"
+                  autoFocus
+                />
+              </div>
+              {createGroup.error && (
+                <p className="text-[15px] text-red-600">
+                  {(createGroup.error as Error).message ?? "Failed to create group"}
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCreateGroup(false);
+                    setNewGroupName("");
+                  }}
+                  className="flex-1 bg-gray-200 text-gray-900 rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateGroup}
+                  disabled={!newGroupName.trim() || createGroup.isPending}
+                  className={cn(
+                    "flex-1 bg-black text-white rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform",
+                    (!newGroupName.trim() || createGroup.isPending) && "opacity-50"
+                  )}
+                >
+                  {createGroup.isPending ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowCreateGroup(true)}
+              className="w-full flex items-center justify-center gap-2 bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] py-4 text-[17px] font-semibold text-[#007AFF] active:scale-[0.98] transition-transform"
+            >
+              <Plus className="h-5 w-5" />
+              Create New Group
+            </button>
+          )}
         </div>
 
         {/* Sign Out */}

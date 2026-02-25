@@ -5,6 +5,23 @@ export interface ScoreEntry {
   score: number | null;
 }
 
+export function sumRoundScores(
+  rounds: Record<string, string>[],
+  participantIds: string[]
+): Record<string, number> {
+  const totals: Record<string, number> = {};
+  for (const id of participantIds) {
+    totals[id] = 0;
+    for (const round of rounds) {
+      const val = round[id];
+      if (val && val !== "") {
+        totals[id] += Number(val) || 0;
+      }
+    }
+  }
+  return totals;
+}
+
 export function calculateWinner(
   entries: ScoreEntry[],
   scoringType: ScoringType
