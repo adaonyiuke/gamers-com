@@ -102,7 +102,7 @@ export default function SettingsPage() {
   const isLoading = groupLoading || groupLoadingData;
 
   return (
-    <div className="pb-28">
+    <div className="pb-36">
       {/* Glass header */}
       <div
         className="sticky top-0 z-40 px-5 pt-14 pb-3"
