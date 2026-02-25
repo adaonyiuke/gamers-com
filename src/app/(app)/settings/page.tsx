@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Copy,
   Check,
-  LogOut,
   Users,
   Shield,
   Share2,
@@ -18,7 +17,6 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroup, useUpdateGroup, useCreateGroup } from "@/lib/queries/groups";
 import { useGroupMembers } from "@/lib/queries/members";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -41,7 +39,6 @@ export default function SettingsPage() {
 
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
 
   // Group editing state
   const [editingGroup, setEditingGroup] = useState(false);
@@ -147,13 +144,6 @@ export default function SettingsPage() {
       `Hey! I'd like you to join our game night group "${group?.name ?? "our group"}" on Game Night HQ.\n\nClick this link to join:\n${link}`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
-  }
-
-  async function handleSignOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
   }
 
   const isLoading = groupLoading || groupLoadingData;
@@ -494,15 +484,6 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Sign Out */}
-        <button
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="w-full flex items-center justify-center gap-2 bg-red-500 text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50"
-        >
-          <LogOut className="h-5 w-5" />
-          {signingOut ? "Signing Out..." : "Sign Out"}
-        </button>
       </div>
     </div>
   );

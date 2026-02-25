@@ -6,9 +6,10 @@ import {
   ChevronLeft,
   Gamepad2,
   Trophy,
-  TrendingUp,
-  Flame,
+  Calendar,
+  Star,
   Pencil,
+  LogOut,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
@@ -17,12 +18,14 @@ import {
   useMemberStats,
   useGroupMembers,
   useUpdateMember,
+  useMemberGameStats,
 } from "@/lib/queries/members";
 import {
   computeBadges,
   type MemberBadgeInput,
   type Badge,
 } from "@/lib/utils/badges";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 
 const AVATAR_COLORS = [
@@ -70,7 +73,10 @@ export default function MemberProfilePage() {
     useMemberProfile(memberId);
   const { data: allStats, isLoading: statsLoading } = useMemberStats(groupId);
   const { data: members } = useGroupMembers(groupId);
+  const { data: gameStats } = useMemberGameStats(memberId);
   const updateMember = useUpdateMember();
+
+  const [signingOut, setSigningOut] = useState(false);
 
   // Check if this is the current user's profile
   const isOwnProfile = useMemo(() => {
@@ -130,7 +136,12 @@ export default function MemberProfilePage() {
   const avatarColor =
     profile?.avatar_url || getAvatarColor(displayName);
   const bio = profile?.bio;
-  const role = profile?.role;
+
+  // Join year
+  const joinYear = useMemo(() => {
+    if (!profile?.joined_at) return null;
+    return new Date(profile.joined_at).getFullYear();
+  }, [profile]);
 
   async function handleSave() {
     if (!memberId) return;
@@ -153,34 +164,39 @@ export default function MemberProfilePage() {
     }
   }
 
+  async function handleSignOut() {
+    setSigningOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
   const statCards = [
     {
+      icon: Calendar,
+      label: "Meetups",
+      value: gameStats?.meetupsAttended ?? 0,
+    },
+    {
       icon: Gamepad2,
-      label: "Sessions",
+      label: "Played",
       value: memberStat?.total_sessions ?? 0,
     },
     {
       icon: Trophy,
-      label: "Wins",
+      label: "Won",
       value: memberStat?.total_wins ?? 0,
     },
     {
-      icon: TrendingUp,
-      label: "Win Rate",
-      value:
-        memberStat?.win_rate != null
-          ? `${Math.round(memberStat.win_rate)}%`
-          : "0%",
-    },
-    {
-      icon: Flame,
-      label: "Streak",
-      value: 0,
+      icon: Star,
+      label: "Top Game",
+      value: gameStats?.topGame ?? "—",
+      isText: true,
     },
   ];
 
   return (
-    <div className="pb-28">
+    <div className="pb-36">
       {/* Glass header */}
       <div
         className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
@@ -206,7 +222,7 @@ export default function MemberProfilePage() {
         {isLoading ? (
           <>
             <div className="flex flex-col items-center gap-3">
-              <SkeletonBlock className="h-[72px] w-[72px] !rounded-full" />
+              <SkeletonBlock className="h-20 w-20 !rounded-full" />
               <SkeletonBlock className="h-6 w-32" />
               <SkeletonBlock className="h-4 w-16" />
             </div>
@@ -229,7 +245,7 @@ export default function MemberProfilePage() {
             <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
               <div className="flex justify-center mb-6">
                 <div
-                  className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-white text-[28px] font-bold transition-colors duration-300"
+                  className="h-20 w-20 rounded-full flex items-center justify-center text-white text-[28px] font-bold transition-colors duration-300"
                   style={{ backgroundColor: editColor }}
                 >
                   {(editName || displayName)[0].toUpperCase()}
@@ -328,17 +344,17 @@ export default function MemberProfilePage() {
                   updateMember.isPending && "opacity-50"
                 )}
               >
-                {updateMember.isPending ? "Saving..." : "Save"}
+                {updateMember.isPending ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </>
         ) : (
           /* ---- VIEW MODE ---- */
           <>
-            {/* Avatar + Name + Bio */}
+            {/* Avatar + Name + Bio + Join Year */}
             <div className="flex flex-col items-center gap-2">
               <div
-                className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-white text-[28px] font-bold"
+                className="h-20 w-20 rounded-full flex items-center justify-center text-white text-[28px] font-bold"
                 style={{ backgroundColor: avatarColor }}
               >
                 {displayName[0].toUpperCase()}
@@ -347,14 +363,14 @@ export default function MemberProfilePage() {
                 <h2 className="text-[22px] font-bold text-gray-900">
                   {displayName}
                 </h2>
-                {role && (
-                  <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mt-0.5 capitalize">
-                    {role === "owner" ? "Admin" : role}
+                {bio && (
+                  <p className="text-[15px] text-gray-500 mt-1 max-w-[280px]">
+                    {bio}
                   </p>
                 )}
-                {bio && (
-                  <p className="text-[15px] text-gray-500 mt-2 max-w-[280px]">
-                    {bio}
+                {joinYear && (
+                  <p className="text-[13px] text-gray-400 mt-1">
+                    Joined {joinYear}
                   </p>
                 )}
               </div>
@@ -388,7 +404,14 @@ export default function MemberProfilePage() {
                         {stat.label}
                       </span>
                     </div>
-                    <p className="text-[28px] font-bold tracking-tight text-gray-900">
+                    <p
+                      className={cn(
+                        "font-bold tracking-tight text-gray-900",
+                        stat.isText
+                          ? "text-[17px]"
+                          : "text-[28px]"
+                      )}
+                    >
                       {stat.value}
                     </p>
                   </div>
@@ -423,6 +446,18 @@ export default function MemberProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Sign Out — only on own profile */}
+            {isOwnProfile && (
+              <button
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="w-full flex items-center justify-center gap-2 bg-red-500 text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50"
+              >
+                <LogOut className="h-5 w-5" />
+                {signingOut ? "Signing Out..." : "Sign Out"}
+              </button>
+            )}
           </>
         )}
       </div>

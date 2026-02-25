@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { TrendingUp, Gamepad2, Flame, Trophy, ChevronRight, Settings } from "lucide-react";
+import { TrendingUp, Gamepad2, Flame, Trophy, ChevronRight } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useMemberStats } from "@/lib/queries/members";
 import { useMeetups } from "@/lib/queries/meetups";
@@ -99,31 +99,21 @@ export default function DashboardPage() {
               Dashboard
             </h1>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Link
-              href="/settings"
-              className="active:scale-95 transition-transform"
+          <Link
+            href={currentMember ? `/profiles/${currentMember.id}` : "/settings"}
+            className="mt-1 active:scale-95 transition-transform"
+          >
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[17px] font-bold shadow-sm"
+              style={{ backgroundColor: avatarColor }}
             >
-              <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
-                <Settings className="h-[18px] w-[18px] text-gray-600" />
-              </div>
-            </Link>
-            <Link
-              href={currentMember ? `/profiles/${currentMember.id}` : "/settings"}
-              className="active:scale-95 transition-transform"
-            >
-              <div
-                className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[17px] font-bold shadow-sm"
-                style={{ backgroundColor: avatarColor }}
-              >
-                {(
-                  user?.user_metadata?.display_name ||
-                  user?.email ||
-                  "?"
-                )[0].toUpperCase()}
-              </div>
-            </Link>
-          </div>
+              {(
+                user?.user_metadata?.display_name ||
+                user?.email ||
+                "?"
+              )[0].toUpperCase()}
+            </div>
+          </Link>
         </div>
       </div>
 

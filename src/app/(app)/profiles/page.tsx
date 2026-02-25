@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Users, Trophy, ChevronRight } from "lucide-react";
+import { Users, Trophy, ChevronRight, Settings } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGroupMembers, useMemberStats } from "@/lib/queries/members";
 import { cn } from "@/lib/utils/cn";
@@ -64,9 +64,19 @@ export default function ProfilesPage() {
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          Players
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
+            Players
+          </h1>
+          <Link
+            href="/settings"
+            className="active:scale-95 transition-transform"
+          >
+            <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
+              <Settings className="h-[18px] w-[18px] text-gray-600" />
+            </div>
+          </Link>
+        </div>
       </div>
 
       <div className="px-5 mt-2">

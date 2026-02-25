@@ -53,6 +53,65 @@ export function useMemberProfile(memberId: string | null) {
   });
 }
 
+export function useMemberGameStats(memberId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["member_game_stats", memberId],
+    queryFn: async () => {
+      // Get meetups attended
+      const { data: participations, error: partError } = await supabase
+        .from("meetup_participants")
+        .select("meetup_id")
+        .eq("member_id", memberId!);
+      if (partError) throw partError;
+      const meetupsAttended = new Set(
+        participations?.map((p: any) => p.meetup_id) ?? []
+      ).size;
+
+      // Get top game (game with most wins)
+      const { data: winEntries, error: winError } = await supabase
+        .from("score_entries")
+        .select(
+          `participant_id,
+          is_winner,
+          sessions:session_id(
+            game_id,
+            games:game_id(name)
+          ),
+          meetup_participants:participant_id(member_id)`
+        )
+        .eq("is_winner", true);
+      if (winError) throw winError;
+
+      // Filter to this member's wins and count by game
+      const gameCounts: Record<string, { name: string; count: number }> = {};
+      for (const entry of winEntries ?? []) {
+        if ((entry as any).meetup_participants?.member_id !== memberId) continue;
+        const session = entry.sessions as any;
+        const gameId = session?.game_id;
+        const gameName = session?.games?.name;
+        if (!gameId || !gameName) continue;
+        if (!gameCounts[gameId]) {
+          gameCounts[gameId] = { name: gameName, count: 0 };
+        }
+        gameCounts[gameId].count++;
+      }
+
+      let topGame: string | null = null;
+      let maxWins = 0;
+      for (const [, val] of Object.entries(gameCounts)) {
+        if (val.count > maxWins) {
+          maxWins = val.count;
+          topGame = val.name;
+        }
+      }
+
+      return { meetupsAttended, topGame };
+    },
+    enabled: !!memberId,
+  });
+}
+
 export function useUpdateMember() {
   const supabase = createClient();
   const queryClient = useQueryClient();
