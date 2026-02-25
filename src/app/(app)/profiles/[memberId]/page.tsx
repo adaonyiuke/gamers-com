@@ -10,7 +10,9 @@ import {
   Star,
   Pencil,
   LogOut,
+  Settings,
 } from "lucide-react";
+import Link from "next/link";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import {
@@ -213,9 +215,21 @@ export default function MemberProfilePage() {
           <ChevronLeft className="h-6 w-6" />
           <span className="text-[17px]">Back</span>
         </button>
-        <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center mr-14 truncate">
+        <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center truncate">
           {isLoading ? "" : displayName}
         </h1>
+        <div className="w-14 flex justify-end">
+          {isOwnProfile && (
+            <Link
+              href="/settings"
+              className="active:scale-95 transition-transform"
+            >
+              <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
+                <Settings className="h-[18px] w-[18px] text-gray-600" />
+              </div>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="px-5 mt-4 space-y-5">

@@ -86,7 +86,6 @@ export function useCreateMeetup() {
           group_id: groupId,
           title,
           date,
-          created_by: user.id,
           status: "planned",
         })
         .select()

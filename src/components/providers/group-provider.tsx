@@ -58,7 +58,6 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           .from("groups")
           .insert({
             name: `${displayName}'s Game Night`,
-            created_by: user!.id,
           })
           .select()
           .single();

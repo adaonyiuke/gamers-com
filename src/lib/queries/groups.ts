@@ -83,7 +83,7 @@ export function useCreateGroup() {
       // Create the group
       const { data: group, error: groupError } = await supabase
         .from("groups")
-        .insert({ name, description, created_by: user.id })
+        .insert({ name, description })
         .select()
         .single();
       if (groupError) throw groupError;
