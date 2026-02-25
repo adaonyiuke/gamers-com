@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useCreateMeetup } from "@/lib/queries/meetups";
 import { useGroupMembers } from "@/lib/queries/members";
-import { useGuests } from "@/lib/queries/guests";
+import { useGuests, useCreateGuest } from "@/lib/queries/guests";
 import { getDefaultMeetupTitle } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
 
@@ -35,9 +35,11 @@ export default function NewMeetupPage() {
   const { data: members, isLoading: membersLoading } = useGroupMembers(groupId);
   const { data: guests, isLoading: guestsLoading } = useGuests(groupId);
   const createMeetup = useCreateMeetup();
+  const createGuest = useCreateGuest();
 
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [selectedGuestIds, setSelectedGuestIds] = useState<string[]>([]);
+  const [newGuestName, setNewGuestName] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -65,6 +67,20 @@ export default function NewMeetupPage() {
     setSelectedGuestIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+  };
+
+  const handleAddGuest = async () => {
+    if (!groupId || !newGuestName.trim()) return;
+    try {
+      const result = await createGuest.mutateAsync({
+        groupId: groupId,
+        name: newGuestName.trim(),
+      });
+      setSelectedGuestIds((prev) => [...prev, result.id]);
+      setNewGuestName("");
+    } catch {
+      // Error is handled by mutation state
+    }
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -252,6 +268,35 @@ export default function NewMeetupPage() {
                 })}
               </div>
             )}
+
+            {/* Add Guest inline input */}
+            <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
+              <UserPlus className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={newGuestName}
+                onChange={(e) => setNewGuestName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddGuest();
+                  }
+                }}
+                placeholder="New guest name"
+                className="flex-1 bg-gray-50 rounded-[10px] px-3 py-2.5 text-[15px] focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
+              />
+              <button
+                type="button"
+                onClick={handleAddGuest}
+                disabled={!newGuestName.trim() || createGuest.isPending}
+                className={cn(
+                  "bg-[#007AFF] text-white rounded-[10px] px-4 py-2.5 text-[15px] font-semibold flex-shrink-0",
+                  (!newGuestName.trim() || createGuest.isPending) && "opacity-50"
+                )}
+              >
+                {createGuest.isPending ? "Adding..." : "Add"}
+              </button>
+            </div>
           </div>
         </div>
 

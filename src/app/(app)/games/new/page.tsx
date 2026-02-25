@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,10 +16,14 @@ const SCORING_OPTIONS = [
   { value: "manual_winner", label: "Manual Winner" },
 ] as const;
 
+const SCORING_DESCRIPTIONS: Record<string, string> = {
+  highest_wins: "The player with the highest score wins the game.",
+  lowest_wins: "The player with the lowest score wins (e.g., golf).",
+  manual_winner: "You pick the winner yourself — no scores needed.",
+};
+
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  minPlayers: z.coerce.number().int().min(1, "Min 1 player"),
-  maxPlayers: z.string().optional(),
   scoringType: z.enum(["highest_wins", "lowest_wins", "manual_winner"]),
 });
 
@@ -29,8 +34,9 @@ const inputClasses =
 
 export default function NewGamePage() {
   const router = useRouter();
-  const { groupId } = useGroupId();
+  const { groupId, loading: groupLoading } = useGroupId();
   const createGame = useCreateGame();
+  const [showScoringInfo, setShowScoringInfo] = useState(false);
 
   const {
     register,
@@ -38,13 +44,10 @@ export default function NewGamePage() {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<FormData>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(schema),
     defaultValues: {
       name: "",
-      minPlayers: 1,
-      maxPlayers: "",
       scoringType: "highest_wins",
     },
   });
@@ -54,17 +57,39 @@ export default function NewGamePage() {
   const onSubmit = async (data: FormData) => {
     if (!groupId) return;
 
-    await createGame.mutateAsync({
-      groupId,
-      name: data.name,
-      minPlayers: data.minPlayers,
-      maxPlayers:
-        data.maxPlayers ? parseInt(data.maxPlayers, 10) || undefined : undefined,
-      scoringType: data.scoringType,
-    });
-
-    router.push("/games");
+    try {
+      await createGame.mutateAsync({
+        groupId,
+        name: data.name,
+        scoringType: data.scoringType,
+      });
+      router.push("/games");
+    } catch {
+      // Error shown via createGame.error
+    }
   };
+
+  if (groupLoading) {
+    return (
+      <div className="pb-28">
+        <div
+          className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
+          style={{
+            background: "rgba(242,242,247,0.85)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          }}
+        >
+          <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center">
+            Add Game
+          </h1>
+        </div>
+        <div className="px-5 mt-4 flex items-center justify-center py-20">
+          <p className="text-gray-400 text-[15px]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-28">
@@ -110,54 +135,36 @@ export default function NewGamePage() {
           )}
         </div>
 
-        {/* Player Counts */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block px-1">
-              Min Players
-            </label>
-            <input
-              {...register("minPlayers")}
-              type="number"
-              min={1}
-              className={cn(
-                inputClasses,
-                errors.minPlayers && "border-red-400 focus:border-red-400"
-              )}
-            />
-            {errors.minPlayers && (
-              <p className="text-[13px] text-red-500 mt-1 px-1">
-                {errors.minPlayers.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block px-1">
-              Max Players
-            </label>
-            <input
-              {...register("maxPlayers")}
-              type="number"
-              min={1}
-              placeholder="Optional"
-              className={cn(
-                inputClasses,
-                errors.maxPlayers && "border-red-400 focus:border-red-400"
-              )}
-            />
-            {errors.maxPlayers && (
-              <p className="text-[13px] text-red-500 mt-1 px-1">
-                {errors.maxPlayers.message}
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* Scoring Type - Segmented Control */}
         <div>
-          <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block px-1">
-            Scoring Type
-          </label>
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+              Scoring Type
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowScoringInfo(!showScoringInfo)}
+              className="text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+          </div>
+
+          {showScoringInfo && (
+            <div className="bg-blue-50 rounded-[14px] px-4 py-3 mb-3 space-y-2">
+              {SCORING_OPTIONS.map((opt) => (
+                <div key={opt.value}>
+                  <p className="text-[13px] font-semibold text-gray-800">
+                    {opt.label}
+                  </p>
+                  <p className="text-[13px] text-gray-600">
+                    {SCORING_DESCRIPTIONS[opt.value]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="bg-gray-200/60 rounded-[14px] p-1 flex">
             {SCORING_OPTIONS.map((opt) => (
               <button
@@ -189,10 +196,10 @@ export default function NewGamePage() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={isSubmitting || createGame.isPending}
+          disabled={isSubmitting || createGame.isPending || !groupId}
           className={cn(
             "w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform",
-            (isSubmitting || createGame.isPending) && "opacity-50"
+            (isSubmitting || createGame.isPending || !groupId) && "opacity-50"
           )}
         >
           {isSubmitting || createGame.isPending ? "Adding..." : "Add Game"}

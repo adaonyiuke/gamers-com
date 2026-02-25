@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -56,17 +57,15 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-8 h-8 text-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M11.644 1.59a.75.75 0 0 1 .712 0l9.75 5.25a.75.75 0 0 1 0 1.32l-9.75 5.25a.75.75 0 0 1-.712 0l-9.75-5.25a.75.75 0 0 1 0-1.32l9.75-5.25Z" />
-              <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 0 0 2.134 0l7.668-4.13 1.37.739a.75.75 0 0 1 0 1.32l-9.75 5.25a.75.75 0 0 1-.71 0l-9.75-5.25a.75.75 0 0 1 0-1.32l1.37-.738Z" />
-              <path d="M10.933 19.231l-7.668-4.13-1.37.739a.75.75 0 0 0 0 1.32l9.75 5.25c.221.12.489.12.71 0l9.75-5.25a.75.75 0 0 0 0-1.32l-1.37-.738-7.668 4.13a2.25 2.25 0 0 1-2.134 0Z" />
-            </svg>
+          <div className="w-16 h-16 rounded-[16px] overflow-hidden mx-auto mb-4 shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
+            <Image
+              src="/icon-192.png"
+              alt="Game Night HQ"
+              width={192}
+              height={192}
+              className="w-full h-full object-cover scale-[1.25]"
+              priority
+            />
           </div>
           <h1 className="text-[28px] font-bold text-black tracking-tight">
             Game Night HQ

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "./supabase-provider";
 
@@ -22,6 +23,7 @@ const Context = createContext<GroupContext>({
 
 export function GroupProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
+  const router = useRouter();
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -67,6 +69,11 @@ export function GroupProvider({ children }: { children: ReactNode }) {
             role: "owner",
           });
           setGroupId(group.id);
+
+          // Redirect new users to onboarding
+          if (typeof window !== "undefined" && !localStorage.getItem("onboarding_complete")) {
+            router.push("/onboarding");
+          }
         }
       }
       setLoading(false);

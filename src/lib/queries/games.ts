@@ -28,23 +28,17 @@ export function useCreateGame() {
     mutationFn: async ({
       groupId,
       name,
-      minPlayers,
-      maxPlayers,
       scoringType,
     }: {
       groupId: string;
       name: string;
-      minPlayers?: number;
-      maxPlayers?: number;
-      scoringType?: string;
+      scoringType: string;
     }) => {
       const { data, error } = await supabase
         .from("games")
         .insert({
           group_id: groupId,
           name,
-          min_players: minPlayers,
-          max_players: maxPlayers,
           scoring_type: scoringType || "highest_wins",
         })
         .select()
