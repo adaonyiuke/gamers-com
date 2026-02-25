@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
 export function useGroupMembers(groupId: string | null) {
@@ -50,5 +50,37 @@ export function useMemberProfile(memberId: string | null) {
       return data;
     },
     enabled: !!memberId,
+  });
+}
+
+export function useUpdateMember() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      memberId,
+      updates,
+    }: {
+      memberId: string;
+      updates: {
+        display_name?: string;
+        bio?: string | null;
+        avatar_url?: string | null;
+      };
+    }) => {
+      const { data, error } = await supabase
+        .from("group_members")
+        .update(updates)
+        .eq("id", memberId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["member_profile", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["group_members"] });
+    },
   });
 }

@@ -39,14 +39,17 @@ export default function OnboardingPage() {
     setSaving(true);
 
     try {
-      // Save avatar color to localStorage
+      // Save avatar color to localStorage for quick access
       localStorage.setItem("avatar_color", selectedColor);
 
-      // Update bio on the group_members record if we have a group
+      // Update bio and avatar color on the group_members record
       if (groupId && user) {
         await supabase
           .from("group_members")
-          .update({ bio: bio.trim() || null })
+          .update({
+            bio: bio.trim() || null,
+            avatar_url: selectedColor,
+          })
           .eq("group_id", groupId)
           .eq("user_id", user.id);
       }

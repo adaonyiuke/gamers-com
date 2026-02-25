@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -8,10 +8,21 @@ import {
   Trophy,
   TrendingUp,
   Flame,
+  Pencil,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
-import { useMemberProfile, useMemberStats } from "@/lib/queries/members";
-import { computeBadges, type MemberBadgeInput, type Badge } from "@/lib/utils/badges";
+import { useUser } from "@/components/providers/supabase-provider";
+import {
+  useMemberProfile,
+  useMemberStats,
+  useGroupMembers,
+  useUpdateMember,
+} from "@/lib/queries/members";
+import {
+  computeBadges,
+  type MemberBadgeInput,
+  type Badge,
+} from "@/lib/utils/badges";
 import { cn } from "@/lib/utils/cn";
 
 const AVATAR_COLORS = [
@@ -53,17 +64,40 @@ export default function MemberProfilePage() {
   const params = useParams();
   const memberId = params.memberId as string;
 
+  const { user } = useUser();
   const { groupId, loading: groupLoading } = useGroupId();
   const { data: profile, isLoading: profileLoading } =
     useMemberProfile(memberId);
   const { data: allStats, isLoading: statsLoading } = useMemberStats(groupId);
+  const { data: members } = useGroupMembers(groupId);
+  const updateMember = useUpdateMember();
+
+  // Check if this is the current user's profile
+  const isOwnProfile = useMemo(() => {
+    if (!profile || !user) return false;
+    return profile.user_id === user.id;
+  }, [profile, user]);
+
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [editColor, setEditColor] = useState(AVATAR_COLORS[0]);
+  const [editName, setEditName] = useState("");
+
+  // Initialize edit state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setEditBio(profile.bio || "");
+      setEditColor(profile.avatar_url || getAvatarColor(profile.display_name));
+      setEditName(profile.display_name || "");
+    }
+  }, [profile]);
 
   const memberStat = useMemo(() => {
     if (!allStats) return null;
     return allStats.find((s: any) => s.member_id === memberId) ?? null;
   }, [allStats, memberId]);
 
-  // Determine if this member has the top win rate for the Champion badge
   const isTopWinRate = useMemo(() => {
     if (!allStats || !memberStat) return false;
     const eligible = allStats.filter(
@@ -71,7 +105,10 @@ export default function MemberProfilePage() {
     );
     if (eligible.length === 0) return false;
     const maxRate = Math.max(...eligible.map((s: any) => s.win_rate ?? 0));
-    return (memberStat.win_rate ?? 0) >= maxRate && (memberStat.total_sessions ?? 0) >= 5;
+    return (
+      (memberStat.win_rate ?? 0) >= maxRate &&
+      (memberStat.total_sessions ?? 0) >= 5
+    );
   }, [allStats, memberStat]);
 
   const badges = useMemo(() => {
@@ -90,6 +127,31 @@ export default function MemberProfilePage() {
   const isLoading = groupLoading || profileLoading || statsLoading;
 
   const displayName = profile?.display_name ?? "Player";
+  const avatarColor =
+    profile?.avatar_url || getAvatarColor(displayName);
+  const bio = profile?.bio;
+  const role = profile?.role;
+
+  async function handleSave() {
+    if (!memberId) return;
+    try {
+      await updateMember.mutateAsync({
+        memberId,
+        updates: {
+          display_name: editName.trim() || displayName,
+          bio: editBio.trim() || null,
+          avatar_url: editColor,
+        },
+      });
+      // Also update localStorage for dashboard avatar
+      if (isOwnProfile) {
+        localStorage.setItem("avatar_color", editColor);
+      }
+      setEditing(false);
+    } catch {
+      // Error shown via mutation state
+    }
+  }
 
   const statCards = [
     {
@@ -143,13 +205,11 @@ export default function MemberProfilePage() {
       <div className="px-5 mt-4 space-y-5">
         {isLoading ? (
           <>
-            {/* Avatar skeleton */}
             <div className="flex flex-col items-center gap-3">
               <SkeletonBlock className="h-[72px] w-[72px] !rounded-full" />
               <SkeletonBlock className="h-6 w-32" />
               <SkeletonBlock className="h-4 w-16" />
             </div>
-            {/* Stats skeleton */}
             <div className="grid grid-cols-2 gap-3">
               {[0, 1, 2, 3].map((i) => (
                 <div
@@ -162,15 +222,124 @@ export default function MemberProfilePage() {
               ))}
             </div>
           </>
-        ) : (
+        ) : editing ? (
+          /* ---- EDIT MODE ---- */
           <>
-            {/* Avatar + Name */}
+            {/* Avatar color picker */}
+            <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+              <div className="flex justify-center mb-6">
+                <div
+                  className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-white text-[28px] font-bold transition-colors duration-300"
+                  style={{ backgroundColor: editColor }}
+                >
+                  {(editName || displayName)[0].toUpperCase()}
+                </div>
+              </div>
+
+              {/* Display name */}
+              <div className="mb-5">
+                <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                  Display Name
+                </label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  placeholder="Your name"
+                />
+              </div>
+
+              {/* Color palette */}
+              <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+                Avatar Color
+              </label>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {AVATAR_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setEditColor(color)}
+                    className="relative w-10 h-10 rounded-full transition-transform active:scale-95"
+                    style={{ backgroundColor: color }}
+                  >
+                    {editColor === color && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={3}
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.5 12.75l6 6 9-13.5"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+                  Bio
+                </label>
+                <span className="text-[13px] text-gray-400">
+                  {editBio.length}/200
+                </span>
+              </div>
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Board game enthusiast, pizza lover..."
+                rows={3}
+                maxLength={200}
+                className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] resize-none focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+              />
+            </div>
+
+            {/* Save / Cancel buttons */}
+            {updateMember.error && (
+              <div className="bg-red-50 rounded-[14px] px-4 py-3">
+                <p className="text-[15px] text-red-600">
+                  {(updateMember.error as Error).message ??
+                    "Failed to save changes"}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditing(false)}
+                className="flex-1 bg-gray-200 text-gray-900 rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={updateMember.isPending}
+                className={cn(
+                  "flex-1 bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform",
+                  updateMember.isPending && "opacity-50"
+                )}
+              >
+                {updateMember.isPending ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ---- VIEW MODE ---- */
+          <>
+            {/* Avatar + Name + Bio */}
             <div className="flex flex-col items-center gap-2">
               <div
                 className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-white text-[28px] font-bold"
-                style={{
-                  backgroundColor: getAvatarColor(displayName),
-                }}
+                style={{ backgroundColor: avatarColor }}
               >
                 {displayName[0].toUpperCase()}
               </div>
@@ -178,12 +347,28 @@ export default function MemberProfilePage() {
                 <h2 className="text-[22px] font-bold text-gray-900">
                   {displayName}
                 </h2>
-                {profile?.role && (
+                {role && (
                   <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mt-0.5 capitalize">
-                    {profile.role}
+                    {role === "owner" ? "Admin" : role}
+                  </p>
+                )}
+                {bio && (
+                  <p className="text-[15px] text-gray-500 mt-2 max-w-[280px]">
+                    {bio}
                   </p>
                 )}
               </div>
+
+              {/* Edit button — only on own profile */}
+              {isOwnProfile && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="mt-2 flex items-center gap-1.5 text-[#007AFF] text-[15px] font-medium active:opacity-60 transition-opacity"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit Profile
+                </button>
+              )}
             </div>
 
             {/* Stats Grid */}

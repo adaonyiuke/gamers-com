@@ -57,11 +57,21 @@ export default function DashboardPage() {
 
   const isLoading = groupLoading || statsLoading || meetupsLoading;
 
+  const currentMember = useMemo(() => {
+    if (!members || !user) return null;
+    return members.find((m: any) => m.user_id === user.id) ?? null;
+  }, [members, user]);
+
   const [avatarColor, setAvatarColor] = useState("#007AFF");
   useEffect(() => {
-    const saved = localStorage.getItem("avatar_color");
-    if (saved) setAvatarColor(saved);
-  }, []);
+    // Prefer DB-stored color, fall back to localStorage
+    if (currentMember?.avatar_url) {
+      setAvatarColor(currentMember.avatar_url);
+    } else {
+      const saved = localStorage.getItem("avatar_color");
+      if (saved) setAvatarColor(saved);
+    }
+  }, [currentMember]);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
