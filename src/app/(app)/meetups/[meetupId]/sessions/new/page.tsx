@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { use, useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Check, Plus, X, Crown } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -47,6 +47,9 @@ export default function NewSessionPage({
     useMeetupParticipants(meetupId);
   const createSession = useCreateSession();
   const finalizeSession = useFinalizeSession();
+
+  const searchParams = useSearchParams();
+  const preselectedGameId = searchParams.get("gameId");
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedGame, setSelectedGame] = useState<any>(null);
@@ -94,6 +97,18 @@ export default function NewSessionPage({
     }
     return maxScore > 0 ? leader : null;
   }, [totals]);
+
+  // Auto-select game from query param (Play Again flow)
+  useEffect(() => {
+    if (preselectedGameId && games && participants && step === 1) {
+      const game = games.find((g: any) => g.id === preselectedGameId);
+      if (game) {
+        setSelectedGame(game);
+        setSelectedParticipantIds(new Set(participants.map((p: any) => p.id)));
+        setStep(2);
+      }
+    }
+  }, [preselectedGameId, games, participants, step]);
 
   const handleSelectGame = (game: any) => {
     setSelectedGame(game);

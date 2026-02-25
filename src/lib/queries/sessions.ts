@@ -59,6 +59,37 @@ export function useCreateSession() {
   });
 }
 
+export function useRecentSessions(groupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["recent_sessions", groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(
+          `*,
+          games:game_id(id, name, icon, scoring_type),
+          meetups:meetup_id!inner(id, group_id, title),
+          score_entries(
+            id, score, is_winner, participant_id,
+            meetup_participants:participant_id(
+              id,
+              group_members:member_id(display_name, avatar_url),
+              guests:guest_id(name, avatar_url)
+            )
+          )`
+        )
+        .eq("meetups.group_id", groupId!)
+        .eq("status", "finalized")
+        .order("finalized_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!groupId,
+  });
+}
+
 export function useFinalizeSession() {
   const supabase = createClient();
   const queryClient = useQueryClient();

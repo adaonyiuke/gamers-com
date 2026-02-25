@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ChevronLeft,
   Trophy,
@@ -9,9 +10,14 @@ import {
   Clock,
   CheckCircle2,
   Gamepad2,
+  Play,
+  X,
+  Calendar,
 } from "lucide-react";
+import { useGroupId } from "@/components/providers/group-provider";
 import { useMeetupSessions } from "@/lib/queries/sessions";
-import { formatDateLong } from "@/lib/utils/dates";
+import { useMeetup, useMeetups } from "@/lib/queries/meetups";
+import { formatDateLong, formatDate } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -34,7 +40,17 @@ export default function SessionDetailPage() {
   const meetupId = params.meetupId as string;
   const sessionId = params.sessionId as string;
 
+  const { groupId } = useGroupId();
   const { data: sessions, isLoading, isError } = useMeetupSessions(meetupId);
+  const { data: meetup } = useMeetup(meetupId);
+  const { data: meetups } = useMeetups(groupId);
+
+  const [showNoMeetupModal, setShowNoMeetupModal] = useState(false);
+
+  const activeMeetup = useMemo(() => {
+    if (!meetups) return null;
+    return meetups.find((m: any) => m.status === "active") ?? null;
+  }, [meetups]);
 
   const session = useMemo(() => {
     if (!sessions) return null;
@@ -58,6 +74,17 @@ export default function SessionDetailPage() {
     if (!isFinalized || !sortedEntries.length) return null;
     return sortedEntries.find((e: any) => e.is_winner) ?? null;
   }, [isFinalized, sortedEntries]);
+
+  function handlePlayAgain() {
+    if (!session?.game_id) return;
+    if (activeMeetup) {
+      router.push(
+        `/meetups/${activeMeetup.id}/sessions/new?gameId=${session.game_id}`
+      );
+    } else {
+      setShowNoMeetupModal(true);
+    }
+  }
 
   if (isError) {
     return (
@@ -115,6 +142,20 @@ export default function SessionDetailPage() {
             session?.games?.name ?? "Session"
           )}
         </h1>
+        {!isLoading && (meetup || session?.played_at) && (
+          <div className="flex items-center gap-3 mt-1 text-[15px] text-gray-500">
+            {meetup?.title && <span>{meetup.title}</span>}
+            {meetup?.title && session?.played_at && (
+              <span className="text-gray-300">·</span>
+            )}
+            {session?.played_at && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>{formatDate(session.played_at)}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-5 space-y-5 mt-2">
@@ -257,7 +298,7 @@ export default function SessionDetailPage() {
                             </div>
                           </div>
                           <p className="text-[17px] font-bold tabular-nums text-gray-900">
-                            {entry.score != null ? entry.score : "—"}
+                            {entry.score != null ? entry.score : "\u2014"}
                           </p>
                         </div>
                       );
@@ -266,9 +307,62 @@ export default function SessionDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Play Again */}
+            {isFinalized && (
+              <button
+                onClick={handlePlayAgain}
+                className="w-full flex items-center justify-center gap-2 bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+              >
+                <Play className="h-5 w-5" />
+                Play Again
+              </button>
+            )}
           </>
         )}
       </div>
+
+      {/* No Active Meetup Modal */}
+      {showNoMeetupModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowNoMeetupModal(false)}
+          />
+          <div className="relative w-full max-w-[430px] bg-white rounded-t-[24px] p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[20px] font-bold text-gray-900">
+                No Active Meetup
+              </h3>
+              <button
+                onClick={() => setShowNoMeetupModal(false)}
+                className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <X className="h-4 w-4 text-gray-500" />
+              </button>
+            </div>
+            <p className="text-[15px] text-gray-500 mb-6">
+              You need an active meetup to record a game. Create a new meetup to
+              get started.
+            </p>
+            <div className="space-y-3">
+              <Link
+                href="/meetups/new"
+                onClick={() => setShowNoMeetupModal(false)}
+                className="block w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold text-center active:scale-[0.98] transition-transform"
+              >
+                Create Meetup
+              </Link>
+              <button
+                onClick={() => setShowNoMeetupModal(false)}
+                className="w-full bg-gray-100 text-gray-700 rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Gamepad2, Plus } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
-import { useGames } from "@/lib/queries/games";
+import { useGames, useGamePlayCounts } from "@/lib/queries/games";
 import { cn } from "@/lib/utils/cn";
 
 const TILE_COLORS = [
@@ -34,6 +34,7 @@ function SkeletonBlock({ className }: { className?: string }) {
 export default function GamesPage() {
   const { groupId, loading: groupLoading } = useGroupId();
   const { data: games, isLoading: gamesLoading } = useGames(groupId);
+  const { data: playCounts } = useGamePlayCounts(groupId);
 
   const isLoading = groupLoading || gamesLoading;
 
@@ -84,9 +85,7 @@ export default function GamesPage() {
               const abbr = (game.name ?? "")
                 .substring(0, 2)
                 .toUpperCase();
-              const playerRange = game.max_players
-                ? `${game.min_players ?? 1}--${game.max_players}`
-                : `${game.min_players ?? 1}+ players`;
+              const count = playCounts?.[game.id] ?? 0;
 
               return (
                 <div
@@ -106,7 +105,7 @@ export default function GamesPage() {
                     {SCORING_LABELS[game.scoring_type] ?? game.scoring_type}
                   </p>
                   <p className="text-[13px] text-gray-400 mt-0.5">
-                    {playerRange}
+                    {count > 0 ? `${count} Played` : "Not Played"}
                   </p>
                 </div>
               );
