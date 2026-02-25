@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TrendingUp, Gamepad2, Flame, Trophy, ChevronRight } from "lucide-react";
@@ -57,6 +57,12 @@ export default function DashboardPage() {
 
   const isLoading = groupLoading || statsLoading || meetupsLoading;
 
+  const [avatarColor, setAvatarColor] = useState("#007AFF");
+  useEffect(() => {
+    const saved = localStorage.getItem("avatar_color");
+    if (saved) setAvatarColor(saved);
+  }, []);
+
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -74,12 +80,31 @@ export default function DashboardPage() {
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
-          {today}
-        </p>
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          Dashboard
-        </h1>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+              {today}
+            </p>
+            <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
+              Dashboard
+            </h1>
+          </div>
+          <Link
+            href="/settings"
+            className="mt-1 relative active:scale-95 transition-transform"
+          >
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[17px] font-bold shadow-sm"
+              style={{ backgroundColor: avatarColor }}
+            >
+              {(
+                user?.user_metadata?.display_name ||
+                user?.email ||
+                "?"
+              )[0].toUpperCase()}
+            </div>
+          </Link>
+        </div>
       </div>
 
       <div className="px-5 space-y-5 mt-2">
