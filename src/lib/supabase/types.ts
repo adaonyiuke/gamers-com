@@ -346,7 +346,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string
           date: string
           group_id: string
           id?: string

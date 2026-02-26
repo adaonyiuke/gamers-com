@@ -1,5 +1,10 @@
 "use client";
 
+import type { Database } from "@/lib/supabase/types";
+
+type MeetupRow = Database["public"]["Tables"]["meetups"]["Row"];
+type FeaturedMeetup = MeetupRow & { label: string; gradient: string };
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,17 +72,26 @@ export default function DashboardPage() {
   }, [stats, members]);
 
   // Featured meetup callout
-  const featuredMeetup = useMemo(() => {
-    if (!meetups || meetups.length === 0) return null;
-    const active = meetups.find((m: any) => m.status === "active");
-    if (active) return { ...active, label: "Current Meetup", gradient: "from-blue-500 to-indigo-600" };
-    const planned = meetups.find((m: any) => m.status === "planned");
-    if (planned) return { ...planned, label: "Next Meetup", gradient: "from-violet-500 to-purple-600" };
-    // Most recent completed
-    const completed = meetups.find((m: any) => m.status === "complete");
-    if (completed) return { ...completed, label: "Last Meetup", gradient: "from-slate-600 to-gray-800" };
-    return null;
-  }, [meetups]);
+const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
+  if (!meetups || meetups.length === 0) return null;
+
+  const active = meetups.find((m) => m.status === "active");
+  if (active) {
+    return { ...active, label: "Current Meetup", gradient: "from-blue-500 to-indigo-600" };
+  }
+
+  const planned = meetups.find((m) => m.status === "planned");
+  if (planned) {
+    return { ...planned, label: "Next Meetup", gradient: "from-violet-500 to-purple-600" };
+  }
+
+  const completed = meetups.find((m) => m.status === "complete");
+  if (completed) {
+    return { ...completed, label: "Last Meetup", gradient: "from-slate-600 to-gray-800" };
+  }
+
+  return null;
+}, [meetups]);
 
   // Fetch participants & sessions for the featured meetup card
   const { data: featuredParticipants } = useMeetupParticipants(featuredMeetup?.id ?? null);
@@ -490,4 +504,5 @@ export default function DashboardPage() {
       )}
     </div>
   );
+  
 }

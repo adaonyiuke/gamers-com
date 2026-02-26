@@ -111,8 +111,8 @@ export default function SeedPage() {
         .eq("group_id", groupId)
         .in("name", ["Alex Chen", "Jordan Park"]);
 
-      let alexId: string;
-      let jordanId: string;
+      let alexId: string | null = null;
+      let jordanId: string | null = null;
 
       const alexExisting = existingGuests?.find((g: any) => g.name === "Alex Chen");
       const jordanExisting = existingGuests?.find((g: any) => g.name === "Jordan Park");
@@ -132,9 +132,18 @@ export default function SeedPage() {
           .select();
         if (guestsError) throw new Error(`Guests: ${guestsError.message}`);
 
-        alexId = alexExisting?.id ?? newGuests?.find((g: any) => g.name === "Alex Chen")?.id;
-        jordanId = jordanExisting?.id ?? newGuests?.find((g: any) => g.name === "Jordan Park")?.id;
+        alexId =
+        alexExisting?.id ??
+        newGuests?.find((g: any) => g.name === "Alex Chen")?.id ??
+        null;
+        
+        jordanId =
+        jordanExisting?.id ??
+        newGuests?.find((g: any) => g.name === "Jordan Park")?.id ??
+        null;
         if (!alexId || !jordanId) throw new Error("Failed to resolve guest IDs");
+        const alexGuestId = alexId;
+        const jordanGuestId = jordanId;
 
         updateStep(1, { status: "done", detail: "Alex Chen · Jordan Park" });
       }
