@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
@@ -94,6 +96,86 @@ export type Database = {
           },
         ]
       }
+      group_settings: {
+        Row: {
+          allow_edit_finalized: boolean | null
+          auto_include_all_members: boolean | null
+          confetti_intensity: string | null
+          created_at: string | null
+          default_meetup_name_format: string | null
+          default_meetup_status: string | null
+          group_id: string
+          guest_allow_recurring: boolean | null
+          guest_include_in_stats: boolean | null
+          id: string
+          leaderboard_default_sort: string | null
+          leaderboard_include_guests: boolean | null
+          lock_sessions_after_complete: boolean | null
+          reduced_motion: boolean | null
+          show_fun_stats: boolean | null
+          show_most_improved: boolean | null
+          show_rivalry_stats: boolean | null
+          streak_include_guests: boolean | null
+          streak_window: number | null
+          updated_at: string | null
+          winner_animation: boolean | null
+        }
+        Insert: {
+          allow_edit_finalized?: boolean | null
+          auto_include_all_members?: boolean | null
+          confetti_intensity?: string | null
+          created_at?: string | null
+          default_meetup_name_format?: string | null
+          default_meetup_status?: string | null
+          group_id: string
+          guest_allow_recurring?: boolean | null
+          guest_include_in_stats?: boolean | null
+          id?: string
+          leaderboard_default_sort?: string | null
+          leaderboard_include_guests?: boolean | null
+          lock_sessions_after_complete?: boolean | null
+          reduced_motion?: boolean | null
+          show_fun_stats?: boolean | null
+          show_most_improved?: boolean | null
+          show_rivalry_stats?: boolean | null
+          streak_include_guests?: boolean | null
+          streak_window?: number | null
+          updated_at?: string | null
+          winner_animation?: boolean | null
+        }
+        Update: {
+          allow_edit_finalized?: boolean | null
+          auto_include_all_members?: boolean | null
+          confetti_intensity?: string | null
+          created_at?: string | null
+          default_meetup_name_format?: string | null
+          default_meetup_status?: string | null
+          group_id?: string
+          guest_allow_recurring?: boolean | null
+          guest_include_in_stats?: boolean | null
+          id?: string
+          leaderboard_default_sort?: string | null
+          leaderboard_include_guests?: boolean | null
+          lock_sessions_after_complete?: boolean | null
+          reduced_motion?: boolean | null
+          show_fun_stats?: boolean | null
+          show_most_improved?: boolean | null
+          show_rivalry_stats?: boolean | null
+          streak_include_guests?: boolean | null
+          streak_window?: number | null
+          updated_at?: string | null
+          winner_animation?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           avatar_url: string | null
@@ -108,7 +190,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string
           description?: string | null
           id?: string
           invite_code?: string | null
@@ -170,8 +252,22 @@ export type Database = {
             foreignKeyName: "guests_invited_by_fkey"
             columns: ["invited_by"]
             isOneToOne: false
+            referencedRelation: "game_leaderboard"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "guests_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
             referencedRelation: "group_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guests_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "member_stats"
+            referencedColumns: ["member_id"]
           },
         ]
       }
@@ -216,8 +312,22 @@ export type Database = {
             foreignKeyName: "meetup_participants_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "game_leaderboard"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "meetup_participants_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
             referencedRelation: "group_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetup_participants_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_stats"
+            referencedColumns: ["member_id"]
           },
         ]
       }
@@ -228,6 +338,7 @@ export type Database = {
           date: string
           group_id: string
           id: string
+          location: string | null
           notes: string | null
           status: string
           title: string
@@ -239,6 +350,7 @@ export type Database = {
           date: string
           group_id: string
           id?: string
+          location?: string | null
           notes?: string | null
           status?: string
           title: string
@@ -250,6 +362,7 @@ export type Database = {
           date?: string
           group_id?: string
           id?: string
+          location?: string | null
           notes?: string | null
           status?: string
           title?: string
@@ -333,6 +446,13 @@ export type Database = {
           winner_participant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sessions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "game_leaderboard"
+            referencedColumns: ["game_id"]
+          },
           {
             foreignKeyName: "sessions_game_id_fkey"
             columns: ["game_id"]
@@ -496,3 +616,43 @@ export type TablesUpdate<
       ? U
       : never
     : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
