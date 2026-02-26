@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       games: {
         Row: {
+          abbreviation: string
           created_at: string
           group_id: string
           icon: string | null
@@ -26,6 +27,7 @@ export type Database = {
           scoring_type: string
         }
         Insert: {
+          abbreviation: string
           created_at?: string
           group_id: string
           icon?: string | null
@@ -36,6 +38,7 @@ export type Database = {
           scoring_type?: string
         }
         Update: {
+          abbreviation?: string
           created_at?: string
           group_id?: string
           icon?: string | null

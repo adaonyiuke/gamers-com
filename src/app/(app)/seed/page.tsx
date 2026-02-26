@@ -70,9 +70,9 @@ export default function SeedPage() {
 
       if (missingGames.length > 0) {
         const gameInserts = [
-          { group_id: groupId, name: "Catan", scoring_type: "highest_wins", min_players: 3, max_players: 6 },
-          { group_id: groupId, name: "Ticket to Ride", scoring_type: "highest_wins", min_players: 2, max_players: 5 },
-          { group_id: groupId, name: "Codenames", scoring_type: "manual_winner", min_players: 2, max_players: 8 },
+          { group_id: groupId, name: "Catan", abbreviation: "CA", scoring_type: "highest_wins", min_players: 3, max_players: 6 },
+          { group_id: groupId, name: "Ticket to Ride", abbreviation: "TI", scoring_type: "highest_wins", min_players: 2, max_players: 5 },
+          { group_id: groupId, name: "Codenames", abbreviation: "CO", scoring_type: "manual_winner", min_players: 2, max_players: 8 },
         ].filter((g) => missingGames.includes(g.name));
 
         const { error: gamesError } = await supabase.from("games").insert(gameInserts);

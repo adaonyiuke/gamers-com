@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -24,10 +24,20 @@ const SCORING_DESCRIPTIONS: Record<string, string> = {
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
+  abbreviation: z
+    .string()
+    .min(1, "Abbreviation is required")
+    .max(2, "Max 2 characters"),
   scoringType: z.enum(["highest_wins", "lowest_wins", "manual_winner"]),
 });
 
 type FormData = z.infer<typeof schema>;
+
+function generateAbbreviation(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+  return trimmed.substring(0, 2).toUpperCase();
+}
 
 const inputClasses =
   "w-full bg-white rounded-[14px] px-4 py-3.5 text-[17px] border border-gray-200 focus:border-[#007AFF] focus:outline-none";
@@ -48,11 +58,22 @@ export default function NewGamePage() {
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
+      abbreviation: "",
       scoringType: "highest_wins",
     },
   });
 
+  const name = watch("name");
+  const abbreviation = watch("abbreviation");
   const scoringType = watch("scoringType");
+
+  // Auto-suggest abbreviation when name changes
+  const [abbrManuallyEdited, setAbbrManuallyEdited] = useState(false);
+  useEffect(() => {
+    if (!abbrManuallyEdited && name) {
+      setValue("abbreviation", generateAbbreviation(name));
+    }
+  }, [name, abbrManuallyEdited, setValue]);
 
   const onSubmit = async (data: FormData) => {
     if (!groupId) return;
@@ -61,6 +82,7 @@ export default function NewGamePage() {
       await createGame.mutateAsync({
         groupId,
         name: data.name,
+        abbreviation: data.abbreviation.toUpperCase(),
         scoringType: data.scoringType,
       });
       router.push("/games");
@@ -133,6 +155,34 @@ export default function NewGamePage() {
               {errors.name.message}
             </p>
           )}
+        </div>
+
+        {/* Abbreviation */}
+        <div>
+          <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block px-1">
+            Abbreviation
+          </label>
+          <input
+            {...register("abbreviation", {
+              onChange: () => setAbbrManuallyEdited(true),
+            })}
+            placeholder="e.g. CA"
+            maxLength={2}
+            value={abbreviation.toUpperCase()}
+            className={cn(
+              inputClasses,
+              "w-24 text-center uppercase tracking-widest font-bold",
+              errors.abbreviation && "border-red-400 focus:border-red-400"
+            )}
+          />
+          {errors.abbreviation && (
+            <p className="text-[13px] text-red-500 mt-1 px-1">
+              {errors.abbreviation.message}
+            </p>
+          )}
+          <p className="text-[12px] text-gray-400 mt-1 px-1">
+            Shown on game tiles. Max 2 characters.
+          </p>
         </div>
 
         {/* Scoring Type - Segmented Control */}

@@ -463,12 +463,12 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
 
       {/* No Active Meetup Modal */}
       {showNoMeetupModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowNoMeetupModal(false)}
           />
-          <div className="relative w-full max-w-[430px] bg-white rounded-t-[24px] p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+          <div className="relative w-full max-w-[400px] bg-white rounded-[24px] p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[20px] font-bold text-gray-900">
                 No Active Meetup
