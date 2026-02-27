@@ -18,6 +18,7 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useMeetupSessions } from "@/lib/queries/sessions";
 import { useMeetup, useMeetups } from "@/lib/queries/meetups";
 import { formatDateLong, formatDate } from "@/lib/utils/dates";
+import { getScoringLabel } from "@/lib/utils/game-rules";
 import { cn } from "@/lib/utils/cn";
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -232,12 +233,7 @@ export default function SessionDetailPage() {
                 </div>
                 {session.games?.scoring_type && (
                   <p className="text-[15px] text-gray-500">
-                    Scoring:{" "}
-                    {scoringType === "lowest_wins"
-                      ? "Lowest Wins"
-                      : scoringType === "highest_wins"
-                        ? "Highest Wins"
-                        : scoringType}
+                    Scoring: {getScoringLabel(session.games.scoring_type)}
                   </p>
                 )}
                 {session.played_at && (

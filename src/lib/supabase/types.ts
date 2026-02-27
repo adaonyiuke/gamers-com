@@ -386,6 +386,7 @@ export type Database = {
           id: string
           is_winner: boolean
           participant_id: string
+          placement: number | null
           score: number | null
           session_id: string
         }
@@ -393,6 +394,7 @@ export type Database = {
           id?: string
           is_winner?: boolean
           participant_id: string
+          placement?: number | null
           score?: number | null
           session_id: string
         }
@@ -400,6 +402,7 @@ export type Database = {
           id?: string
           is_winner?: boolean
           participant_id?: string
+          placement?: number | null
           score?: number | null
           session_id?: string
         }

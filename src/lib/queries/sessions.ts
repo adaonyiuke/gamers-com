@@ -99,19 +99,28 @@ export function useFinalizeSession() {
       sessionId,
       meetupId,
       scores,
+      placements = [],
       winnerParticipantId,
     }: {
       sessionId: string;
       meetupId: string;
       scores: { participantId: string; score: number | null }[];
+      placements?: { participantId: string; placement: number }[];
       winnerParticipantId: string | null;
     }) => {
-      // Upsert score entries
+      // Build a placement lookup for merging into score entries
+      const placementMap: Record<string, number> = {};
+      for (const p of placements) {
+        placementMap[p.participantId] = p.placement;
+      }
+
+      // Upsert score entries (with optional placement)
       const scoreEntries = scores.map((s) => ({
         session_id: sessionId,
         participant_id: s.participantId,
         score: s.score,
         is_winner: s.participantId === winnerParticipantId,
+        placement: placementMap[s.participantId] ?? null,
       }));
 
       const { error: scoreError } = await supabase
@@ -141,6 +150,10 @@ export function useFinalizeSession() {
       });
       queryClient.invalidateQueries({ queryKey: ["member_stats"] });
       queryClient.invalidateQueries({ queryKey: ["game_leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+      queryClient.invalidateQueries({ queryKey: ["game_stats"] });
+      queryClient.invalidateQueries({ queryKey: ["game_top_performers"] });
+      queryClient.invalidateQueries({ queryKey: ["game_play_history"] });
     },
   });
 }

@@ -9,18 +9,7 @@ import { z } from "zod";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useCreateGame } from "@/lib/queries/games";
 import { cn } from "@/lib/utils/cn";
-
-const SCORING_OPTIONS = [
-  { value: "highest_wins", label: "Highest Wins" },
-  { value: "lowest_wins", label: "Lowest Wins" },
-  { value: "manual_winner", label: "Manual Winner" },
-] as const;
-
-const SCORING_DESCRIPTIONS: Record<string, string> = {
-  highest_wins: "The player with the highest score wins the game.",
-  lowest_wins: "The player with the lowest score wins (e.g., golf).",
-  manual_winner: "You pick the winner yourself — no scores needed.",
-};
+import { SCORING_OPTIONS, SCORING_TYPE_ENUM } from "@/lib/utils/game-rules";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -28,7 +17,7 @@ const schema = z.object({
     .string()
     .min(1, "Abbreviation is required")
     .max(2, "Max 2 characters"),
-  scoringType: z.enum(["highest_wins", "lowest_wins", "manual_winner"]),
+  scoringType: z.enum(SCORING_TYPE_ENUM),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -208,7 +197,7 @@ export default function NewGamePage() {
                     {opt.label}
                   </p>
                   <p className="text-[13px] text-gray-600">
-                    {SCORING_DESCRIPTIONS[opt.value]}
+                    {opt.description}
                   </p>
                 </div>
               ))}

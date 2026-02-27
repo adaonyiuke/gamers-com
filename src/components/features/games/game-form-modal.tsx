@@ -8,21 +8,11 @@ import { X, Info } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useCreateGame, useUpdateGame } from "@/lib/queries/games";
 import { cn } from "@/lib/utils/cn";
+import { SCORING_OPTIONS, SCORING_TYPE_ENUM } from "@/lib/utils/game-rules";
+import type { GameScoringType } from "@/lib/utils/game-rules";
 import type { Database } from "@/lib/supabase/types";
 
 type GameRow = Database["public"]["Tables"]["games"]["Row"];
-
-const SCORING_OPTIONS = [
-  { value: "highest_wins", label: "Highest Wins" },
-  { value: "lowest_wins", label: "Lowest Wins" },
-  { value: "manual_winner", label: "Manual Winner" },
-] as const;
-
-const SCORING_DESCRIPTIONS: Record<string, string> = {
-  highest_wins: "The player with the highest score wins the game.",
-  lowest_wins: "The player with the lowest score wins (e.g., golf).",
-  manual_winner: "You pick the winner yourself — no scores needed.",
-};
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -30,7 +20,7 @@ const schema = z.object({
     .string()
     .min(1, "Abbreviation is required")
     .max(2, "Max 2 characters"),
-  scoringType: z.enum(["highest_wins", "lowest_wins", "manual_winner"]),
+  scoringType: z.enum(SCORING_TYPE_ENUM),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -220,7 +210,7 @@ export function GameFormModal({
                       {opt.label}
                     </p>
                     <p className="text-[13px] text-gray-600">
-                      {SCORING_DESCRIPTIONS[opt.value]}
+                      {opt.description}
                     </p>
                   </div>
                 ))}
@@ -234,13 +224,20 @@ export function GameFormModal({
                   type="button"
                   onClick={() => setValue("scoringType", opt.value)}
                   className={cn(
-                    "flex-1 py-2.5 rounded-[10px] text-[13px] font-semibold transition-all text-center",
+                    "flex-1 py-2 rounded-[10px] text-[12px] font-semibold transition-all leading-tight flex flex-col items-center justify-center min-h-[44px]",
                     scoringType === opt.value
                       ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500"
                   )}
                 >
-                  {opt.label}
+                  {opt.label.includes(" ") ? (
+                    <>
+                      <span>{opt.label.split(" ")[0]}</span>
+                      <span>{opt.label.split(" ").slice(1).join(" ")}</span>
+                    </>
+                  ) : (
+                    <span>{opt.label}</span>
+                  )}
                 </button>
               ))}
             </div>

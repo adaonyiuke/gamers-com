@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { getScoringLabel, isGameScoringType, getGameScoringMode } from "@/lib/utils/game-rules";
 
 export function useMeetups(groupId: string | null) {
   const supabase = createClient();
@@ -115,6 +116,112 @@ export function useCreateMeetup() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meetups"] });
     },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Normalized meetup plays — single query for all session results in a meetup
+// ---------------------------------------------------------------------------
+
+export type MeetupPlayResult = {
+  sessionId: string;
+  gameId: string;
+  gameName: string;
+  scoringType: string;
+  scoringLabel: string;
+  playedAt: string;
+  finalizedAt: string | null;
+  status: string;
+  winnerName: string | null;
+  entries: {
+    participantName: string;
+    score: number | null;
+    placement: number | null;
+    isWinner: boolean;
+  }[];
+};
+
+export function useMeetupPlays(meetupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["meetup_plays", meetupId],
+    queryFn: async (): Promise<MeetupPlayResult[]> => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(
+          `id,
+          played_at,
+          finalized_at,
+          status,
+          winner_participant_id,
+          games:game_id(id, name, scoring_type),
+          score_entries(
+            score, is_winner, placement, participant_id,
+            meetup_participants:participant_id(
+              group_members:member_id(display_name),
+              guests:guest_id(name)
+            )
+          )`
+        )
+        .eq("meetup_id", meetupId!)
+        .order("played_at", { ascending: true });
+      if (error) throw error;
+
+      return (data ?? []).map((session) => {
+        const game = session.games as unknown as {
+          id: string;
+          name: string;
+          scoring_type: string;
+        } | null;
+
+        const scoringType = game?.scoring_type ?? "highest_wins";
+        const isPlacement =
+          isGameScoringType(scoringType) &&
+          getGameScoringMode(scoringType as any) === "placement";
+
+        const entries = ((session.score_entries ?? []) as unknown as {
+          score: number | null;
+          is_winner: boolean;
+          placement: number | null;
+          participant_id: string;
+          meetup_participants: {
+            group_members: { display_name: string } | null;
+            guests: { name: string } | null;
+          } | null;
+        }[]).map((e) => ({
+          participantName:
+            e.meetup_participants?.group_members?.display_name ??
+            e.meetup_participants?.guests?.name ??
+            "Unknown",
+          score: e.score,
+          placement: e.placement,
+          isWinner: e.is_winner,
+        }));
+
+        // Sort entries: by placement if placement mode, by score otherwise
+        if (isPlacement) {
+          entries.sort((a, b) => (a.placement ?? 999) - (b.placement ?? 999));
+        } else {
+          entries.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+        }
+
+        const winnerEntry = entries.find((e) => e.isWinner);
+
+        return {
+          sessionId: session.id,
+          gameId: game?.id ?? "",
+          gameName: game?.name ?? "Unknown",
+          scoringType,
+          scoringLabel: getScoringLabel(scoringType),
+          playedAt: session.played_at,
+          finalizedAt: session.finalized_at,
+          status: session.status,
+          winnerName: winnerEntry?.participantName ?? null,
+          entries,
+        };
+      });
+    },
+    enabled: !!meetupId,
   });
 }
 

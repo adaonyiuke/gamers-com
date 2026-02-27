@@ -8,6 +8,7 @@ import { useGamesWithStats } from "@/lib/queries/games";
 import { sortGames, filterGamesBySearch } from "@/lib/utils/game-sorting";
 import type { SortMode, QuickFilter } from "@/lib/utils/game-sorting";
 import { getRelativeTime } from "@/lib/utils/dates";
+import { getScoringLabel } from "@/lib/utils/game-rules";
 import { cn } from "@/lib/utils/cn";
 
 const TILE_COLORS = [
@@ -20,12 +21,6 @@ const TILE_COLORS = [
   "#FF3B30",
   "#00C7BE",
 ];
-
-const SCORING_LABELS: Record<string, string> = {
-  highest_wins: "Highest Wins",
-  lowest_wins: "Lowest Wins",
-  manual_winner: "Manual Winner",
-};
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: "recent", label: "Recently Played" },
@@ -253,11 +248,13 @@ export default function GamesPage() {
                         {game.name}
                       </p>
                       <p className="text-[13px] text-gray-500 mt-0.5">
-                        {SCORING_LABELS[game.scoring_type] ?? game.scoring_type}
+                        {getScoringLabel(game.scoring_type)}
                       </p>
                       <p className="text-[13px] text-gray-400 mt-0.5">
-                        {game.play_count > 0
-                          ? `${game.play_count} Played · ${getRelativeTime(game.last_played_at!)}`
+                        {game.play_count > 0 && game.last_played_at
+                          ? `${game.play_count} Played · ${getRelativeTime(game.last_played_at)}`
+                          : game.play_count > 0
+                          ? `${game.play_count} Played`
                           : "Not Played"}
                       </p>
                     </Link>

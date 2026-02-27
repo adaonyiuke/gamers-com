@@ -8,7 +8,17 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useGames } from "@/lib/queries/games";
 import { useMeetupParticipants } from "@/lib/queries/meetups";
 import { useCreateSession, useFinalizeSession } from "@/lib/queries/sessions";
-import { calculateWinner, sumRoundScores, ScoringType } from "@/lib/utils/scoring";
+import {
+  calculateWinner,
+  sumRoundScores,
+  getScoringLabel,
+  isManualWinnerType,
+  requiresScoreEntry,
+  getGameScoringMode,
+  isGameScoringType,
+  getPlacementWinner,
+} from "@/lib/utils/game-rules";
+import type { GameScoringType } from "@/lib/utils/game-rules";
 import { WinnerReveal } from "@/components/features/sessions/winner-reveal";
 import { cn } from "@/lib/utils/cn";
 
@@ -60,13 +70,20 @@ export default function NewSessionPage({
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Placement state — maps participantId → placement number (1st, 2nd, 3rd…)
+  const [placements, setPlacements] = useState<Record<string, number>>({});
+
   // Rounds state
   const [rounds, setRounds] = useState<Record<string, string>[]>([{}]);
   const [currentRound, setCurrentRound] = useState(0);
 
-  const scoringType: ScoringType =
-    selectedGame?.scoring_type ?? "highest_wins";
-  const isManualWinner = scoringType === "manual_winner";
+  const scoringType: GameScoringType =
+    isGameScoringType(selectedGame?.scoring_type ?? "")
+      ? (selectedGame!.scoring_type as GameScoringType)
+      : "highest_wins";
+  const isManualWinner = isManualWinnerType(scoringType);
+  const isPlacementMode = getGameScoringMode(scoringType) === "placement";
+  const needsScoreEntry = requiresScoreEntry(scoringType);
 
   const selectedParticipants = useMemo(() => {
     if (!participants) return [];
@@ -113,6 +130,7 @@ export default function NewSessionPage({
   const handleSelectGame = (game: any) => {
     setSelectedGame(game);
     setManualWinnerId(null);
+    setPlacements({});
     setRounds([{}]);
     setCurrentRound(0);
     // Default: select all participants
@@ -168,26 +186,45 @@ export default function NewSessionPage({
         gameId: selectedGame.id,
       });
 
-      // Calculate final scores — sum rounds if multiple, otherwise use single round
-      let scoreEntries;
-      if (rounds.length > 1 && !isManualWinner) {
-        const roundTotals = sumRoundScores(rounds, selectedIds);
+      // Build score entries and determine winner based on scoring mode
+      let scoreEntries: { participantId: string; score: number | null }[];
+      let placementEntries: { participantId: string; placement: number }[] = [];
+      let winnerParticipantId: string | null = null;
+
+      if (isPlacementMode) {
+        // Placement mode: derive scores from placement order, winner = 1st place
+        placementEntries = selectedIds
+          .filter((id) => placements[id] != null)
+          .map((id) => ({
+            participantId: id,
+            placement: placements[id],
+          }));
         scoreEntries = selectedIds.map((id) => ({
           participantId: id,
-          score: roundTotals[id] ?? 0,
+          score: null,
         }));
-      } else {
+        winnerParticipantId = getPlacementWinner(placementEntries);
+      } else if (isManualWinner) {
+        // Manual winner: no score calculation
         scoreEntries = selectedIds.map((id) => ({
           participantId: id,
           score: rounds[0][id] ? Number(rounds[0][id]) : null,
         }));
-      }
-
-      // Calculate winner
-      let winnerParticipantId: string | null = null;
-      if (isManualWinner) {
         winnerParticipantId = manualWinnerId;
       } else {
+        // Score-based: sum rounds if multiple, auto-calculate winner
+        if (rounds.length > 1) {
+          const roundTotals = sumRoundScores(rounds, selectedIds);
+          scoreEntries = selectedIds.map((id) => ({
+            participantId: id,
+            score: roundTotals[id] ?? 0,
+          }));
+        } else {
+          scoreEntries = selectedIds.map((id) => ({
+            participantId: id,
+            score: rounds[0][id] ? Number(rounds[0][id]) : null,
+          }));
+        }
         winnerParticipantId = calculateWinner(scoreEntries, scoringType);
       }
 
@@ -196,6 +233,7 @@ export default function NewSessionPage({
         sessionId: session.id,
         meetupId,
         scores: scoreEntries,
+        placements: placementEntries,
         winnerParticipantId,
       });
 
@@ -222,7 +260,9 @@ export default function NewSessionPage({
     submitting,
     rounds,
     isManualWinner,
+    isPlacementMode,
     manualWinnerId,
+    placements,
     scoringType,
     meetupId,
     selectedIds,
@@ -234,13 +274,17 @@ export default function NewSessionPage({
   const canFinalize = useMemo(() => {
     if (selectedIds.length === 0) return false;
     if (isManualWinner) return !!manualWinnerId;
+    if (isPlacementMode) {
+      // At least 1st place must be assigned
+      return Object.values(placements).includes(1);
+    }
     // At least one score entered in any round
     return rounds.some((round) =>
       selectedIds.some((id) => round[id] && round[id] !== "")
     );
-  }, [selectedIds, rounds, isManualWinner, manualWinnerId]);
+  }, [selectedIds, rounds, isManualWinner, isPlacementMode, manualWinnerId, placements]);
 
-  const stepTitle = step === 1 ? "Choose a Game" : step === 2 ? "Select Players" : isManualWinner ? "Select Winner" : "Enter Scores";
+  const stepTitle = step === 1 ? "Choose a Game" : step === 2 ? "Select Players" : isManualWinner ? "Select Winner" : isPlacementMode ? "Assign Placements" : "Enter Scores";
 
   return (
     <div className="pb-28">
@@ -354,11 +398,7 @@ export default function NewSessionPage({
                       </p>
                       {game.scoring_type && (
                         <p className="text-[12px] text-gray-400 mt-0.5">
-                          {game.scoring_type === "highest_wins"
-                            ? "Highest wins"
-                            : game.scoring_type === "lowest_wins"
-                            ? "Lowest wins"
-                            : "Manual winner"}
+                          {getScoringLabel(game.scoring_type)}
                         </p>
                       )}
                     </button>
@@ -465,8 +505,8 @@ export default function NewSessionPage({
               {stepTitle}
             </p>
 
-            {/* Round tabs (only show if >1 round) */}
-            {!isManualWinner && rounds.length > 1 && (
+            {/* Round tabs (only show if >1 round, score-based modes only) */}
+            {needsScoreEntry && rounds.length > 1 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {rounds.map((_, idx) => (
                   <button
@@ -560,6 +600,31 @@ export default function NewSessionPage({
                             <Check className="h-4 w-4 text-white" />
                           )}
                         </button>
+                      ) : isPlacementMode ? (
+                        /* Placement selector */
+                        <select
+                          value={placements[p.id] ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPlacements((prev) => {
+                              const next = { ...prev };
+                              if (val === "") {
+                                delete next[p.id];
+                              } else {
+                                next[p.id] = Number(val);
+                              }
+                              return next;
+                            });
+                          }}
+                          className="w-20 bg-gray-50 rounded-[10px] px-2 py-2.5 text-[17px] text-center font-semibold border border-gray-200 focus:border-[#007AFF] focus:outline-none shrink-0 appearance-none"
+                        >
+                          <option value="">—</option>
+                          {selectedIds.map((_, idx) => (
+                            <option key={idx + 1} value={idx + 1}>
+                              {idx + 1}{idx === 0 ? "st" : idx === 1 ? "nd" : idx === 2 ? "rd" : "th"}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
                         /* Score input for current round */
                         <input
@@ -579,8 +644,8 @@ export default function NewSessionPage({
               </div>
             </div>
 
-            {/* Add Round button (for non-manual games) */}
-            {!isManualWinner && rounds.length <= 1 && (
+            {/* Add Round button (for score-based games only) */}
+            {needsScoreEntry && rounds.length <= 1 && (
               <button
                 onClick={handleAddRound}
                 className="w-full flex items-center justify-center gap-2 bg-gray-100 rounded-[14px] py-3.5 text-[15px] font-semibold text-gray-600 active:scale-[0.98] transition-transform"
@@ -590,8 +655,8 @@ export default function NewSessionPage({
               </button>
             )}
 
-            {/* Totals summary (multi-round) */}
-            {!isManualWinner && rounds.length > 1 && totals && (
+            {/* Totals summary (multi-round, score-based only) */}
+            {needsScoreEntry && rounds.length > 1 && totals && (
               <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-4">
                 <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Totals ({rounds.length} rounds)
