@@ -59,6 +59,22 @@ export function useMeetupParticipants(meetupId: string | null) {
   });
 }
 
+export function useMeetupGamesCount(meetupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["meetup_games_count", meetupId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("sessions")
+        .select("*", { count: "exact", head: true })
+        .eq("meetup_id", meetupId!);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!meetupId,
+  });
+}
+
 export function useCreateMeetup() {
   const supabase = createClient();
   const queryClient = useQueryClient();

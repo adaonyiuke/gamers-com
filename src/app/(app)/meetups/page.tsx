@@ -1,11 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { CalendarDays, Plus, Users, Trash2, X, Check } from "lucide-react";
+import {
+  CalendarDays,
+  Plus,
+  Users,
+  Trash2,
+  Check,
+  Ellipsis,
+  Gamepad2,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
-import { useMeetups, useSoftDeleteMeetups } from "@/lib/queries/meetups";
-import { useMeetupParticipants } from "@/lib/queries/meetups";
+import {
+  useMeetups,
+  useSoftDeleteMeetups,
+  useMeetupParticipants,
+  useMeetupGamesCount,
+} from "@/lib/queries/meetups";
 import { useCurrentMemberRole } from "@/lib/queries/members";
 import { formatDate } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
@@ -30,21 +44,49 @@ export default function MeetupsPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [showMenu]);
 
   const isLoading = groupLoading || meetupsLoading;
   const isAdmin = role === "admin" || role === "owner";
+  const hasMeetups = !!meetups && meetups.length > 0;
 
   const filteredMeetups = useMemo(() => {
     if (!meetups) return [];
-    if (filter === "all") return meetups;
-    if (filter === "upcoming")
+
+    if (filter === "upcoming") {
+      return meetups
+        .filter(
+          (m: Record<string, unknown>) =>
+            m.status === "planned" || m.status === "active"
+        )
+        .sort(
+          (a: Record<string, unknown>, b: Record<string, unknown>) =>
+            new Date(a.date as string).getTime() -
+            new Date(b.date as string).getTime()
+        );
+    }
+
+    if (filter === "completed") {
       return meetups.filter(
-        (m: Record<string, unknown>) =>
-          m.status === "planned" || m.status === "active"
+        (m: Record<string, unknown>) => m.status === "complete"
       );
-    return meetups.filter(
-      (m: Record<string, unknown>) => m.status === "complete"
-    );
+      // Already date DESC from query
+    }
+
+    // "all" — date DESC from query
+    return meetups;
   }, [meetups, filter]);
 
   const statusPill = (status: string) => {
@@ -94,6 +136,52 @@ export default function MeetupsPage() {
     }
   };
 
+  const emptyState = () => {
+    if (!hasMeetups) {
+      return (
+        <div className="flex flex-col items-center justify-center pt-24">
+          <CalendarDays className="h-16 w-16 text-gray-300 mb-4" />
+          <p className="text-[17px] font-semibold text-gray-400 mb-1">
+            No meetups yet
+          </p>
+          <p className="text-[15px] text-gray-400 text-center max-w-[260px]">
+            Tap the + button to schedule your first game night.
+          </p>
+        </div>
+      );
+    }
+
+    if (filter === "upcoming") {
+      return (
+        <div className="flex flex-col items-center justify-center pt-24">
+          <Sparkles className="h-16 w-16 text-gray-300 mb-4" />
+          <p className="text-[17px] font-semibold text-gray-400 mb-1">
+            Nothing on the horizon
+          </p>
+          <p className="text-[15px] text-gray-400 text-center max-w-[260px]">
+            All caught up! Schedule a new meetup when you&apos;re ready.
+          </p>
+        </div>
+      );
+    }
+
+    if (filter === "completed") {
+      return (
+        <div className="flex flex-col items-center justify-center pt-24">
+          <CheckCircle2 className="h-16 w-16 text-gray-300 mb-4" />
+          <p className="text-[17px] font-semibold text-gray-400 mb-1">
+            No completed meetups
+          </p>
+          <p className="text-[15px] text-gray-400 text-center max-w-[260px]">
+            Completed meetups will appear here after you wrap up a game night.
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="pb-28">
       {/* Glass header */}
@@ -110,12 +198,30 @@ export default function MeetupsPage() {
             Meetups
           </h1>
           {isAdmin && !selectMode && filteredMeetups.length > 0 && (
-            <button
-              onClick={() => setSelectMode(true)}
-              className="text-[15px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
-            >
-              Select
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu((v) => !v)}
+                className="h-9 w-9 rounded-full bg-gray-200/80 flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <Ellipsis className="h-5 w-5 text-gray-600" />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-11 bg-white rounded-[14px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] overflow-hidden min-w-[160px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setSelectMode(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-900 active:bg-gray-50 transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-full border-[1.5px] border-gray-300 flex items-center justify-center shrink-0">
+                      <Check className="h-3.5 w-3.5 text-gray-500" />
+                    </div>
+                    Select
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {selectMode && (
             <button
@@ -191,16 +297,7 @@ export default function MeetupsPage() {
             ))}
           </div>
         ) : filteredMeetups.length === 0 ? (
-          /* Empty state */
-          <div className="flex flex-col items-center justify-center pt-24">
-            <CalendarDays className="h-16 w-16 text-gray-300 mb-4" />
-            <p className="text-[17px] font-semibold text-gray-400 mb-1">
-              No meetups yet
-            </p>
-            <p className="text-[15px] text-gray-400 text-center">
-              Tap the + button to schedule your first game night.
-            </p>
-          </div>
+          emptyState()
         ) : (
           /* Meetup list */
           <div className="space-y-3">
@@ -287,27 +384,49 @@ function MeetupCard({
   isSelected: boolean;
   onToggleSelect: () => void;
 }) {
-  const { data: participants } = useMeetupParticipants(
-    meetup.id as string
-  );
+  const meetupId = meetup.id as string;
+  const isComplete = meetup.status === "complete";
+  const { data: participants } = useMeetupParticipants(meetupId);
+  const { data: gamesCount } = useMeetupGamesCount(meetupId);
 
   const cardContent = (
     <>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[17px] font-semibold text-gray-900 truncate flex-1 mr-3">
+        <h3
+          className={cn(
+            "text-[17px] font-semibold truncate flex-1 mr-3",
+            isComplete ? "text-gray-500" : "text-gray-900"
+          )}
+        >
           {meetup.title as string}
         </h3>
         {statusPill(meetup.status as string)}
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-[15px] text-gray-500">
+        <p
+          className={cn(
+            "text-[15px]",
+            isComplete ? "text-gray-400" : "text-gray-500"
+          )}
+        >
           {formatDate(meetup.date as string)}
         </p>
-        <div className="flex items-center gap-1 text-gray-400">
-          <Users className="h-3.5 w-3.5" />
-          <span className="text-[13px] font-medium">
-            {participants?.length ?? 0}
-          </span>
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            isComplete ? "text-gray-300" : "text-gray-400"
+          )}
+        >
+          <div className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            <span className="text-[13px] font-medium">
+              {participants?.length ?? 0}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Gamepad2 className="h-3.5 w-3.5" />
+            <span className="text-[13px] font-medium">{gamesCount ?? 0}</span>
+          </div>
         </div>
       </div>
     </>
@@ -318,7 +437,8 @@ function MeetupCard({
       <button
         onClick={onToggleSelect}
         className={cn(
-          "w-full text-left bg-white rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform flex items-start gap-3",
+          "w-full text-left rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] active:bg-gray-50 transition-all duration-150 flex items-start gap-3",
+          isComplete ? "bg-white/70" : "bg-white",
           isSelected && "ring-2 ring-[#007AFF]"
         )}
       >
@@ -339,8 +459,11 @@ function MeetupCard({
 
   return (
     <Link
-      href={`/meetups/${meetup.id}`}
-      className="block bg-white rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform"
+      href={`/meetups/${meetupId}`}
+      className={cn(
+        "block rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] active:bg-gray-50 transition-all duration-150",
+        isComplete ? "bg-white/70" : "bg-white"
+      )}
     >
       {cardContent}
     </Link>
