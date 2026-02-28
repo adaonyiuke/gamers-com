@@ -9,18 +9,8 @@ import { sortGames, filterGamesBySearch } from "@/lib/utils/game-sorting";
 import type { SortMode, QuickFilter } from "@/lib/utils/game-sorting";
 import { getRelativeTime } from "@/lib/utils/dates";
 import { getScoringLabel } from "@/lib/utils/game-rules";
+import { GameTile } from "@/components/features/games/game-tile";
 import { cn } from "@/lib/utils/cn";
-
-const TILE_COLORS = [
-  "#007AFF",
-  "#FF9500",
-  "#FF2D55",
-  "#5856D6",
-  "#34C759",
-  "#AF52DE",
-  "#FF3B30",
-  "#00C7BE",
-];
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: "recent", label: "Recently Played" },
@@ -229,7 +219,6 @@ export default function GamesPage() {
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {displayedGames.map((game, idx) => {
-                  const color = TILE_COLORS[idx % TILE_COLORS.length];
                   const abbr = game.abbreviation || game.name.substring(0, 2).toUpperCase();
 
                   return (
@@ -238,11 +227,15 @@ export default function GamesPage() {
                       href={`/games/${game.id}`}
                       className="bg-white rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform block"
                     >
-                      <div
-                        className="h-12 w-12 rounded-[10px] flex items-center justify-center text-white text-[17px] font-bold mb-3"
-                        style={{ backgroundColor: color }}
-                      >
-                        {abbr}
+                      <div className="mb-3">
+                        <GameTile
+                          thumbnailUrl={game.thumbnail_url}
+                          imageUrl={game.image_url}
+                          imageStatus={game.image_status}
+                          abbreviation={abbr}
+                          colorIndex={idx}
+                          size="sm"
+                        />
                       </div>
                       <p className="text-[17px] font-semibold text-gray-900 truncate">
                         {game.name}

@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, UserPlus } from "lucide-react";
+import {
+  ChevronLeft,
+  Check,
+  UserPlus,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,7 +17,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useCreateMeetup } from "@/lib/queries/meetups";
 import { useGroupMembers } from "@/lib/queries/members";
-import { useGuests, useCreateGuest } from "@/lib/queries/guests";
+import {
+  useGuests,
+  useCreateGuest,
+  useUpdateGuest,
+  useDeleteGuest,
+} from "@/lib/queries/guests";
 import { getDefaultMeetupTitle } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
 
@@ -29,10 +41,192 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+function GuestRow({
+  guest,
+  selected,
+  onToggle,
+  onDeselect,
+  onUpdated,
+  onDeleted,
+}: {
+  guest: { id: string; name: string };
+  selected: boolean;
+  onToggle: () => void;
+  onDeselect: () => void;
+  onUpdated: () => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(guest.name);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const updateGuest = useUpdateGuest();
+  const deleteGuest = useDeleteGuest();
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = async () => {
+    const trimmed = editValue.trim();
+    if (!trimmed || trimmed === guest.name) {
+      setEditValue(guest.name);
+      setIsEditing(false);
+      return;
+    }
+    try {
+      await updateGuest.mutateAsync({ guestId: guest.id, name: trimmed });
+      setIsEditing(false);
+      onUpdated();
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteGuest.mutateAsync({ guestId: guest.id });
+      onDeleted(guest.id);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === "Escape") {
+      setEditValue(guest.name);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3">
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          maxLength={60}
+          className="flex-1 text-[15px] bg-gray-50 rounded-[10px] px-3 py-2 border border-gray-200 focus:border-[#007AFF] focus:outline-none min-w-0"
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={updateGuest.isPending}
+          className="h-8 w-8 rounded-full bg-[#007AFF] flex items-center justify-center text-white shrink-0 active:scale-95 transition-transform disabled:opacity-50"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setEditValue(guest.name);
+            setIsEditing(false);
+          }}
+          className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0 active:scale-95 transition-transform"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  if (showDeleteConfirm) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3">
+        <p className="flex-1 text-[14px] text-gray-600">
+          Remove <span className="font-semibold">{guest.name}</span>?
+        </p>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleteGuest.isPending}
+          className="text-[14px] font-semibold text-red-500 px-3 py-1.5 rounded-[8px] bg-red-50 active:opacity-60 transition-opacity disabled:opacity-50"
+        >
+          {deleteGuest.isPending ? "..." : "Remove"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(false)}
+          className="text-[14px] font-medium text-gray-500 px-3 py-1.5 active:opacity-60 transition-opacity"
+        >
+          Keep
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center gap-3 flex-1 min-w-0 active:opacity-60 transition-opacity"
+      >
+        <div
+          className={cn(
+            "h-6 w-6 rounded-[7px] flex items-center justify-center border-2 transition-colors shrink-0",
+            selected
+              ? "bg-[#007AFF] border-[#007AFF]"
+              : "border-gray-300"
+          )}
+        >
+          {selected && <Check className="h-3.5 w-3.5 text-white" />}
+        </div>
+        <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+          <span className="text-[13px] font-bold text-orange-500">
+            {(guest.name ?? "?")[0].toUpperCase()}
+          </span>
+        </div>
+        <span className="text-[17px] text-gray-900 truncate">
+          {guest.name}
+        </span>
+      </button>
+      <div
+        className={cn(
+          "flex items-center gap-1 shrink-0 transition-all duration-200",
+          selected
+            ? "opacity-0 pointer-events-none w-0 overflow-hidden"
+            : "opacity-100"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            if (selected) onDeselect();
+            setEditValue(guest.name);
+            setIsEditing(true);
+          }}
+          className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#007AFF] active:scale-95 transition-all"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 active:scale-95 transition-all"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function NewMeetupPage() {
   const router = useRouter();
   const { groupId, loading: groupLoading } = useGroupId();
-  const { data: members, isLoading: membersLoading } = useGroupMembers(groupId);
+  const { data: members, isLoading: membersLoading } =
+    useGroupMembers(groupId);
   const { data: guests, isLoading: guestsLoading } = useGuests(groupId);
   const createMeetup = useCreateMeetup();
   const createGuest = useCreateGuest();
@@ -81,6 +275,10 @@ export default function NewMeetupPage() {
     } catch {
       // Error is handled by mutation state
     }
+  };
+
+  const handleGuestDeleted = (guestId: string) => {
+    setSelectedGuestIds((prev) => prev.filter((id) => id !== guestId));
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -176,17 +374,21 @@ export default function NewMeetupPage() {
               </div>
             ) : !members || members.length === 0 ? (
               <div className="p-6 text-center">
-                <p className="text-[15px] text-gray-400">No members in this group.</p>
+                <p className="text-[15px] text-gray-400">
+                  No members in this group.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {members.map((member: any) => {
-                  const selected = selectedMemberIds.includes(member.id);
+                {members.map((member: Record<string, unknown>) => {
+                  const selected = selectedMemberIds.includes(
+                    member.id as string
+                  );
                   return (
                     <button
                       type="button"
-                      key={member.id}
-                      onClick={() => toggleMember(member.id)}
+                      key={member.id as string}
+                      onClick={() => toggleMember(member.id as string)}
                       className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
                     >
                       <div
@@ -197,15 +399,19 @@ export default function NewMeetupPage() {
                             : "border-gray-300"
                         )}
                       >
-                        {selected && <Check className="h-3.5 w-3.5 text-white" />}
+                        {selected && (
+                          <Check className="h-3.5 w-3.5 text-white" />
+                        )}
                       </div>
                       <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-[13px] font-bold text-gray-500">
-                          {(member.display_name ?? "?")[0].toUpperCase()}
+                          {(
+                            (member.display_name as string) ?? "?"
+                          )[0].toUpperCase()}
                         </span>
                       </div>
                       <span className="text-[17px] text-gray-900">
-                        {member.display_name}
+                        {member.display_name as string}
                       </span>
                     </button>
                   );
@@ -218,7 +424,7 @@ export default function NewMeetupPage() {
         {/* Guests */}
         <div>
           <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-            Select Guests
+            Guests{guests && guests.length > 0 ? ` (${guests.length})` : ""}
           </p>
           <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
             {isLoading ? (
@@ -232,40 +438,32 @@ export default function NewMeetupPage() {
               </div>
             ) : !guests || guests.length === 0 ? (
               <div className="p-6 text-center">
-                <p className="text-[15px] text-gray-400">No guests available.</p>
+                <p className="text-[15px] text-gray-400">
+                  No guests available.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {guests.map((guest: any) => {
-                  const selected = selectedGuestIds.includes(guest.id);
-                  return (
-                    <button
-                      type="button"
-                      key={guest.id}
-                      onClick={() => toggleGuest(guest.id)}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
-                    >
-                      <div
-                        className={cn(
-                          "h-6 w-6 rounded-[7px] flex items-center justify-center border-2 transition-colors",
-                          selected
-                            ? "bg-[#007AFF] border-[#007AFF]"
-                            : "border-gray-300"
-                        )}
-                      >
-                        {selected && <Check className="h-3.5 w-3.5 text-white" />}
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                        <span className="text-[13px] font-bold text-orange-500">
-                          {(guest.name ?? "?")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="text-[17px] text-gray-900">
-                        {guest.name}
-                      </span>
-                    </button>
-                  );
-                })}
+                {guests.map((guest: Record<string, unknown>) => (
+                  <GuestRow
+                    key={guest.id as string}
+                    guest={{
+                      id: guest.id as string,
+                      name: guest.name as string,
+                    }}
+                    selected={selectedGuestIds.includes(guest.id as string)}
+                    onToggle={() => toggleGuest(guest.id as string)}
+                    onDeselect={() =>
+                      setSelectedGuestIds((prev) =>
+                        prev.filter((id) => id !== (guest.id as string))
+                      )
+                    }
+                    onUpdated={() => {
+                      /* React Query auto-invalidates */
+                    }}
+                    onDeleted={handleGuestDeleted}
+                  />
+                ))}
               </div>
             )}
 
@@ -291,7 +489,8 @@ export default function NewMeetupPage() {
                 disabled={!newGuestName.trim() || createGuest.isPending}
                 className={cn(
                   "bg-[#007AFF] text-white rounded-[10px] px-4 py-2.5 text-[15px] font-semibold flex-shrink-0",
-                  (!newGuestName.trim() || createGuest.isPending) && "opacity-50"
+                  (!newGuestName.trim() || createGuest.isPending) &&
+                    "opacity-50"
                 )}
               >
                 {createGuest.isPending ? "Adding..." : "Add"}

@@ -9,17 +9,7 @@ import { getRelativeTime, formatDate } from "@/lib/utils/dates";
 import { getScoringLabel, getGameScoringMode, isGameScoringType } from "@/lib/utils/game-rules";
 import { cn } from "@/lib/utils/cn";
 import { GameFormModal } from "@/components/features/games/game-form-modal";
-
-const TILE_COLORS = [
-  "#007AFF",
-  "#FF9500",
-  "#FF2D55",
-  "#5856D6",
-  "#34C759",
-  "#AF52DE",
-  "#FF3B30",
-  "#00C7BE",
-];
+import { GameTile } from "@/components/features/games/game-tile";
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
@@ -131,7 +121,6 @@ export default function GameDetailPage() {
   const INITIAL_HISTORY_LIMIT = 6;
   const isLoading = gameLoading || statsLoading;
 
-  const color = TILE_COLORS[0];
   const abbr =
     game?.abbreviation || (game?.name ?? "").substring(0, 2).toUpperCase();
   const playCount = stats?.play_count ?? 0;
@@ -219,12 +208,14 @@ export default function GameDetailPage() {
             {/* Game info card */}
             <div className="bg-white rounded-[20px] p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="flex items-start gap-4">
-                <div
-                  className="h-16 w-16 rounded-[14px] flex items-center justify-center text-white text-[22px] font-bold shrink-0"
-                  style={{ backgroundColor: color }}
-                >
-                  {abbr}
-                </div>
+                <GameTile
+                  thumbnailUrl={game.thumbnail_url}
+                  imageUrl={game.image_url}
+                  imageStatus={game.image_status}
+                  abbreviation={abbr}
+                  colorIndex={0}
+                  size="lg"
+                />
                 <div className="flex-1 min-w-0 pt-0.5">
                   <h2 className="text-[22px] font-bold text-gray-900 truncate">
                     {game.name}

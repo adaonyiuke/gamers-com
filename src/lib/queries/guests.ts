@@ -54,3 +54,42 @@ export function useCreateGuest() {
     },
   });
 }
+
+export function useUpdateGuest() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ guestId, name }: { guestId: string; name: string }) => {
+      const { data, error } = await supabase
+        .from("guests")
+        .update({ name })
+        .eq("id", guestId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+    },
+  });
+}
+
+export function useDeleteGuest() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ guestId }: { guestId: string }) => {
+      const { error } = await supabase
+        .from("guests")
+        .delete()
+        .eq("id", guestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+    },
+  });
+}

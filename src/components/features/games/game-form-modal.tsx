@@ -103,6 +103,7 @@ export function GameFormModal({
           name: data.name,
           abbreviation: data.abbreviation.toUpperCase(),
           scoringType: data.scoringType,
+          previousName: game.name,
         });
       }
       onSuccess();

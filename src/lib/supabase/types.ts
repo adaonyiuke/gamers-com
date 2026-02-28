@@ -17,36 +17,54 @@ export type Database = {
       games: {
         Row: {
           abbreviation: string
+          bgg_id: number | null
           created_at: string
           group_id: string
           icon: string | null
           id: string
+          image_source: string | null
+          image_status: string | null
+          image_updated_at: string | null
+          image_url: string | null
           max_players: number | null
           min_players: number | null
           name: string
           scoring_type: string
+          thumbnail_url: string | null
         }
         Insert: {
           abbreviation: string
+          bgg_id?: number | null
           created_at?: string
           group_id: string
           icon?: string | null
           id?: string
+          image_source?: string | null
+          image_status?: string | null
+          image_updated_at?: string | null
+          image_url?: string | null
           max_players?: number | null
           min_players?: number | null
           name: string
           scoring_type?: string
+          thumbnail_url?: string | null
         }
         Update: {
           abbreviation?: string
+          bgg_id?: number | null
           created_at?: string
           group_id?: string
           icon?: string | null
           id?: string
+          image_source?: string | null
+          image_status?: string | null
+          image_updated_at?: string | null
+          image_url?: string | null
           max_players?: number | null
           min_players?: number | null
           name?: string
           scoring_type?: string
+          thumbnail_url?: string | null
         }
         Relationships: [
           {
@@ -339,6 +357,7 @@ export type Database = {
           created_at: string
           created_by: string
           date: string
+          deleted_at: string | null
           group_id: string
           id: string
           location: string | null
@@ -351,6 +370,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           date: string
+          deleted_at?: string | null
           group_id: string
           id?: string
           location?: string | null
@@ -363,6 +383,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           date?: string
+          deleted_at?: string | null
           group_id?: string
           id?: string
           location?: string | null

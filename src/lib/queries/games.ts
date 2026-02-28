@@ -3,9 +3,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getGameScoringMode, isGameScoringType } from "@/lib/utils/game-rules";
+import type { QueryClient } from "@tanstack/react-query";
 import type { Database } from "@/lib/supabase/types";
 
 type GameRow = Database["public"]["Tables"]["games"]["Row"];
+
+// ---------- Fire-and-forget BGG art fetch ----------
+function triggerBggArtFetch(gameId: string, queryClient: QueryClient) {
+  fetch(`/api/games/${gameId}/fetch-bgg-art`, { method: "POST" })
+    .then((res) => {
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["games"] });
+        queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+        queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+      }
+    })
+    .catch(() => {
+      // Best-effort — silently ignore failures
+    });
+}
 
 export type GameWithStats = GameRow & {
   play_count: number;
@@ -159,9 +175,10 @@ export function useCreateGame() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+      triggerBggArtFetch(data.id, queryClient);
     },
   });
 }
@@ -177,11 +194,13 @@ export function useUpdateGame() {
       name,
       abbreviation,
       scoringType,
+      previousName,
     }: {
       id: string;
       name: string;
       abbreviation: string;
       scoringType: string;
+      previousName?: string;
     }) => {
       const { data, error } = await supabase
         .from("games")
@@ -194,12 +213,17 @@ export function useUpdateGame() {
         .select()
         .single();
       if (error) throw error;
-      return data;
+      // Attach whether name changed for onSuccess
+      return { ...data, _nameChanged: previousName !== undefined && previousName !== name };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
       queryClient.invalidateQueries({ queryKey: ["game", data.id] });
+      // Only re-fetch BGG art if the name changed
+      if (data._nameChanged) {
+        triggerBggArtFetch(data.id, queryClient);
+      }
     },
   });
 }

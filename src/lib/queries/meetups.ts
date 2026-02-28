@@ -13,6 +13,7 @@ export function useMeetups(groupId: string | null) {
         .from("meetups")
         .select("*")
         .eq("group_id", groupId!)
+        .is("deleted_at", null)
         .order("date", { ascending: false });
       if (error) throw error;
       return data;
@@ -225,6 +226,37 @@ export function useMeetupPlays(meetupId: string | null) {
   });
 }
 
+// ---------- Update meetup title (admin only — enforced via RLS) ----------
+export function useUpdateMeetupTitle() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      meetupId,
+      title,
+    }: {
+      meetupId: string;
+      title: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("meetups")
+        .update({ title })
+        .eq("id", meetupId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["meetups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["meetups", "detail", data.id],
+      });
+    },
+  });
+}
+
 export function useUpdateMeetupStatus() {
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -251,6 +283,25 @@ export function useUpdateMeetupStatus() {
       queryClient.invalidateQueries({
         queryKey: ["meetups", "detail", data.id],
       });
+    },
+  });
+}
+
+// ---------- Soft-delete meetups (admin only — enforced via RLS) ----------
+export function useSoftDeleteMeetups() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ meetupIds }: { meetupIds: string[] }) => {
+      const { error } = await supabase
+        .from("meetups")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", meetupIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetups"] });
     },
   });
 }

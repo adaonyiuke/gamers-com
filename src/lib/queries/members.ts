@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@/components/providers/supabase-provider";
 
 export function useGroupMembers(groupId: string | null) {
   const supabase = createClient();
@@ -109,6 +110,26 @@ export function useMemberGameStats(memberId: string | null) {
       return { meetupsAttended, topGame };
     },
     enabled: !!memberId,
+  });
+}
+
+// ---------- Current user's role in a group ----------
+export function useCurrentMemberRole(groupId: string | null) {
+  const supabase = createClient();
+  const { user } = useUser();
+  return useQuery({
+    queryKey: ["current_member_role", groupId, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_members")
+        .select("role")
+        .eq("group_id", groupId!)
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data.role as string;
+    },
+    enabled: !!groupId && !!user?.id,
   });
 }
 
