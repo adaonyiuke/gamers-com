@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "backfill-bgg": "npx tsx scripts/backfill-bgg-art.ts"
+    "backfill-bgg": "npx tsx scripts/backfill-bgg-art.ts",
+    "seed:dev": "npx tsx scripts/seed-dev-members.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

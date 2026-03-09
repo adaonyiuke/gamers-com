@@ -509,11 +509,11 @@ export default function NewSessionPage({
             {needsScoreEntry && rounds.length > 1 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {rounds.map((_, idx) => (
-                  <button
+                  <div
                     key={idx}
                     onClick={() => setCurrentRound(idx)}
                     className={cn(
-                      "relative flex items-center gap-1 px-4 py-2 rounded-full text-[15px] font-semibold whitespace-nowrap transition-colors shrink-0",
+                      "relative flex items-center gap-1 px-4 py-2 rounded-full text-[15px] font-semibold whitespace-nowrap transition-colors shrink-0 cursor-pointer select-none",
                       currentRound === idx
                         ? "bg-[#007AFF] text-white"
                         : "bg-gray-200 text-gray-600"
@@ -531,7 +531,7 @@ export default function NewSessionPage({
                         <X className="h-3.5 w-3.5" />
                       </button>
                     )}
-                  </button>
+                  </div>
                 ))}
                 <button
                   onClick={handleAddRound}

@@ -2,14 +2,19 @@
 /**
  * backfill-bgg-art.ts — Fetch BGG box art for games missing images.
  *
+ * Strategy:
+ *   1. Match games against local bgg_catalog table (fast, no API calls)
+ *   2. For unmatched games, fall back to BGG XML search API
+ *   3. Fetch box art via BGG thing API for all matched games
+ *
  * Usage:
  *   npx tsx scripts/backfill-bgg-art.ts
  *   npx tsx scripts/backfill-bgg-art.ts --limit 5
  *   npx tsx scripts/backfill-bgg-art.ts --dry-run
- *   npx tsx scripts/backfill-bgg-art.ts --delay 2000
+ *   npx tsx scripts/backfill-bgg-art.ts --delay 1000
  *
  * Requires BGG_API_TOKEN in .env.local (or environment).
- * Also requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+ * Also requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -18,7 +23,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 
 // ---------------------------------------------------------------------------
-// Load .env.local (explicit for safety across dotenv versions)
+// Load .env.local
 // ---------------------------------------------------------------------------
 config({ path: resolve(process.cwd(), ".env.local") });
 
@@ -37,7 +42,7 @@ function getFlagValue(name: string): string | undefined {
 
 const dryRun = getFlag("dry-run");
 const limit = getFlagValue("limit") ? parseInt(getFlagValue("limit")!, 10) : undefined;
-const delay = getFlagValue("delay") ? parseInt(getFlagValue("delay")!, 10) : 1500;
+const delay = getFlagValue("delay") ? parseInt(getFlagValue("delay")!, 10) : 1000;
 
 // ---------------------------------------------------------------------------
 // Validate environment
@@ -45,21 +50,20 @@ const delay = getFlagValue("delay") ? parseInt(getFlagValue("delay")!, 10) : 150
 const bggToken = process.env.BGG_API_TOKEN;
 if (!bggToken || bggToken.length === 0) {
   console.error("ERROR: BGG_API_TOKEN is not set. Cannot backfill without a token.");
-  console.error("Set it in .env.local or your environment, then re-run.");
   process.exit(1);
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseKey) {
-  console.error("ERROR: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.");
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error("ERROR: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.");
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 // ---------------------------------------------------------------------------
-// BGG helpers (inlined to avoid path alias issues in standalone script)
+// BGG XML helpers (fallback for games not in catalog)
 // ---------------------------------------------------------------------------
 const BGG_SEARCH_URL = "https://boardgamegeek.com/xmlapi2/search";
 const BGG_THING_URL = "https://boardgamegeek.com/xmlapi2/thing";
@@ -153,19 +157,76 @@ function sleep(ms: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 1: Match against bgg_catalog
+// ---------------------------------------------------------------------------
+async function matchFromCatalog(
+  gameName: string
+): Promise<{ status: "matched"; bggId: number } | { status: "unmatched" }> {
+  // Exact match (case-insensitive) against bgg_catalog
+  const { data, error } = await supabase
+    .from("bgg_catalog")
+    .select("bgg_id, name, year_published")
+    .ilike("name", gameName)
+    .limit(10);
+
+  if (error || !data || data.length === 0) {
+    return { status: "unmatched" };
+  }
+
+  // Exact match
+  const normalized = normalizeGameName(gameName);
+  const exact = data.filter((r) => normalizeGameName(r.name) === normalized);
+
+  if (exact.length === 1) {
+    return { status: "matched", bggId: exact[0].bgg_id };
+  }
+  if (exact.length > 1) {
+    // Prefer most recent year
+    const sorted = [...exact].sort(
+      (a, b) => (b.year_published ?? 0) - (a.year_published ?? 0)
+    );
+    return { status: "matched", bggId: sorted[0].bgg_id };
+  }
+
+  return { status: "unmatched" };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Fetch art by BGG ID
+// ---------------------------------------------------------------------------
+async function fetchArtByBggId(
+  bggId: number
+): Promise<{ image: string | null; thumbnail: string | null } | null> {
+  const thingXml = await fetchBgg(`${BGG_THING_URL}?id=${bggId}`);
+  if (!thingXml) return null;
+  return parseBggThingXml(thingXml);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
-  console.log("BGG Art Backfill");
+  console.log("BGG Art Backfill (catalog-first strategy)");
   console.log(`  dry-run: ${dryRun}`);
   console.log(`  limit:   ${limit ?? "all"}`);
-  console.log(`  delay:   ${delay}ms between games`);
+  console.log(`  delay:   ${delay}ms between API calls`);
+  console.log("");
+
+  // Check if catalog is populated
+  const { count: catalogCount } = await supabase
+    .from("bgg_catalog")
+    .select("*", { count: "exact", head: true });
+  console.log(`  bgg_catalog rows: ${catalogCount?.toLocaleString() ?? 0}`);
+  if (!catalogCount || catalogCount === 0) {
+    console.error("\nERROR: bgg_catalog is empty. Run import-bgg-catalog.ts first.");
+    process.exit(1);
+  }
   console.log("");
 
   // Find games needing art
   let query = supabase
     .from("games")
-    .select("id, name, image_status, image_url")
+    .select("id, name, bgg_id, image_status, image_url")
     .or("image_status.in.(pending_auth,pending,missing,ambiguous,error),image_url.is.null")
     .order("name", { ascending: true });
 
@@ -186,7 +247,15 @@ async function main() {
 
   console.log(`Found ${games.length} game(s) to process.\n`);
 
-  const stats = { ok: 0, missing: 0, ambiguous: 0, error: 0, skipped: 0 };
+  const stats = {
+    catalogMatch: 0,
+    xmlMatch: 0,
+    artOk: 0,
+    artMissing: 0,
+    noMatch: 0,
+    error: 0,
+    skipped: 0,
+  };
 
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
@@ -200,79 +269,135 @@ async function main() {
 
     process.stdout.write(`${prefix} ${game.name}... `);
 
-    // Search BGG
-    const searchQuery = encodeURIComponent(normalizeGameName(game.name));
-    const searchXml = await fetchBgg(`${BGG_SEARCH_URL}?type=boardgame&query=${searchQuery}`);
+    // --- Step 1: Resolve bgg_id ---
+    let bggId: number | null = game.bgg_id ?? null;
 
-    if (!searchXml) {
-      console.log("BGG search failed");
-      await supabase.from("games").update({ image_status: "error", image_updated_at: new Date().toISOString() }).eq("id", game.id);
+    if (!bggId) {
+      // Try catalog first (no API call)
+      const catalogResult = await matchFromCatalog(game.name);
+      if (catalogResult.status === "matched") {
+        bggId = catalogResult.bggId;
+        process.stdout.write(`catalog(${bggId}) → `);
+        stats.catalogMatch++;
+      } else {
+        // Fall back to XML search API
+        const searchQuery = encodeURIComponent(normalizeGameName(game.name));
+        const searchXml = await fetchBgg(
+          `${BGG_SEARCH_URL}?type=boardgame&query=${searchQuery}`
+        );
+
+        if (!searchXml) {
+          console.log("BGG search failed");
+          await supabase
+            .from("games")
+            .update({ image_status: "error", image_updated_at: new Date().toISOString() })
+            .eq("id", game.id);
+          stats.error++;
+          await sleep(delay);
+          continue;
+        }
+
+        const items = parseBggSearchXml(searchXml);
+        const match = pickBestBggMatch(items, game.name);
+
+        if (match.status === "missing") {
+          console.log("not found");
+          await supabase
+            .from("games")
+            .update({
+              image_status: "missing",
+              bgg_id: null,
+              image_url: null,
+              thumbnail_url: null,
+              image_source: null,
+              image_updated_at: new Date().toISOString(),
+            })
+            .eq("id", game.id);
+          stats.noMatch++;
+          await sleep(delay);
+          continue;
+        }
+
+        if (match.status === "ambiguous") {
+          console.log(`ambiguous (${items.length} results)`);
+          await supabase
+            .from("games")
+            .update({
+              image_status: "ambiguous",
+              bgg_id: null,
+              image_url: null,
+              thumbnail_url: null,
+              image_source: null,
+              image_updated_at: new Date().toISOString(),
+            })
+            .eq("id", game.id);
+          stats.noMatch++;
+          await sleep(delay);
+          continue;
+        }
+
+        bggId = match.bggId;
+        process.stdout.write(`xml(${bggId}) → `);
+        stats.xmlMatch++;
+        await sleep(delay); // pace after XML search
+      }
+    } else {
+      process.stdout.write(`cached(${bggId}) → `);
+      stats.catalogMatch++;
+    }
+
+    // --- Step 2: Fetch art by bgg_id ---
+    const images = await fetchArtByBggId(bggId);
+    if (!images) {
+      console.log("art fetch failed");
+      await supabase
+        .from("games")
+        .update({
+          bgg_id: bggId,
+          image_status: "error",
+          image_updated_at: new Date().toISOString(),
+        })
+        .eq("id", game.id);
       stats.error++;
       await sleep(delay);
       continue;
     }
 
-    const items = parseBggSearchXml(searchXml);
-    const match = pickBestBggMatch(items, game.name);
-
-    if (match.status === "missing") {
-      console.log("no results on BGG");
-      await supabase.from("games").update({ image_status: "missing", bgg_id: null, image_url: null, thumbnail_url: null, image_source: null, image_updated_at: new Date().toISOString() }).eq("id", game.id);
-      stats.missing++;
-      await sleep(delay);
-      continue;
-    }
-
-    if (match.status === "ambiguous") {
-      console.log(`ambiguous (${items.length} results)`);
-      await supabase.from("games").update({ image_status: "ambiguous", bgg_id: null, image_url: null, thumbnail_url: null, image_source: null, image_updated_at: new Date().toISOString() }).eq("id", game.id);
-      stats.ambiguous++;
-      await sleep(delay);
-      continue;
-    }
-
-    // Fetch thing details
-    const thingXml = await fetchBgg(`${BGG_THING_URL}?id=${match.bggId}`);
-    if (!thingXml) {
-      console.log("BGG thing fetch failed");
-      await supabase.from("games").update({ image_status: "error", image_updated_at: new Date().toISOString() }).eq("id", game.id);
-      stats.error++;
-      await sleep(delay);
-      continue;
-    }
-
-    const images = parseBggThingXml(thingXml);
     const status = images.image ? "ok" : "missing";
-
-    await supabase.from("games").update({
-      bgg_id: match.bggId,
-      image_url: images.image,
-      thumbnail_url: images.thumbnail,
-      image_source: "bgg",
-      image_status: status,
-      image_updated_at: new Date().toISOString(),
-    }).eq("id", game.id);
+    await supabase
+      .from("games")
+      .update({
+        bgg_id: bggId,
+        image_url: images.image,
+        thumbnail_url: images.thumbnail,
+        image_source: "bgg",
+        image_status: status,
+        image_updated_at: new Date().toISOString(),
+      })
+      .eq("id", game.id);
 
     if (status === "ok") {
-      console.log(`OK (bgg_id: ${match.bggId})`);
-      stats.ok++;
+      console.log("OK");
+      stats.artOk++;
     } else {
-      console.log(`matched but no image (bgg_id: ${match.bggId})`);
-      stats.missing++;
+      console.log("matched but no image");
+      stats.artMissing++;
     }
 
-    // Pace requests
+    // Pace API requests
     if (i < games.length - 1) {
       await sleep(delay);
     }
   }
 
   console.log("\n--- Summary ---");
-  console.log(`  OK:        ${stats.ok}`);
-  console.log(`  Missing:   ${stats.missing}`);
-  console.log(`  Ambiguous: ${stats.ambiguous}`);
-  console.log(`  Errors:    ${stats.error}`);
-  if (dryRun) console.log(`  Skipped:   ${stats.skipped} (dry run)`);
+  console.log(`  Catalog matches: ${stats.catalogMatch}`);
+  console.log(`  XML API matches: ${stats.xmlMatch}`);
+  console.log(`  Art fetched:     ${stats.artOk}`);
+  console.log(`  Art missing:     ${stats.artMissing}`);
+  console.log(`  No match:        ${stats.noMatch}`);
+  console.log(`  Errors:          ${stats.error}`);
+  if (dryRun) console.log(`  Skipped:         ${stats.skipped} (dry run)`);
   console.log("\nDone!");
 }
 
