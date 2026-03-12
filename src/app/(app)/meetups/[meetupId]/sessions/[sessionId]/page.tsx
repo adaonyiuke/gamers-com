@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  ChevronLeft,
   Trophy,
   Crown,
   Clock,
@@ -14,6 +13,7 @@ import {
   X,
   Calendar,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useMeetupSessions } from "@/lib/queries/sessions";
 import { useMeetup, useMeetups } from "@/lib/queries/meetups";
@@ -90,25 +90,7 @@ export default function SessionDetailPage() {
   if (isError) {
     return (
       <div className="pb-28">
-        <div
-          className="sticky top-0 z-40 px-5 pt-14 pb-3"
-          style={{
-            background: "rgba(242,242,247,0.85)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-          }}
-        >
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#007AFF] text-[17px] font-medium -ml-1 mb-2"
-          >
-            <ChevronLeft className="h-5 w-5" />
-            Back
-          </button>
-          <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-            Session
-          </h1>
-        </div>
+        <PageHeader title="Session" backLabel="Meetup" backHref={`/meetups/${meetupId}`} variant="large" />
         <div className="px-5 mt-8 text-center">
           <p className="text-[17px] text-red-500">
             Failed to load session data. Please try again.
@@ -120,29 +102,16 @@ export default function SessionDetailPage() {
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
+      <PageHeader
+        title={
+          isLoading
+            ? ""
+            : session?.games?.name ?? "Session"
+        }
+        backLabel="Meetup"
+        backHref={`/meetups/${meetupId}`}
+        variant="large"
       >
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 text-[#007AFF] text-[17px] font-medium -ml-1 mb-2"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          Back
-        </button>
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          {isLoading ? (
-            <SkeletonBlock className="h-9 w-48 inline-block" />
-          ) : (
-            session?.games?.name ?? "Session"
-          )}
-        </h1>
         {!isLoading && (meetup || session?.played_at) && (
           <div className="flex items-center gap-3 mt-1 text-[15px] text-gray-500">
             {meetup?.title && <span>{meetup.title}</span>}
@@ -157,7 +126,7 @@ export default function SessionDetailPage() {
             )}
           </div>
         )}
-      </div>
+      </PageHeader>
 
       <div className="px-5 space-y-5 mt-2">
         {isLoading ? (

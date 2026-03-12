@@ -3,11 +3,11 @@
 import { use } from "react";
 import Link from "next/link";
 import {
-  ChevronLeft,
   Gamepad2,
   Play,
   CheckCircle2,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useMeetup, useMeetupParticipants, useUpdateMeetupStatus } from "@/lib/queries/meetups";
 import { useMeetupSessions } from "@/lib/queries/sessions";
@@ -56,25 +56,7 @@ export default function MeetupDetailPage({
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <Link
-            href="/meetups"
-            className="flex items-center text-[#007AFF] -ml-1.5"
-          >
-            <ChevronLeft className="h-6 w-6" />
-            <span className="text-[17px]">Meetups</span>
-          </Link>
-        </div>
-      </div>
+      <PageHeader title="Meetup" backLabel="Meetups" backHref="/meetups" />
 
       <div className="px-5 mt-2 space-y-5">
         {/* Header card */}

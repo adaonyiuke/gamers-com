@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Home,
@@ -11,12 +10,12 @@ import {
   Users,
   ChevronLeft,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroupMembers } from "@/lib/queries/members";
 
 export default function SettingsHubPage() {
-  const router = useRouter();
   const { user } = useUser();
   const { groupId } = useGroupId();
   const { data: members } = useGroupMembers(groupId);
@@ -76,28 +75,7 @@ export default function SettingsHubPage() {
 
   return (
     <div className="pb-36">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-[#007AFF] -ml-1.5 active:opacity-60 transition-opacity"
-          >
-            <ChevronLeft className="h-6 w-6" />
-            <span className="text-[17px]">Back</span>
-          </button>
-        </div>
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          Settings
-        </h1>
-      </div>
+      <PageHeader title="Settings" backLabel="Players" backHref="/profiles" variant="large" />
 
       <div className="px-5 mt-2 space-y-3">
         {sections.map((section) => {

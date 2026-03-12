@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { PageHeader } from "@/components/ui/page-header";
 
 /* ── Section wrapper ─────────────────────────────────────────── */
 
@@ -215,33 +216,21 @@ export function SettingRow({
 
 export function SettingsHeader({
   title,
-  onBack,
+  onBack: _onBack,
   rightAction,
 }: {
   title: string;
-  onBack: () => void;
+  /** @deprecated Kept for API compat — back behavior is now handled by PageHeader. */
+  onBack?: () => void;
   rightAction?: ReactNode;
 }) {
   return (
-    <div
-      className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
-      style={{
-        background: "rgba(242,242,247,0.85)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }}
-    >
-      <button
-        onClick={onBack}
-        className="flex items-center text-[#007AFF] -ml-1 active:opacity-60 transition-opacity"
-      >
-        <ChevronLeft className="h-6 w-6" />
-        <span className="text-[17px]">Back</span>
-      </button>
-      <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center">
-        {title}
-      </h1>
-      <div className="w-14 flex justify-end">{rightAction}</div>
-    </div>
+    <PageHeader
+      title={title}
+      backLabel="Settings"
+      backHref="/settings"
+      centeredTitle
+      rightAction={rightAction}
+    />
   );
 }

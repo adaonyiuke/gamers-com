@@ -3,14 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ChevronLeft,
   Check,
   UserPlus,
   Pencil,
   Trash2,
   X,
 } from "lucide-react";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -299,28 +298,7 @@ export default function NewMeetupPage() {
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <Link
-            href="/meetups"
-            className="flex items-center text-[#007AFF] -ml-1.5"
-          >
-            <ChevronLeft className="h-6 w-6" />
-            <span className="text-[17px]">Back</span>
-          </Link>
-        </div>
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          New Meetup
-        </h1>
-      </div>
+      <PageHeader title="New Meetup" backLabel="Meetups" backHref="/meetups" variant="large" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-5 mt-2 space-y-5">
         {/* Title */}

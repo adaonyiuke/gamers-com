@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { UserPlus, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGuests, useCreateGuest } from "@/lib/queries/guests";
@@ -45,19 +46,7 @@ export default function GuestsPage() {
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-          Guests
-        </h1>
-      </div>
+      <PageHeader title="Guests" backLabel="Group Settings" backHref="/settings/group" variant="large" />
 
       <div className="px-5 space-y-5 mt-2">
         {/* Add Guest Form */}
