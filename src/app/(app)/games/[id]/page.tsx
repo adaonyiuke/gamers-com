@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Pencil, Trophy, Clock, Calendar, ChevronDown, ChevronUp, User, Medal, Star } from "lucide-react";
+import { Pencil, Trophy, Clock, Calendar, ChevronDown, ChevronUp, User, Medal, Star } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGameById, useGameStats, useGamePlayHistory, useGameTopPerformers } from "@/lib/queries/games";
 import type { PlayHistoryEntry, TopPerformer } from "@/lib/queries/games";
 import { getRelativeTime, formatDate } from "@/lib/utils/dates";
@@ -134,33 +135,22 @@ export default function GameDetailPage() {
 
   return (
     <div className="pb-36">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <button
-          onClick={() => router.push("/games")}
-          className="flex items-center text-[#007AFF] -ml-1 active:opacity-60 transition-opacity"
-        >
-          <ChevronLeft className="h-6 w-6" />
-          <span className="text-[17px]">Games</span>
-        </button>
-        <div className="flex-1" />
-        {game && (
-          <button
-            onClick={() => setShowEditModal(true)}
-            className="flex items-center gap-1.5 text-[#007AFF] active:opacity-60 transition-opacity"
-          >
-            <Pencil className="h-4 w-4" />
-            <span className="text-[17px]">Edit</span>
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Game"
+        backLabel="Games"
+        backHref="/games"
+        rightAction={
+          game ? (
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="flex items-center gap-1.5 text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="text-[17px]">Edit</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       <div className="px-5 mt-4">
         {isLoading ? (

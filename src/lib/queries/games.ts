@@ -29,17 +29,25 @@ export type GameWithStats = GameRow & {
 };
 
 // ---------- Fetch all games with play stats ----------
-export function useGamesWithStats(groupId: string | null) {
+export function useGamesWithStats(
+  groupId: string | null,
+  options?: { includeArchived?: boolean }
+) {
+  const includeArchived = options?.includeArchived ?? false;
   const supabase = createClient();
   return useQuery({
-    queryKey: ["games_with_stats", groupId],
+    queryKey: ["games_with_stats", groupId, { includeArchived }],
     queryFn: async (): Promise<GameWithStats[]> => {
-      // 1. Fetch all games for group
-      const { data: games, error: gamesErr } = await supabase
+      // 1. Fetch games for group (optionally filtering out archived)
+      let query = supabase
         .from("games")
         .select("*")
         .eq("group_id", groupId!)
         .order("name", { ascending: true });
+      if (!includeArchived) {
+        query = query.is("archived_at", null);
+      }
+      const { data: games, error: gamesErr } = await query;
       if (gamesErr) throw gamesErr;
 
       // 2. Fetch finalized sessions for group to compute play_count + last_played_at
@@ -455,6 +463,77 @@ export function useGamePlayCounts(groupId: string | null) {
       return counts;
     },
     enabled: !!groupId,
+  });
+}
+
+// ---------- Archive a game ----------
+export function useArchiveGame() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (gameId: string) => {
+      const { error } = await supabase
+        .from("games")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", gameId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+    },
+  });
+}
+
+// ---------- Unarchive a game ----------
+export function useUnarchiveGame() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (gameId: string) => {
+      const { error } = await supabase
+        .from("games")
+        .update({ archived_at: null })
+        .eq("id", gameId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+    },
+  });
+}
+
+// ---------- Delete a game (only if no sessions) ----------
+export function useDeleteGame() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (gameId: string) => {
+      // Check if game has any sessions
+      const { count, error: countErr } = await supabase
+        .from("sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("game_id", gameId);
+      if (countErr) throw countErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          "Cannot delete a game with recorded sessions. Archive it instead."
+        );
+      }
+      const { error } = await supabase
+        .from("games")
+        .delete()
+        .eq("id", gameId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
+    },
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Star, Layout } from "lucide-react";
+import { Layout } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroupMembers } from "@/lib/queries/members";
@@ -61,21 +61,9 @@ export default function GameSettingsPage() {
         <SettingSection title="Game Library">
           <SettingRow
             label="Manage games"
-            description="View, edit, and organize your game library"
+            description="View, archive, or remove games from your library"
             icon={<Layout className="h-5 w-5 text-gray-400" />}
-            onClick={() => router.push("/games")}
-          />
-          <SettingRow
-            label="Set featured games"
-            description="Pin your group's favorite games to the top"
-            icon={<Star className="h-5 w-5 text-gray-400" />}
-            onClick={() => router.push("/games")}
-          />
-          <SettingRow
-            label="Archive unused games"
-            description="Hide games that haven't been played recently"
-            icon={<Archive className="h-5 w-5 text-gray-400" />}
-            onClick={() => router.push("/games")}
+            onClick={() => router.push("/settings/games/manage")}
           />
         </SettingSection>
 

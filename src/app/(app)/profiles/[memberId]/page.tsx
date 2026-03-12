@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ChevronLeft,
   Gamepad2,
   Trophy,
   Calendar,
@@ -13,6 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import {
@@ -199,27 +199,12 @@ export default function MemberProfilePage() {
 
   return (
     <div className="pb-36">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-[#007AFF] -ml-1 active:opacity-60 transition-opacity"
-        >
-          <ChevronLeft className="h-6 w-6" />
-          <span className="text-[17px]">Back</span>
-        </button>
-        <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center truncate">
-          {isLoading ? "" : displayName}
-        </h1>
-        <div className="w-14 flex justify-end">
-          {isOwnProfile && (
+      <PageHeader
+        title={isLoading ? "" : displayName}
+        backHref="/profiles"
+        centeredTitle
+        rightAction={
+          isOwnProfile ? (
             <Link
               href="/settings"
               className="active:scale-95 transition-transform"
@@ -228,9 +213,9 @@ export default function MemberProfilePage() {
                 <Settings className="h-[18px] w-[18px] text-gray-600" />
               </div>
             </Link>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <div className="px-5 mt-4 space-y-5">
         {isLoading ? (

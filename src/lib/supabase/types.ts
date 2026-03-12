@@ -77,6 +77,7 @@ export type Database = {
       games: {
         Row: {
           abbreviation: string
+          archived_at: string | null
           bgg_id: number | null
           created_at: string
           group_id: string
@@ -94,6 +95,7 @@ export type Database = {
         }
         Insert: {
           abbreviation: string
+          archived_at?: string | null
           bgg_id?: number | null
           created_at?: string
           group_id: string
@@ -111,6 +113,7 @@ export type Database = {
         }
         Update: {
           abbreviation?: string
+          archived_at?: string | null
           bgg_id?: number | null
           created_at?: string
           group_id?: string

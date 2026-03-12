@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Info } from "lucide-react";
+import { Info } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -104,26 +105,7 @@ export default function NewGamePage() {
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
-      <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3 flex items-center gap-3"
-        style={{
-          background: "rgba(242,242,247,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-[#007AFF] -ml-1 active:opacity-60 transition-opacity"
-        >
-          <ChevronLeft className="h-6 w-6" />
-          <span className="text-[17px]">Back</span>
-        </button>
-        <h1 className="text-[17px] font-semibold text-gray-900 flex-1 text-center mr-14">
-          Add Game
-        </h1>
-      </div>
+      <PageHeader title="Add Game" backLabel="Games" backHref="/games" centeredTitle />
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-5 mt-4 space-y-5">
         {/* Name */}
