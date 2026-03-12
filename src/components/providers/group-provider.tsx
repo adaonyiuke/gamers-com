@@ -5,48 +5,91 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "./supabase-provider";
+
+interface GroupMembership {
+  group_id: string;
+  group_name: string;
+  role: string;
+}
 
 interface GroupContext {
   groupId: string | null;
   loading: boolean;
+  groups: GroupMembership[];
   setGroupId: (id: string) => void;
+  switchGroup: (id: string) => void;
 }
+
+const STORAGE_KEY = "selected_group_id";
 
 const Context = createContext<GroupContext>({
   groupId: null,
   loading: true,
+  groups: [],
   setGroupId: () => {},
+  switchGroup: () => {},
 });
 
 export function GroupProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [groups, setGroups] = useState<GroupMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+
+  const switchGroup = useCallback(
+    (id: string) => {
+      setGroupId(id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY, id);
+      }
+      // Invalidate all queries so they refetch with the new group
+      queryClient.invalidateQueries();
+    },
+    [queryClient]
+  );
 
   useEffect(() => {
     if (!user) {
       setGroupId(null);
+      setGroups([]);
       setLoading(false);
       return;
     }
 
-    async function loadGroup() {
-      // Find the user's first group
+    async function loadGroups() {
+      // Fetch all memberships with group names
       const { data: memberships } = await supabase
         .from("group_members")
-        .select("group_id")
+        .select("group_id, role, groups:group_id(name)")
         .eq("user_id", user!.id)
-        .limit(1);
+        .order("joined_at", { ascending: true });
 
       if (memberships && memberships.length > 0) {
-        setGroupId(memberships[0].group_id);
+        const groupList: GroupMembership[] = memberships.map((m: any) => ({
+          group_id: m.group_id,
+          group_name: (m.groups as any)?.name ?? "Unknown Group",
+          role: m.role,
+        }));
+        setGroups(groupList);
+
+        // Check localStorage for a previously selected group
+        const storedId =
+          typeof window !== "undefined"
+            ? localStorage.getItem(STORAGE_KEY)
+            : null;
+        const validStored = groupList.find((g) => g.group_id === storedId);
+
+        setGroupId(validStored ? storedId! : groupList[0].group_id);
       } else {
         // Auto-create a group for new users
         const displayName =
@@ -70,9 +113,23 @@ export function GroupProvider({ children }: { children: ReactNode }) {
             role: "owner",
           });
           setGroupId(group.id);
+          setGroups([
+            {
+              group_id: group.id,
+              group_name: group.name,
+              role: "owner",
+            },
+          ]);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEY, group.id);
+          }
 
           // Redirect new users to onboarding
-          if (typeof window !== "undefined" && !localStorage.getItem("onboarding_complete")) {
+          if (
+            typeof window !== "undefined" &&
+            !localStorage.getItem("onboarding_complete")
+          ) {
             router.push("/onboarding");
           }
         }
@@ -80,11 +137,13 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
 
-    loadGroup();
+    loadGroups();
   }, [user, supabase]);
 
   return (
-    <Context.Provider value={{ groupId, loading, setGroupId }}>{children}</Context.Provider>
+    <Context.Provider value={{ groupId, loading, groups, setGroupId, switchGroup }}>
+      {children}
+    </Context.Provider>
   );
 }
 

@@ -81,7 +81,8 @@ export function useRecentSessions(groupId: string | null) {
         )
         .eq("meetups.group_id", groupId!)
         .eq("status", "finalized")
-        .order("finalized_at", { ascending: false })
+        .order("finalized_at", { ascending: false, nullsFirst: false })
+        .order("played_at", { ascending: false })
         .limit(5);
       if (error) throw error;
       return data;
@@ -148,6 +149,7 @@ export function useFinalizeSession() {
       queryClient.invalidateQueries({
         queryKey: ["sessions", data.meetup_id],
       });
+      queryClient.invalidateQueries({ queryKey: ["recent_sessions"] });
       queryClient.invalidateQueries({ queryKey: ["member_stats"] });
       queryClient.invalidateQueries({ queryKey: ["game_leaderboard"] });
       queryClient.invalidateQueries({ queryKey: ["games_with_stats"] });
