@@ -25,40 +25,46 @@ export function getDefaultMeetupTitle(): string {
 }
 
 /**
- * Formats a date as a relative time label using human-readable buckets.
+ * Formats a date as a relative time label.
  *
  * Bucketing rules:
- *   0 days          → "Today"
- *   1 day           → "1 day ago"
- *   2–6 days        → "X days ago"
- *   7–13 days       → "1 week ago"
- *   14–27 days      → "X weeks ago" (rounded down)
- *   28–364 days     → "X month(s) ago" (rounded down, 1 month = 30 days)
- *   365+ days       → "X year(s) ago" (rounded down)
- *
- * Uses local midnight boundaries to avoid off-by-one issues around midnight.
+ *   < 60 seconds    → "Xs ago" or "just now"
+ *   < 60 minutes    → "Xm ago"
+ *   < 24 hours      → "Xh ago"
+ *   1–6 days        → "Xd ago"
+ *   7–27 days       → "Xw ago"
+ *   28–364 days     → "Xmo ago"
+ *   365+ days       → "Xy ago"
  */
 export function getRelativeTime(date: string | Date | null | undefined): string {
   if (!date) return "Unknown";
   const d = new Date(date);
-  // Guard against invalid or epoch-zero dates (e.g. new Date(null) = 1970-01-01)
   if (isNaN(d.getTime()) || d.getFullYear() < 2000) return "Unknown";
+
   const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
 
-  // Compare using local-date midnights to avoid timezone / midnight edge cases
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dateMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffMs = todayMidnight.getTime() - dateMidnight.getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  // Future dates (clock skew)
+  if (diffMs < 0) return "just now";
 
-  if (days <= 0) return "Today";
+  const seconds = Math.floor(diffMs / 1000);
+  if (seconds < 5) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
 
   const weeks = Math.floor(days / 7);
   if (days < 28) return `${weeks}w ago`;
 
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months}m ago`;
+  if (months < 12) return `${months}mo ago`;
 
   const years = Math.floor(days / 365);
   return `${years}y ago`;

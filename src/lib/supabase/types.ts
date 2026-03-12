@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      bgg_catalog: {
+        Row: {
+          abstracts_rank: number | null
+          average: number | null
+          bayes_average: number | null
+          bgg_id: number
+          cgs_rank: number | null
+          childrensgames_rank: number | null
+          familygames_rank: number | null
+          imported_at: string
+          is_expansion: boolean
+          name: string
+          partygames_rank: number | null
+          rank: number | null
+          strategygames_rank: number | null
+          thematic_rank: number | null
+          users_rated: number | null
+          wargames_rank: number | null
+          year_published: number | null
+        }
+        Insert: {
+          abstracts_rank?: number | null
+          average?: number | null
+          bayes_average?: number | null
+          bgg_id: number
+          cgs_rank?: number | null
+          childrensgames_rank?: number | null
+          familygames_rank?: number | null
+          imported_at?: string
+          is_expansion?: boolean
+          name: string
+          partygames_rank?: number | null
+          rank?: number | null
+          strategygames_rank?: number | null
+          thematic_rank?: number | null
+          users_rated?: number | null
+          wargames_rank?: number | null
+          year_published?: number | null
+        }
+        Update: {
+          abstracts_rank?: number | null
+          average?: number | null
+          bayes_average?: number | null
+          bgg_id?: number
+          cgs_rank?: number | null
+          childrensgames_rank?: number | null
+          familygames_rank?: number | null
+          imported_at?: string
+          is_expansion?: boolean
+          name?: string
+          partygames_rank?: number | null
+          rank?: number | null
+          strategygames_rank?: number | null
+          thematic_rank?: number | null
+          users_rated?: number | null
+          wargames_rank?: number | null
+          year_published?: number | null
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           abbreviation: string
@@ -529,6 +589,7 @@ export type Database = {
       member_stats: {
         Row: {
           avatar_url: string | null
+          current_streak: number | null
           display_name: string | null
           group_id: string | null
           member_id: string | null
@@ -550,7 +611,16 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      generate_invite_code: { Args: never; Returns: string }
+      lookup_group_by_invite_code: {
+        Args: { code: string }
+        Returns: {
+          avatar_url: string
+          description: string
+          id: string
+          name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

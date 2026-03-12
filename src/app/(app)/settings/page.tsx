@@ -8,6 +8,7 @@ import {
   Gamepad2,
   BarChart3,
   Wrench,
+  Users,
   ChevronLeft,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -27,6 +28,14 @@ export default function SettingsHubPage() {
   }, [members, user]);
 
   const sections = [
+    {
+      href: "/settings/groups",
+      icon: Users,
+      iconBg: "bg-teal-100",
+      iconColor: "text-teal-600",
+      title: "Your Groups",
+      subtitle: "Switch, create, or join groups",
+    },
     {
       href: "/settings/group",
       icon: Home,

@@ -14,12 +14,14 @@ import {
   Flame,
   Trophy,
   ChevronRight,
+  ChevronDown,
   Calendar,
   X,
   MapPin,
   Users,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
+import { useGroup } from "@/lib/queries/groups";
 import { useMemberStats } from "@/lib/queries/members";
 import { useMeetups, useMeetupParticipants } from "@/lib/queries/meetups";
 import { useRecentSessions, useMeetupSessions } from "@/lib/queries/sessions";
@@ -38,7 +40,9 @@ function SkeletonBlock({ className }: { className?: string }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { groupId, loading: groupLoading } = useGroupId();
+  const { groupId, loading: groupLoading, groups, switchGroup } = useGroupId();
+  const { data: group } = useGroup(groupId);
+  const [showGroupPicker, setShowGroupPicker] = useState(false);
   const { user } = useUser();
   const { data: stats, isLoading: statsLoading } = useMemberStats(groupId);
   const { data: members, isLoading: membersLoading } = useGroupMembers(groupId);
@@ -156,30 +160,31 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
 
   return (
     <div className="pb-28">
-      {/* Glass header */}
+      {/* Sticky top nav: group selector + avatar */}
       <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-3"
+        className="sticky top-0 z-40 px-5 pt-14 pb-2"
         style={{
           background: "rgba(242,242,247,0.85)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
-              {today}
-            </p>
-            <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
-              Dashboard
-            </h1>
-          </div>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowGroupPicker(!showGroupPicker)}
+            className="flex items-center gap-1.5 active:opacity-60 transition-opacity"
+          >
+            <span className="text-[17px] font-semibold text-gray-900 truncate max-w-[240px]">
+              {group?.name ?? "Loading..."}
+            </span>
+            <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />
+          </button>
           <Link
             href={currentMember ? `/profiles/${currentMember.id}` : "/profiles"}
-            className="mt-1 active:scale-95 transition-transform"
+            className="active:scale-95 transition-transform"
           >
             <div
-              className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[17px] font-bold shadow-sm"
+              className="h-9 w-9 rounded-full flex items-center justify-center text-white text-[15px] font-bold shadow-sm"
               style={{ backgroundColor: avatarColor }}
             >
               {(
@@ -191,6 +196,57 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
           </Link>
         </div>
       </div>
+
+      {/* Date + title (scrolls with content) */}
+      <div className="px-5 mt-1 mb-2">
+        <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+          {today}
+        </p>
+        <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
+          Dashboard
+        </h1>
+      </div>
+
+      {/* Group picker dropdown */}
+      {showGroupPicker && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowGroupPicker(false)}>
+          <div
+            className="absolute left-5 right-5 top-[120px] max-w-[400px] mx-auto bg-white rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {groups.map((g) => {
+              const isActive = g.group_id === groupId;
+              return (
+                <button
+                  key={g.group_id}
+                  onClick={() => {
+                    switchGroup(g.group_id);
+                    setShowGroupPicker(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors border-b border-gray-50 last:border-0",
+                    isActive ? "bg-[#007AFF]/[0.04]" : "active:bg-gray-50"
+                  )}
+                >
+                  <span className="text-[15px] font-semibold text-gray-900 flex-1 truncate">
+                    {g.group_name}
+                  </span>
+                  {isActive && (
+                    <div className="h-2 w-2 rounded-full bg-[#007AFF] shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+            <Link
+              href="/settings/groups"
+              onClick={() => setShowGroupPicker(false)}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-[14px] font-semibold text-[#007AFF] bg-gray-50 active:bg-gray-100 transition-colors"
+            >
+              Manage Groups
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="px-5 space-y-5 mt-2">
         {/* Featured Meetup Callout Card */}
@@ -319,7 +375,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                 </span>
               </div>
               <p className="text-[28px] font-bold tracking-tight text-gray-900">
-                {(currentMemberStat as any)?.current_streak ?? 0}
+                {currentMemberStat?.current_streak ?? 0}
               </p>
             </div>
           </div>

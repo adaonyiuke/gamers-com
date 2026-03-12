@@ -101,6 +101,11 @@ function JoinContent() {
         return;
       }
 
+      // Store joined group so GroupProvider picks it up
+      if (typeof window !== "undefined") {
+        localStorage.setItem("selected_group_id", group.id);
+      }
+
       // Success - redirect to dashboard
       router.replace("/dashboard");
     }
