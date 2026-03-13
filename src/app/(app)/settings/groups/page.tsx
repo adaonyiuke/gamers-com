@@ -161,14 +161,14 @@ export default function GroupsPage() {
                   const isActive = g.group_id === groupId;
                   const initial = g.name.charAt(0).toUpperCase();
                   return (
-                    <div key={g.group_id} className="flex items-center">
+                    <div key={g.group_id} className={cn("flex items-center transition-colors", isActive ? "bg-[#007AFF]/[0.04]" : "")}>
                       <button
                         onClick={() => {
                           if (!isActive) switchGroup(g.group_id);
                         }}
                         className={cn(
                           "flex-1 flex items-center gap-3 px-5 py-4 text-left transition-colors",
-                          isActive ? "bg-[#007AFF]/[0.04]" : "active:bg-gray-50"
+                          !isActive && "active:bg-gray-50"
                         )}
                       >
                         <div
