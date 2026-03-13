@@ -113,6 +113,105 @@ export function useMemberGameStats(memberId: string | null) {
   });
 }
 
+// ---------- Leaderboard with time-period filtering ----------
+export type LeaderboardEntry = {
+  member_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  total_wins: number;
+  total_sessions: number;
+  win_rate: number;
+};
+
+export function useLeaderboard(
+  groupId: string | null,
+  period: "month" | "year" | "all"
+) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["leaderboard", groupId, period],
+    queryFn: async (): Promise<LeaderboardEntry[]> => {
+      if (period === "all") {
+        const { data: stats, error } = await supabase
+          .from("member_stats")
+          .select("*")
+          .eq("group_id", groupId!);
+        if (error) throw error;
+        return (stats ?? [])
+          .map((s: any) => ({
+            member_id: s.member_id,
+            display_name: s.display_name ?? "Unknown",
+            avatar_url: s.avatar_url,
+            total_wins: s.total_wins ?? 0,
+            total_sessions: s.total_sessions ?? 0,
+            win_rate: s.win_rate ?? 0,
+          }))
+          .sort((a, b) => b.total_wins - a.total_wins);
+      }
+
+      // For month/year, compute from raw session data
+      const now = new Date();
+      const cutoff =
+        period === "month"
+          ? new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+          : new Date(now.getFullYear(), 0, 1).toISOString();
+
+      // Get all members in the group
+      const { data: members, error: membersError } = await supabase
+        .from("group_members")
+        .select("id, display_name, avatar_url")
+        .eq("group_id", groupId!);
+      if (membersError) throw membersError;
+
+      // Get finalized sessions in the time range with score entries
+      const { data: sessions, error: sessionsError } = await supabase
+        .from("sessions")
+        .select(
+          `id, finalized_at,
+          meetups:meetup_id!inner(group_id),
+          score_entries(participant_id, is_winner,
+            meetup_participants:participant_id(member_id)
+          )`
+        )
+        .eq("meetups.group_id", groupId!)
+        .eq("status", "finalized")
+        .gte("finalized_at", cutoff);
+      if (sessionsError) throw sessionsError;
+
+      // Compute per-member stats
+      const statsMap: Record<string, { wins: number; plays: number }> = {};
+      for (const member of members ?? []) {
+        statsMap[member.id] = { wins: 0, plays: 0 };
+      }
+
+      for (const session of sessions ?? []) {
+        const entries = (session.score_entries ?? []) as any[];
+        for (const entry of entries) {
+          const memberId = entry.meetup_participants?.member_id;
+          if (!memberId || !statsMap[memberId]) continue;
+          statsMap[memberId].plays++;
+          if (entry.is_winner) statsMap[memberId].wins++;
+        }
+      }
+
+      return (members ?? [])
+        .map((m: any) => {
+          const s = statsMap[m.id] ?? { wins: 0, plays: 0 };
+          return {
+            member_id: m.id,
+            display_name: m.display_name,
+            avatar_url: m.avatar_url,
+            total_wins: s.wins,
+            total_sessions: s.plays,
+            win_rate: s.plays > 0 ? Math.round((s.wins / s.plays) * 100) : 0,
+          };
+        })
+        .sort((a, b) => b.total_wins - a.total_wins);
+    },
+    enabled: !!groupId,
+  });
+}
+
 // ---------- Current user's role in a group ----------
 export function useCurrentMemberRole(groupId: string | null) {
   const supabase = createClient();

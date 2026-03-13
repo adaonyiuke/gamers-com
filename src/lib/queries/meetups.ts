@@ -49,7 +49,8 @@ export function useMeetupParticipants(meetupId: string | null) {
         .select(
           `*,
           group_members:member_id(id, display_name, avatar_url),
-          guests:guest_id(id, name, avatar_url)`
+          guests:guest_id(id, name, avatar_url),
+          group_members_invited_by:invited_by(id, display_name)`
         )
         .eq("meetup_id", meetupId!);
       if (error) throw error;
@@ -86,12 +87,14 @@ export function useCreateMeetup() {
       date,
       participantMemberIds,
       participantGuestIds,
+      invitedByMap,
     }: {
       groupId: string;
       title: string;
       date: string;
       participantMemberIds: string[];
       participantGuestIds: string[];
+      invitedByMap?: Record<string, string>;
     }) => {
       const {
         data: { user },
@@ -114,10 +117,12 @@ export function useCreateMeetup() {
         ...participantMemberIds.map((id) => ({
           meetup_id: meetup.id,
           member_id: id,
+          invited_by: invitedByMap?.[id],
         })),
         ...participantGuestIds.map((id) => ({
           meetup_id: meetup.id,
           guest_id: id,
+          invited_by: invitedByMap?.[id],
         })),
       ];
 

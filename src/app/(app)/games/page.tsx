@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Gamepad2, Plus, Search, SlidersHorizontal, Check } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -258,6 +259,19 @@ export default function GamesPage() {
           </>
         )}
       </div>
+
+      {/* BGG Attribution */}
+      {!isLoading && (
+        <div className="flex justify-center mt-6 mb-2 px-5">
+          <Image
+            src="/pb-bgg-web.png"
+            alt="Powered by BoardGameGeek"
+            width={120}
+            height={32}
+            className="object-contain"
+          />
+        </div>
+      )}
 
       {/* FAB */}
       <Link

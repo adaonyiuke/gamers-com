@@ -1,11 +1,13 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Gamepad2,
   Play,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -40,8 +42,19 @@ export default function MeetupDetailPage({
   const updateStatus = useUpdateMeetupStatus();
   const { data: role } = useCurrentMemberRole(groupId);
 
+  const router = useRouter();
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
+
   const isLoading = meetupLoading;
   const isAdmin = role === "admin" || role === "owner";
+
+  function handleRecordGame() {
+    if (meetup?.status === "active") {
+      router.push(`/meetups/${meetupId}/sessions/new`);
+    } else {
+      setShowInactiveModal(true);
+    }
+  }
 
   const handleStatusUpdate = async (
     newStatus: "planned" | "active" | "complete"
@@ -101,15 +114,64 @@ export default function MeetupDetailPage({
 
         {/* Action Buttons */}
         {meetup && (meetup.status === "planned" || meetup.status === "active") && (
-          <Link
-            href={`/meetups/${meetupId}/sessions/new`}
-            className="block w-full bg-[#007AFF] text-white rounded-[14px] py-4 text-[17px] font-semibold text-center active:scale-[0.98] transition-transform"
+          <button
+            onClick={handleRecordGame}
+            className={cn(
+              "w-full rounded-[14px] py-4 text-[17px] font-semibold transition-all",
+              meetup.status === "active"
+                ? "bg-[#007AFF] text-white active:scale-[0.98]"
+                : "bg-[#007AFF]/30 text-white/60 cursor-default"
+            )}
           >
             <span className="flex items-center justify-center gap-2">
               <Gamepad2 className="h-5 w-5" />
               Record Game
             </span>
-          </Link>
+          </button>
+        )}
+
+        {/* Inactive meetup modal */}
+        {showInactiveModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setShowInactiveModal(false)}
+            />
+            <div className="relative w-full max-w-[400px] bg-white rounded-[24px] p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[20px] font-bold text-gray-900">
+                  Meetup Not Started
+                </h3>
+                <button
+                  onClick={() => setShowInactiveModal(false)}
+                  className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <X className="h-4 w-4 text-gray-500" />
+                </button>
+              </div>
+              <p className="text-[15px] text-gray-500 mb-6">
+                You can't record games until the meetup is active. Start the meetup to begin recording.
+              </p>
+              {isAdmin && (
+                <button
+                  onClick={async () => {
+                    setShowInactiveModal(false);
+                    await handleStatusUpdate("active");
+                  }}
+                  disabled={updateStatus.isPending}
+                  className="w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50 mb-3"
+                >
+                  {updateStatus.isPending ? "Starting..." : "Start Meetup"}
+                </button>
+              )}
+              <button
+                onClick={() => setShowInactiveModal(false)}
+                className="w-full bg-gray-100 text-gray-700 rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
         )}
 
         {meetup?.status === "planned" && (

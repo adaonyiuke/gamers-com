@@ -12,6 +12,11 @@ const getName = (p: Record<string, unknown>) => {
   return gm?.display_name ?? g?.name ?? "Unknown";
 };
 
+const getInviterName = (p: Record<string, unknown>) => {
+  const inviter = p.group_members_invited_by as { display_name: string } | null;
+  return inviter?.display_name ?? null;
+};
+
 function SkeletonBlock({ className }: { className?: string }) {
   return (
     <div
@@ -87,6 +92,7 @@ export function ParticipantsSection({
             {displayed?.map((p: Record<string, unknown>) => {
               const name = getName(p);
               const isGuest = !!p.guest_id;
+              const inviterName = getInviterName(p);
               return (
                 <div
                   key={p.id as string}
@@ -106,6 +112,11 @@ export function ParticipantsSection({
                     </p>
                     {isGuest && (
                       <p className="text-[13px] text-gray-400">Guest</p>
+                    )}
+                    {inviterName && (
+                      <p className="text-[13px] text-gray-500">
+                        Invited by {inviterName}
+                      </p>
                     )}
                   </div>
                 </div>

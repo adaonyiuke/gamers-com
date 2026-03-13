@@ -359,6 +359,7 @@ export type Database = {
         Row: {
           guest_id: string | null
           id: string
+          invited_by: string | null
           joined_at: string
           meetup_id: string
           member_id: string | null
@@ -366,6 +367,7 @@ export type Database = {
         Insert: {
           guest_id?: string | null
           id?: string
+          invited_by?: string | null
           joined_at?: string
           meetup_id: string
           member_id?: string | null
@@ -373,6 +375,7 @@ export type Database = {
         Update: {
           guest_id?: string | null
           id?: string
+          invited_by?: string | null
           joined_at?: string
           meetup_id?: string
           member_id?: string | null
@@ -384,6 +387,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "guests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetup_participants_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "game_leaderboard"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "meetup_participants_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "group_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetup_participants_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "member_stats"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "meetup_participants_meetup_id_fkey"

@@ -91,6 +91,59 @@ export function useRecentSessions(groupId: string | null) {
   });
 }
 
+// Sessions from the last 3 meetups, grouped by meetup
+export function useRecentMeetupSessions(groupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["recent_meetup_sessions", groupId],
+    queryFn: async () => {
+      // Get the 3 most recent meetups
+      const { data: meetups, error: meetupsError } = await supabase
+        .from("meetups")
+        .select("id, title, date, status")
+        .eq("group_id", groupId!)
+        .is("deleted_at", null)
+        .order("date", { ascending: false })
+        .limit(3);
+      if (meetupsError) throw meetupsError;
+      if (!meetups || meetups.length === 0) return [];
+
+      const meetupIds = meetups.map((m) => m.id);
+
+      // Get all finalized sessions for those meetups
+      const { data: sessions, error: sessionsError } = await supabase
+        .from("sessions")
+        .select(
+          `*,
+          games:game_id(id, name, icon, scoring_type),
+          meetups:meetup_id(id, title, date),
+          score_entries(
+            id, score, is_winner, participant_id,
+            meetup_participants:participant_id(
+              id,
+              group_members:member_id(display_name, avatar_url),
+              guests:guest_id(name, avatar_url)
+            )
+          )`
+        )
+        .in("meetup_id", meetupIds)
+        .eq("status", "finalized")
+        .order("finalized_at", { ascending: false, nullsFirst: false })
+        .order("played_at", { ascending: false });
+      if (sessionsError) throw sessionsError;
+
+      // Group sessions by meetup, preserving meetup order
+      return meetups.map((meetup) => ({
+        meetup,
+        sessions: (sessions ?? []).filter(
+          (s: any) => s.meetup_id === meetup.id
+        ),
+      }));
+    },
+    enabled: !!groupId,
+  });
+}
+
 export function useFinalizeSession() {
   const supabase = createClient();
   const queryClient = useQueryClient();

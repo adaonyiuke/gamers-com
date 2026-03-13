@@ -67,6 +67,7 @@ export default function DashboardPage() {
   const leaderboard = useMemo(() => {
     if (!stats || !members) return [];
     return [...stats]
+      .filter((s: any) => (s.total_sessions ?? 0) > 0)
       .sort((a: any, b: any) => (b.total_wins ?? 0) - (a.total_wins ?? 0))
       .slice(0, 3)
       .map((s: any) => {
@@ -383,9 +384,17 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
 
         {/* Leaderboard */}
         <div>
-          <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-            Leaderboard
-          </p>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+              Leaderboard
+            </p>
+            <Link
+              href="/dashboard/leaderboard"
+              className="text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              View More
+            </Link>
+          </div>
           <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
             {isLoading ? (
               <div className="p-4 space-y-4">
@@ -403,7 +412,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               <div className="p-8 text-center">
                 <Trophy className="h-10 w-10 text-gray-300 mx-auto mb-2" />
                 <p className="text-[15px] text-gray-500">
-                  No stats yet. Play some games to see the leaderboard!
+                  The arena is empty. Start playing games to see your name rise to the top of the ranks.
                 </p>
               </div>
             ) : (
@@ -426,9 +435,10 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                           {entry.display_name}
                         </p>
                       </div>
-                      <p className="text-[15px] font-medium text-gray-500">
-                        {entry.total_wins ?? 0}W
-                      </p>
+                      <div className="flex items-center gap-1 text-[15px] font-medium text-gray-500">
+                        <Trophy className="h-3.5 w-3.5" />
+                        <span>{entry.total_wins ?? 0}</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -439,9 +449,17 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
 
         {/* Recent Activity */}
         <div>
-          <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-            Recent Activity
-          </p>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+              Recent Activity
+            </p>
+            <Link
+              href="/dashboard/activity"
+              className="text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              View More
+            </Link>
+          </div>
           <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
             {isLoading ? (
               <div className="p-4 space-y-4">
