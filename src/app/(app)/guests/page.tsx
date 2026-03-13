@@ -7,6 +7,7 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGuests, useCreateGuest } from "@/lib/queries/guests";
 import { useGroupMembers } from "@/lib/queries/members";
+import { useGroupSettings } from "@/lib/queries/settings";
 import { cn } from "@/lib/utils/cn";
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -20,13 +21,21 @@ function SkeletonBlock({ className }: { className?: string }) {
 export default function GuestsPage() {
   const { groupId, loading: groupLoading } = useGroupId();
   const { user } = useUser();
-  const { data: guests, isLoading: guestsLoading } = useGuests(groupId);
+  const { data: allGuests, isLoading: guestsLoading } = useGuests(groupId);
   const { data: members } = useGroupMembers(groupId);
+  const { data: settings } = useGroupSettings(groupId);
   const createGuest = useCreateGuest();
 
   const [name, setName] = useState("");
 
   const currentMember = members?.find((m: any) => m.user_id === user?.id);
+  const isAdmin = currentMember?.role === "owner";
+  const ownGuestsOnly =
+    !isAdmin && (settings?.perm_members_manage_own_guests_only ?? false);
+
+  const guests = ownGuestsOnly
+    ? allGuests?.filter((g: any) => g.invited_by === currentMember?.id)
+    : allGuests;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -80,8 +89,13 @@ export default function GuestsPage() {
         {/* Guest List */}
         <div>
           <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-            All Guests
+            {ownGuestsOnly ? "Your Guests" : "All Guests"}
           </p>
+          {ownGuestsOnly && (
+            <p className="text-[13px] text-gray-400 mb-3 px-1">
+              Showing only guests you've invited.
+            </p>
+          )}
           <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
             {isLoading ? (
               <div className="p-4 space-y-4">

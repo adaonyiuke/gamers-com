@@ -195,6 +195,9 @@ export type Database = {
           leaderboard_default_sort: string | null
           leaderboard_include_guests: boolean | null
           lock_sessions_after_complete: boolean | null
+          perm_members_can_share_invite: boolean
+          perm_members_can_view_guest_archive: boolean
+          perm_members_manage_own_guests_only: boolean
           reduced_motion: boolean | null
           show_fun_stats: boolean | null
           show_most_improved: boolean | null
@@ -218,6 +221,9 @@ export type Database = {
           leaderboard_default_sort?: string | null
           leaderboard_include_guests?: boolean | null
           lock_sessions_after_complete?: boolean | null
+          perm_members_can_share_invite?: boolean
+          perm_members_can_view_guest_archive?: boolean
+          perm_members_manage_own_guests_only?: boolean
           reduced_motion?: boolean | null
           show_fun_stats?: boolean | null
           show_most_improved?: boolean | null
@@ -241,6 +247,9 @@ export type Database = {
           leaderboard_default_sort?: string | null
           leaderboard_include_guests?: boolean | null
           lock_sessions_after_complete?: boolean | null
+          perm_members_can_share_invite?: boolean
+          perm_members_can_view_guest_archive?: boolean
+          perm_members_manage_own_guests_only?: boolean
           reduced_motion?: boolean | null
           show_fun_stats?: boolean | null
           show_most_improved?: boolean | null

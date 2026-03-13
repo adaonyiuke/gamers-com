@@ -336,12 +336,12 @@ export default function MeetupsPage() {
 
       {/* Confirmation dialog */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowConfirm(false)}
           />
-          <div className="relative w-full max-w-[430px] mx-5 mb-8 space-y-2">
+          <div className="relative w-full max-w-sm space-y-2">
             <div className="bg-white rounded-[14px] overflow-hidden">
               <div className="px-4 pt-5 pb-3 text-center">
                 <p className="text-[13px] text-gray-500">

@@ -41,7 +41,7 @@ export default function SettingsHubPage() {
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
       title: "Group Settings",
-      subtitle: "Members, invites & identity",
+      subtitle: isAdmin ? "Members, invites & identity" : "View members & share invite",
     },
     {
       href: "/settings/games",

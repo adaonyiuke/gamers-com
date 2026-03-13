@@ -137,6 +137,26 @@ export function useCreateGroup() {
   });
 }
 
+export function useDeleteGroup() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ groupId }: { groupId: string }) => {
+      const { error } = await supabase
+        .from("groups")
+        .delete()
+        .eq("id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({ queryKey: ["user_groups"] });
+      queryClient.invalidateQueries({ queryKey: ["group_members"] });
+    },
+  });
+}
+
 export function useLookupGroupByInviteCode() {
   const supabase = createClient();
 

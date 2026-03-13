@@ -10,16 +10,21 @@ import {
   Share2,
   Mail,
   Pencil,
-  UserPlus,
   UserMinus,
   ChevronUp,
   ChevronDown,
-  QrCode,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
-import { useGroup, useUpdateGroup } from "@/lib/queries/groups";
-import { useGroupMembers } from "@/lib/queries/members";
+import { useGroup, useUpdateGroup, useDeleteGroup } from "@/lib/queries/groups";
+import {
+  useGroupMembers,
+  useUpdateMemberRole,
+  useRemoveMember,
+  useLeaveGroup,
+} from "@/lib/queries/members";
 import { useGroupSettings, useUpdateGroupSettings } from "@/lib/queries/settings";
 import {
   SettingsHeader,
@@ -30,15 +35,27 @@ import {
 } from "@/components/settings/setting-components";
 import { cn } from "@/lib/utils/cn";
 
+const MAX_ADMINS = 3;
+
+type ConfirmDialog =
+  | { type: "remove"; memberId: string; name: string }
+  | { type: "demote"; memberId: string; name: string }
+  | { type: "leave" }
+  | { type: "delete" };
+
 export default function GroupSettingsPage() {
   const router = useRouter();
   const { user } = useUser();
-  const { groupId } = useGroupId();
+  const { groupId, switchGroup } = useGroupId();
   const { data: group } = useGroup(groupId);
   const { data: members } = useGroupMembers(groupId);
   const { data: settings } = useGroupSettings(groupId);
   const updateGroup = useUpdateGroup();
   const updateSettings = useUpdateGroupSettings();
+  const updateMemberRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
+  const leaveGroup = useLeaveGroup();
+  const deleteGroup = useDeleteGroup();
 
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -46,13 +63,24 @@ export default function GroupSettingsPage() {
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupDescription, setEditGroupDescription] = useState("");
   const [editMeetupFormat, setEditMeetupFormat] = useState("");
-  const [showQR, setShowQR] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog | null>(null);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const isAdmin = useMemo(() => {
     if (!members || !user) return false;
     const me = members.find((m: any) => m.user_id === user.id);
     return me?.role === "owner";
   }, [members, user]);
+
+  const adminCount = useMemo(
+    () => (members ?? []).filter((m: any) => m.role === "owner").length,
+    [members]
+  );
+
+  const myMemberId = useMemo(
+    () => members?.find((m: any) => m.user_id === user?.id)?.id ?? null,
+    [members, user]
+  );
 
   function startEditingGroup() {
     setEditGroupName(group?.name ?? "");
@@ -134,6 +162,57 @@ export default function GroupSettingsPage() {
     updateSettings.mutate({ groupId, updates: { [key]: value } });
   }
 
+  function handlePromote(memberId: string) {
+    if (!groupId) return;
+    setPromoteError(null);
+    if (adminCount >= MAX_ADMINS) {
+      setPromoteError(`This group already has ${MAX_ADMINS} admins. Demote one before promoting another.`);
+      return;
+    }
+    updateMemberRole.mutate({ memberId, groupId, role: "owner" });
+  }
+
+  function handleDemoteRequest(memberId: string, name: string) {
+    setConfirmDialog({ type: "demote", memberId, name });
+  }
+
+  async function handleDemoteConfirm() {
+    if (!groupId || confirmDialog?.type !== "demote") return;
+    await updateMemberRole.mutateAsync({
+      memberId: confirmDialog.memberId,
+      groupId,
+      role: "member",
+    });
+    setConfirmDialog(null);
+  }
+
+  async function handleRemoveConfirm() {
+    if (!groupId || confirmDialog?.type !== "remove") return;
+    await removeMember.mutateAsync({ memberId: confirmDialog.memberId, groupId });
+    setConfirmDialog(null);
+  }
+
+  async function handleLeaveConfirm() {
+    if (!groupId) return;
+    await leaveGroup.mutateAsync({ groupId });
+    setConfirmDialog(null);
+    // Switch to another group if available
+    router.push("/settings/groups");
+  }
+
+  async function handleDeleteConfirm() {
+    if (!groupId) return;
+    await deleteGroup.mutateAsync({ groupId });
+    setConfirmDialog(null);
+    router.push("/settings/groups");
+  }
+
+  const isPending =
+    updateMemberRole.isPending ||
+    removeMember.isPending ||
+    leaveGroup.isPending ||
+    deleteGroup.isPending;
+
   return (
     <div className="pb-36">
       <SettingsHeader title="Group Settings" onBack={() => router.back()} />
@@ -212,9 +291,11 @@ export default function GroupSettingsPage() {
                       {group.description}
                     </p>
                   )}
-                  <p className="text-[13px] text-gray-400 mt-2">
-                    Format: {settings?.default_meetup_name_format ?? "Game Night #{n}"}
-                  </p>
+                  {isAdmin && (
+                    <p className="text-[13px] text-gray-400 mt-2">
+                      Format: {settings?.default_meetup_name_format ?? "Game Night #{n}"}
+                    </p>
+                  )}
                 </div>
                 {isAdmin && (
                   <button
@@ -230,7 +311,19 @@ export default function GroupSettingsPage() {
         </SettingSection>
 
         {/* ── Members ───────────────────────────────────────────── */}
-        <SettingSection title="Members">
+        <SettingSection
+          title={
+            isAdmin
+              ? `Members · ${adminCount}/${MAX_ADMINS} admins`
+              : "Members"
+          }
+        >
+          {promoteError && (
+            <div className="mx-5 mb-2 flex items-center gap-2 bg-amber-50 rounded-[12px] px-4 py-3">
+              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+              <p className="text-[13px] text-amber-700">{promoteError}</p>
+            </div>
+          )}
           {members && members.length > 0 ? (
             <>
               {members.map((member: any) => {
@@ -271,8 +364,14 @@ export default function GroupSettingsPage() {
                     {isAdmin && !isCurrentUser && (
                       <div className="flex items-center gap-1">
                         <button
-                          className="p-2 text-gray-400 active:text-[#007AFF] transition-colors"
-                          title={isOwner ? "Demote" : "Promote"}
+                          onClick={() =>
+                            isOwner
+                              ? handleDemoteRequest(member.id, member.display_name)
+                              : handlePromote(member.id)
+                          }
+                          disabled={updateMemberRole.isPending}
+                          className="p-2 text-gray-400 active:text-[#007AFF] transition-colors disabled:opacity-40"
+                          title={isOwner ? "Demote to member" : "Promote to admin"}
                         >
                           {isOwner ? (
                             <ChevronDown className="h-4 w-4" />
@@ -281,8 +380,16 @@ export default function GroupSettingsPage() {
                           )}
                         </button>
                         <button
-                          className="p-2 text-gray-400 active:text-red-500 transition-colors"
-                          title="Remove"
+                          onClick={() =>
+                            setConfirmDialog({
+                              type: "remove",
+                              memberId: member.id,
+                              name: member.display_name,
+                            })
+                          }
+                          disabled={removeMember.isPending}
+                          className="p-2 text-gray-400 active:text-red-500 transition-colors disabled:opacity-40"
+                          title="Remove from group"
                         >
                           <UserMinus className="h-4 w-4" />
                         </button>
@@ -302,106 +409,207 @@ export default function GroupSettingsPage() {
 
         {/* ── Guests ────────────────────────────────────────────── */}
         <SettingSection title="Guests">
-          <SettingToggle
-            label="Include in all-time stats"
-            description="Count guest scores in leaderboards"
-            value={settings?.guest_include_in_stats ?? false}
-            onChange={(v) => handleSettingChange("guest_include_in_stats", v)}
-            disabled={!isAdmin}
-          />
-          <SettingToggle
-            label="Allow recurring guests"
-            description="Let the same guest join multiple meetups"
-            value={settings?.guest_allow_recurring ?? true}
-            onChange={(v) => handleSettingChange("guest_allow_recurring", v)}
-            disabled={!isAdmin}
-          />
-          <SettingRow
-            label="Manage guest archive"
-            description="View and manage all past guests"
-            onClick={() => router.push("/guests")}
-          />
-        </SettingSection>
-
-        {/* ── Invites ───────────────────────────────────────────── */}
-        <SettingSection title="Invites">
-          {group?.invite_code ? (
+          {isAdmin && (
             <>
-              <div className="px-5 py-5">
-                <p className="text-[32px] font-bold tracking-[0.2em] text-center text-gray-900 font-mono">
-                  {group.invite_code}
-                </p>
-              </div>
-              <div className="px-5 py-3 flex gap-2">
-                <button
-                  onClick={handleCopyCode}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-[12px] py-3 text-[15px] font-semibold text-gray-900 active:scale-[0.98] transition-transform"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4 text-green-500" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      Copy
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleShareLink}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#007AFF] rounded-[12px] py-3 text-[15px] font-semibold text-white active:scale-[0.98] transition-transform"
-                >
-                  {linkCopied ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-4 w-4" />
-                      Share
-                    </>
-                  )}
-                </button>
-              </div>
-              <button
-                onClick={handleEmailInvite}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 text-[15px] font-medium text-[#007AFF] active:bg-gray-50 transition-colors"
-              >
-                <Mail className="h-4 w-4" />
-                Send Email Invite
-              </button>
+              <SettingToggle
+                label="Include in all-time stats"
+                description="Count guest scores in leaderboards"
+                value={settings?.guest_include_in_stats ?? false}
+                onChange={(v) => handleSettingChange("guest_include_in_stats", v)}
+              />
+              <SettingToggle
+                label="Allow recurring guests"
+                description="Let the same guest join multiple meetups"
+                value={settings?.guest_allow_recurring ?? true}
+                onChange={(v) => handleSettingChange("guest_allow_recurring", v)}
+              />
             </>
-          ) : (
-            <div className="p-5 text-center">
-              <p className="text-[15px] text-gray-500">No invite code generated</p>
-            </div>
+          )}
+          {(isAdmin || (settings?.perm_members_can_view_guest_archive ?? true)) && (
+            <SettingRow
+              label="Manage guest archive"
+              description="View and manage all past guests"
+              onClick={() => router.push("/guests")}
+            />
           )}
         </SettingSection>
 
-        {/* ── Meetup Defaults ───────────────────────────────────── */}
-        <SettingSection title="Meetup Defaults">
-          <SettingToggle
-            label="Auto-include all members"
-            description="Pre-select all core members for new meetups"
-            value={settings?.auto_include_all_members ?? true}
-            onChange={(v) => handleSettingChange("auto_include_all_members", v)}
-            disabled={!isAdmin}
-          />
-          <SettingSelect
-            label="Default status on creation"
-            value={settings?.default_meetup_status ?? "planned"}
-            options={[
-              { label: "Planned", value: "planned" },
-              { label: "Active", value: "active" },
-            ]}
-            onChange={(v) => handleSettingChange("default_meetup_status", v)}
-            disabled={!isAdmin}
-          />
-        </SettingSection>
+        {/* ── Invites ───────────────────────────────────────────── */}
+        {(isAdmin || (settings?.perm_members_can_share_invite ?? true)) && (
+          <SettingSection title="Invites">
+            {group?.invite_code ? (
+              <>
+                <div className="px-5 py-5">
+                  <p className="text-[32px] font-bold tracking-[0.2em] text-center text-gray-900 font-mono">
+                    {group.invite_code}
+                  </p>
+                </div>
+                <div className="px-5 py-3 flex gap-2">
+                  <button
+                    onClick={handleCopyCode}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-[12px] py-3 text-[15px] font-semibold text-gray-900 active:scale-[0.98] transition-transform"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 text-green-500" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleShareLink}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#007AFF] rounded-[12px] py-3 text-[15px] font-semibold text-white active:scale-[0.98] transition-transform"
+                  >
+                    {linkCopied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4" />
+                        Share
+                      </>
+                    )}
+                  </button>
+                </div>
+                <button
+                  onClick={handleEmailInvite}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3.5 text-[15px] font-medium text-[#007AFF] active:bg-gray-50 transition-colors"
+                >
+                  <Mail className="h-4 w-4" />
+                  Send Email Invite
+                </button>
+              </>
+            ) : (
+              <div className="p-5 text-center">
+                <p className="text-[15px] text-gray-500">No invite code generated</p>
+              </div>
+            )}
+          </SettingSection>
+        )}
+
+        {/* ── Meetup Defaults (admin only) ──────────────────────── */}
+        {isAdmin && (
+          <SettingSection title="Meetup Defaults">
+            <SettingToggle
+              label="Auto-include all members"
+              description="Pre-select all core members for new meetups"
+              value={settings?.auto_include_all_members ?? true}
+              onChange={(v) => handleSettingChange("auto_include_all_members", v)}
+            />
+            <SettingSelect
+              label="Default status on creation"
+              value={settings?.default_meetup_status ?? "planned"}
+              options={[
+                { label: "Planned", value: "planned" },
+                { label: "Active", value: "active" },
+              ]}
+              onChange={(v) => handleSettingChange("default_meetup_status", v)}
+            />
+          </SettingSection>
+        )}
+
+        {/* ── Permissions (admin only) ───────────────────────────── */}
+        {isAdmin && (
+          <SettingSection title="Permissions">
+            <SettingRow
+              label="Member Permissions"
+              description="Control what members can see and do"
+              onClick={() => router.push("/settings/group/permissions")}
+            />
+          </SettingSection>
+        )}
+
+        {/* ── Danger Zone ───────────────────────────────────────── */}
+        <div className="pt-2">
+          {isAdmin ? (
+            <button
+              onClick={() => setConfirmDialog({ type: "delete" })}
+              className="w-full flex items-center justify-center gap-2 py-4 text-[17px] font-semibold text-red-500 active:opacity-60 transition-opacity"
+            >
+              Delete Group
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmDialog({ type: "leave" })}
+              className="w-full flex items-center justify-center gap-2 py-4 text-[17px] font-semibold text-red-500 active:opacity-60 transition-opacity"
+            >
+              Leave Group
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* ── Confirm Dialog ────────────────────────────────────── */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-5">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => !isPending && setConfirmDialog(null)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-[24px] px-5 py-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-[17px] font-semibold text-gray-900">
+                  {confirmDialog.type === "remove" && `Remove ${confirmDialog.name}?`}
+                  {confirmDialog.type === "demote" && `Demote ${confirmDialog.name}?`}
+                  {confirmDialog.type === "leave" && "Leave this group?"}
+                  {confirmDialog.type === "delete" && "Delete this group?"}
+                </p>
+                <p className="text-[14px] text-gray-500 mt-0.5">
+                  {confirmDialog.type === "remove" &&
+                    "They'll lose access to all group data and meetups."}
+                  {confirmDialog.type === "demote" &&
+                    "They'll become a regular member and lose admin access."}
+                  {confirmDialog.type === "leave" &&
+                    "You'll lose access to this group's meetups and history."}
+                  {confirmDialog.type === "delete" &&
+                    "All meetups, sessions, scores, and guests will be permanently deleted. This cannot be undone."}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setConfirmDialog(null)}
+                disabled={isPending}
+                className="flex-1 bg-gray-100 text-gray-900 rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmDialog.type === "remove") handleRemoveConfirm();
+                  else if (confirmDialog.type === "demote") handleDemoteConfirm();
+                  else if (confirmDialog.type === "leave") handleLeaveConfirm();
+                  else if (confirmDialog.type === "delete") handleDeleteConfirm();
+                }}
+                disabled={isPending}
+                className="flex-1 bg-red-500 text-white rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    {confirmDialog.type === "remove" && "Remove"}
+                    {confirmDialog.type === "demote" && "Demote"}
+                    {confirmDialog.type === "leave" && "Leave Group"}
+                    {confirmDialog.type === "delete" && "Delete Group"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

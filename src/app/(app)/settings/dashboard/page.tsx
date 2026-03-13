@@ -37,6 +37,14 @@ export default function DashboardSettingsPage() {
     <div className="pb-36">
       <SettingsHeader title="Dashboard Settings" onBack={() => router.back()} />
 
+      {!isAdmin && (
+        <div className="mx-5 mt-4 flex items-center gap-3 bg-gray-50 rounded-[14px] px-4 py-3.5">
+          <p className="text-[14px] text-gray-500">
+            These settings are managed by your group admin.
+          </p>
+        </div>
+      )}
+
       <div className="px-5 mt-4 space-y-5">
         {/* ── Leaderboards ──────────────────────────────────────── */}
         <SettingSection title="Leaderboards">

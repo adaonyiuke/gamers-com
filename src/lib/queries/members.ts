@@ -232,6 +232,80 @@ export function useCurrentMemberRole(groupId: string | null) {
   });
 }
 
+export function useUpdateMemberRole() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      memberId,
+      groupId,
+      role,
+    }: {
+      memberId: string;
+      groupId: string;
+      role: "owner" | "member";
+    }) => {
+      const { data, error } = await supabase
+        .from("group_members")
+        .update({ role })
+        .eq("id", memberId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, { groupId }) => {
+      queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
+    },
+  });
+}
+
+export function useLeaveGroup() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({ groupId }: { groupId: string }) => {
+      const { error } = await supabase
+        .from("group_members")
+        .delete()
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_groups"] });
+      queryClient.invalidateQueries({ queryKey: ["group_members"] });
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      memberId,
+      groupId,
+    }: {
+      memberId: string;
+      groupId: string;
+    }) => {
+      const { error } = await supabase
+        .from("group_members")
+        .delete()
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, { groupId }) => {
+      queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
+    },
+  });
+}
+
 export function useUpdateMember() {
   const supabase = createClient();
   const queryClient = useQueryClient();

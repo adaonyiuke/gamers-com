@@ -9,6 +9,8 @@ import {
   Loader2,
   Shield,
   AlertCircle,
+  AlertTriangle,
+  LogOut,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import {
@@ -17,6 +19,7 @@ import {
   useLookupGroupByInviteCode,
   useJoinGroup,
 } from "@/lib/queries/groups";
+import { useLeaveGroup } from "@/lib/queries/members";
 import {
   SettingsHeader,
   SettingSection,
@@ -32,8 +35,15 @@ export default function GroupsPage() {
   const createGroup = useCreateGroup();
   const lookupGroup = useLookupGroupByInviteCode();
   const joinGroup = useJoinGroup();
+  const leaveGroup = useLeaveGroup();
 
   const [view, setView] = useState<View>("list");
+  const [leaveTarget, setLeaveTarget] = useState<{
+    groupId: string;
+    name: string;
+    isOnlyOwner: boolean;
+    isLastMember: boolean;
+  } | null>(null);
 
   // Create group form
   const [newName, setNewName] = useState("");
@@ -77,7 +87,7 @@ export default function GroupsPage() {
   async function handleConfirmJoin() {
     if (!foundGroup) return;
     try {
-      const result = await joinGroup.mutateAsync({ groupId: foundGroup.id });
+      await joinGroup.mutateAsync({ groupId: foundGroup.id });
       switchGroup(foundGroup.id);
       setInviteCode("");
       setFoundGroup(null);
@@ -98,6 +108,41 @@ export default function GroupsPage() {
     joinGroup.reset();
   }
 
+  function requestLeave(g: NonNullable<typeof userGroups>[number]) {
+    if (!userGroups) return;
+    const groupMembers = userGroups.filter((x) => x.group_id === g.group_id);
+    const isOnlyOwner =
+      g.role === "owner" &&
+      userGroups.filter(
+        (x) => x.group_id === g.group_id && x.role === "owner"
+      ).length === 1;
+    const isLastMember = userGroups.filter((x) => x.group_id === g.group_id).length === 1;
+    setLeaveTarget({
+      groupId: g.group_id,
+      name: g.name,
+      isOnlyOwner,
+      isLastMember,
+    });
+  }
+
+  async function handleConfirmLeave() {
+    if (!leaveTarget) return;
+    try {
+      await leaveGroup.mutateAsync({ groupId: leaveTarget.groupId });
+      if (leaveTarget.groupId === groupId) {
+        const remaining = (userGroups ?? []).filter(
+          (g) => g.group_id !== leaveTarget.groupId
+        );
+        if (remaining.length > 0) {
+          switchGroup(remaining[0].group_id);
+        }
+      }
+      setLeaveTarget(null);
+    } catch {
+      // Error shown via mutation state
+    }
+  }
+
   return (
     <div className="pb-36">
       <SettingsHeader title="Your Groups" onBack={() => router.back()} />
@@ -116,45 +161,53 @@ export default function GroupsPage() {
                   const isActive = g.group_id === groupId;
                   const initial = g.name.charAt(0).toUpperCase();
                   return (
-                    <button
-                      key={g.group_id}
-                      onClick={() => {
-                        if (!isActive) switchGroup(g.group_id);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-5 py-4 text-left transition-colors",
-                        isActive ? "bg-[#007AFF]/[0.04]" : "active:bg-gray-50"
-                      )}
-                    >
-                      <div
+                    <div key={g.group_id} className="flex items-center">
+                      <button
+                        onClick={() => {
+                          if (!isActive) switchGroup(g.group_id);
+                        }}
                         className={cn(
-                          "h-11 w-11 rounded-[13px] flex items-center justify-center shrink-0 text-[17px] font-bold",
-                          isActive
-                            ? "bg-[#007AFF] text-white"
-                            : "bg-gray-100 text-gray-500"
+                          "flex-1 flex items-center gap-3 px-5 py-4 text-left transition-colors",
+                          isActive ? "bg-[#007AFF]/[0.04]" : "active:bg-gray-50"
                         )}
                       >
-                        {initial}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[17px] font-semibold text-gray-900 truncate">
-                            {g.name}
-                          </p>
-                          {g.role === "owner" && (
-                            <Shield className="h-3.5 w-3.5 text-[#007AFF] shrink-0" />
+                        <div
+                          className={cn(
+                            "h-11 w-11 rounded-[13px] flex items-center justify-center shrink-0 text-[17px] font-bold",
+                            isActive
+                              ? "bg-[#007AFF] text-white"
+                              : "bg-gray-100 text-gray-500"
+                          )}
+                        >
+                          {initial}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[17px] font-semibold text-gray-900 truncate">
+                              {g.name}
+                            </p>
+                            {g.role === "owner" && (
+                              <Shield className="h-3.5 w-3.5 text-[#007AFF] shrink-0" />
+                            )}
+                          </div>
+                          {g.description && (
+                            <p className="text-[13px] text-gray-500 truncate mt-0.5">
+                              {g.description}
+                            </p>
                           )}
                         </div>
-                        {g.description && (
-                          <p className="text-[13px] text-gray-500 truncate mt-0.5">
-                            {g.description}
-                          </p>
+                        {isActive && (
+                          <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
                         )}
-                      </div>
-                      {isActive && (
-                        <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
-                      )}
-                    </button>
+                      </button>
+                      <button
+                        onClick={() => requestLeave(g)}
+                        className="pr-5 pl-2 py-4 text-red-500 hover:text-red-600 active:text-red-700 transition-colors"
+                        title={`Leave ${g.name}`}
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </button>
+                    </div>
                   );
                 })
               ) : (
@@ -359,6 +412,63 @@ export default function GroupsPage() {
           </SettingSection>
         )}
       </div>
+
+      {/* ── Leave Group Confirm Dialog ─────────────────────────── */}
+      {leaveTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-5">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => !leaveGroup.isPending && setLeaveTarget(null)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-[24px] px-5 py-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-[17px] font-semibold text-gray-900">
+                  Leave {leaveTarget.name}?
+                </p>
+                <p className="text-[14px] text-gray-500 mt-0.5">
+                  {leaveTarget.isOnlyOwner && !leaveTarget.isLastMember
+                    ? "You're the only admin. Transfer ownership to another member before leaving."
+                    : leaveTarget.isLastMember
+                    ? "You're the last member. Leaving will delete this group and all its data."
+                    : "You'll lose access to all meetups and history for this group."}
+                </p>
+              </div>
+            </div>
+
+            {leaveGroup.isError && (
+              <div className="flex items-center gap-2 text-red-500 text-[14px]">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>Failed to leave group. Please try again.</span>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setLeaveTarget(null)}
+                disabled={leaveGroup.isPending}
+                className="flex-1 bg-gray-100 text-gray-900 rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLeave}
+                disabled={leaveGroup.isPending || (leaveTarget.isOnlyOwner && !leaveTarget.isLastMember)}
+                className="flex-1 bg-red-500 text-white rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center"
+              >
+                {leaveGroup.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  "Leave Group"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

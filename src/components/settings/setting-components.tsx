@@ -11,7 +11,7 @@ export function SettingSection({
   title,
   children,
 }: {
-  title: string;
+  title: string | ReactNode;
   children: ReactNode;
 }) {
   return (
