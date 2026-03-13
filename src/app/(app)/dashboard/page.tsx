@@ -109,7 +109,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
     if (!featuredSessions || featuredMeetup?.status !== "complete") return null;
     const winCounts: Record<string, { name: string; count: number }> = {};
     for (const session of featuredSessions) {
-      const winner = session.score_entries?.find((e: any) => e.is_winner);
+      const winner = session.score_entries?.find((e: any) => e.is_winner) as any;
       if (!winner) continue;
       const name =
         winner.meetup_participants?.group_members?.display_name ??
