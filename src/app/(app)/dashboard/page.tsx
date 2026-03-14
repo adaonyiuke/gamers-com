@@ -38,6 +38,54 @@ function SkeletonBlock({ className }: { className?: string }) {
   );
 }
 
+function InstallBanner() {
+  const [visible, setVisible] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    // Don't show if already installed as PWA
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in window.navigator && (window.navigator as any).standalone === true);
+    if (isStandalone) return;
+    // Don't show if dismissed before
+    if (localStorage.getItem("pwa_banner_dismissed")) return;
+    // Only show on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) return;
+    setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+    setVisible(true);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className="mx-5 mb-4 bg-white rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] px-4 py-3.5 flex items-start gap-3">
+      <div className="h-9 w-9 rounded-[10px] bg-black flex items-center justify-center shrink-0 mt-0.5">
+        <Gamepad2 className="h-5 w-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] font-semibold text-gray-900">Add to Home Screen</p>
+        <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">
+          {isIOS
+            ? 'Tap the Share button below, then "Add to Home Screen" for the best experience.'
+            : 'Tap the browser menu, then "Add to Home Screen" or "Install App".'}
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          localStorage.setItem("pwa_banner_dismissed", "1");
+          setVisible(false);
+        }}
+        className="shrink-0 text-gray-400 active:opacity-60 transition-opacity mt-0.5"
+        aria-label="Dismiss"
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { groupId, loading: groupLoading, groups, switchGroup } = useGroupId();
@@ -207,6 +255,9 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
           Dashboard
         </h1>
       </div>
+
+      {/* PWA install nudge for first-time mobile visitors */}
+      <InstallBanner />
 
       {/* Group picker dropdown */}
       {showGroupPicker && (
@@ -410,10 +461,16 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               </div>
             ) : leaderboard.length === 0 ? (
               <div className="p-8 text-center">
-                <Trophy className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-[15px] text-gray-500">
+                <Trophy className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-[15px] text-gray-500 mb-4">
                   The arena is empty. Start playing games to see your name rise to the top of the ranks.
                 </p>
+                <Link
+                  href="/meetups/new"
+                  className="inline-block bg-black text-white text-[15px] font-semibold rounded-[12px] px-5 py-2.5 active:scale-[0.98] transition-transform"
+                >
+                  Schedule a Meetup
+                </Link>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -475,10 +532,16 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               </div>
             ) : !recentSessions || recentSessions.length === 0 ? (
               <div className="p-8 text-center">
-                <Gamepad2 className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-[15px] text-gray-500">
+                <Gamepad2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-[15px] text-gray-500 mb-4">
                   No sessions recorded yet. Start a meetup to get going!
                 </p>
+                <Link
+                  href="/meetups/new"
+                  className="inline-block bg-black text-white text-[15px] font-semibold rounded-[12px] px-5 py-2.5 active:scale-[0.98] transition-transform"
+                >
+                  Start a Meetup
+                </Link>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
