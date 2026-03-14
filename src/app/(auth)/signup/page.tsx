@@ -18,11 +18,18 @@ export default function SignupPage() {
     setLoading(true);
     setMessage("");
 
+    // Preserve invite code through email confirmation so the user is
+    // auto-joined to the group after they verify their email.
+    const inviteCode = new URLSearchParams(window.location.search).get("code");
+    const callbackNext = inviteCode
+      ? `?next=${encodeURIComponent("/join?code=" + inviteCode)}`
+      : "";
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/callback`,
+        emailRedirectTo: `${window.location.origin}/callback${callbackNext}`,
         data: {
           display_name: displayName,
         },

@@ -487,12 +487,17 @@ export default function NewMeetupPage() {
         )}
 
         {/* Submit */}
+        {selectedMemberIds.length + selectedGuestIds.length === 0 && (
+          <p className="text-[13px] text-center text-gray-400">
+            Select at least one player to create a meetup
+          </p>
+        )}
         <button
           type="submit"
-          disabled={createMeetup.isPending}
+          disabled={createMeetup.isPending || selectedMemberIds.length + selectedGuestIds.length === 0}
           className={cn(
             "w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform",
-            createMeetup.isPending && "opacity-50"
+            (createMeetup.isPending || selectedMemberIds.length + selectedGuestIds.length === 0) && "opacity-50"
           )}
         >
           {createMeetup.isPending ? "Creating..." : "Create Meetup"}

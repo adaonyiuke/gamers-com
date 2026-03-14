@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Home,
   Gamepad2,
@@ -9,16 +10,31 @@ import {
   Wrench,
   Users,
   ChevronLeft,
+  LogOut,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroupMembers } from "@/lib/queries/members";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsHubPage() {
   const { user } = useUser();
   const { groupId } = useGroupId();
   const { data: members } = useGroupMembers(groupId);
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    // Clear any persisted group selection
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("selected_group_id");
+    }
+    router.push("/login");
+  }
 
   const isAdmin = useMemo(() => {
     if (!members || !user) return false;
@@ -103,6 +119,25 @@ export default function SettingsHubPage() {
             </Link>
           );
         })}
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full flex items-center gap-4 bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-5 active:scale-[0.98] transition-transform disabled:opacity-50"
+        >
+          <div className="h-11 w-11 rounded-[13px] bg-red-50 flex items-center justify-center shrink-0">
+            <LogOut className="h-[22px] w-[22px] text-red-500" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-[17px] font-semibold text-red-500">
+              {loggingOut ? "Signing out..." : "Sign Out"}
+            </p>
+            <p className="text-[13px] text-gray-400 mt-0.5">
+              {user?.email ?? ""}
+            </p>
+          </div>
+        </button>
       </div>
     </div>
   );

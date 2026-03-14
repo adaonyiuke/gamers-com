@@ -271,10 +271,17 @@ export default function NewSessionPage({
     router,
   ]);
 
+  // Detect duplicate placements (e.g. two players both assigned 1st place)
+  const hasDuplicatePlacements = useMemo(() => {
+    const assigned = Object.values(placements).filter((p) => p != null);
+    return new Set(assigned).size !== assigned.length;
+  }, [placements]);
+
   const canFinalize = useMemo(() => {
     if (selectedIds.length === 0) return false;
     if (isManualWinner) return !!manualWinnerId;
     if (isPlacementMode) {
+      if (hasDuplicatePlacements) return false;
       // At least 1st place must be assigned
       return Object.values(placements).includes(1);
     }
@@ -282,7 +289,7 @@ export default function NewSessionPage({
     return rounds.some((round) =>
       selectedIds.some((id) => round[id] && round[id] !== "")
     );
-  }, [selectedIds, rounds, isManualWinner, isPlacementMode, manualWinnerId, placements]);
+  }, [selectedIds, rounds, isManualWinner, isPlacementMode, manualWinnerId, placements, hasDuplicatePlacements]);
 
   const stepTitle = step === 1 ? "Choose a Game" : step === 2 ? "Select Players" : isManualWinner ? "Select Winner" : isPlacementMode ? "Assign Placements" : "Enter Scores";
 
@@ -710,6 +717,15 @@ export default function NewSessionPage({
               <div className="bg-red-50 rounded-[14px] px-4 py-3">
                 <p className="text-red-600 text-[15px]">
                   Something went wrong. Please try again.
+                </p>
+              </div>
+            )}
+
+            {/* Duplicate placement warning */}
+            {isPlacementMode && hasDuplicatePlacements && (
+              <div className="bg-amber-50 rounded-[14px] px-4 py-3">
+                <p className="text-amber-700 text-[15px]">
+                  Two players have the same placement. Each position must be unique.
                 </p>
               </div>
             )}
