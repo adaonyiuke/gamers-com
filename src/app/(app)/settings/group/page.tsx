@@ -1,6 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
+const AVATAR_COLORS = [
+  "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
+  "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
+];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 import { useRouter } from "next/navigation";
 import {
   Copy,
@@ -336,10 +348,11 @@ export default function GroupSettingsPage() {
                     key={member.id}
                     className="flex items-center gap-3 px-5 py-3.5"
                   >
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                      <span className="text-[17px] font-semibold text-gray-600">
-                        {initial}
-                      </span>
+                    <div
+                      className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[17px] font-semibold shrink-0"
+                      style={{ backgroundColor: member.avatar_url ?? getAvatarColor(member.display_name ?? "") }}
+                    >
+                      {initial}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

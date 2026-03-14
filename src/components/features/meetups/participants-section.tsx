@@ -6,10 +6,28 @@ import { cn } from "@/lib/utils/cn";
 
 const INITIAL_LIMIT = 4;
 
+const AVATAR_COLORS = [
+  "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
+  "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
+];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 const getName = (p: Record<string, unknown>) => {
-  const gm = p.group_members as { display_name: string } | null;
+  const gm = p.group_members as { display_name: string; avatar_url?: string | null } | null;
   const g = p.guests as { name: string } | null;
   return gm?.display_name ?? g?.name ?? "Unknown";
+};
+
+const getMemberAvatarColor = (p: Record<string, unknown>, name: string): string | null => {
+  const gm = p.group_members as { avatar_url?: string | null } | null;
+  if (gm) return gm.avatar_url ?? getAvatarColor(name);
+  return null; // guest
 };
 
 const getInviterName = (p: Record<string, unknown>) => {
@@ -93,16 +111,15 @@ export function ParticipantsSection({
               const name = getName(p);
               const isGuest = !!p.guest_id;
               const inviterName = getInviterName(p);
+              const avatarColor = isGuest ? "#FB923C" : (getMemberAvatarColor(p, name) ?? "#007AFF");
               return (
                 <div
                   key={p.id as string}
                   className="flex items-center gap-3 px-4 py-3.5"
                 >
                   <div
-                    className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold",
-                      isGuest ? "bg-orange-400" : "bg-[#007AFF]"
-                    )}
+                    className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
+                    style={{ backgroundColor: avatarColor }}
                   >
                     {name[0].toUpperCase()}
                   </div>

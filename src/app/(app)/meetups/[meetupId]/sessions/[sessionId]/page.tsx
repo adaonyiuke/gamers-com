@@ -29,10 +29,29 @@ function SkeletonBlock({ className }: { className?: string }) {
   );
 }
 
+const AVATAR_COLORS = [
+  "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
+  "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
+];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 const getName = (entry: any) =>
   entry.meetup_participants?.group_members?.display_name ??
   entry.meetup_participants?.guests?.name ??
   "Unknown";
+
+const getEntryAvatarColor = (entry: any, name: string): string => {
+  const avatarUrl =
+    entry.meetup_participants?.group_members?.avatar_url ??
+    entry.meetup_participants?.guests?.avatar_url;
+  return avatarUrl ?? getAvatarColor(name);
+};
 
 export default function SessionDetailPage() {
   const params = useParams();
@@ -234,8 +253,8 @@ export default function SessionDetailPage() {
                   <div className="divide-y divide-gray-100">
                     {sortedEntries.map((entry: any, idx: number) => {
                       const participantName = getName(entry);
-                      const initial =
-                        participantName.charAt(0).toUpperCase();
+                      const initial = participantName.charAt(0).toUpperCase();
+                      const avatarColor = getEntryAvatarColor(entry, participantName);
 
                       return (
                         <div
@@ -247,10 +266,11 @@ export default function SessionDetailPage() {
                               {idx + 1}
                             </span>
                           </div>
-                          <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-[15px] font-semibold text-gray-600">
-                              {initial}
-                            </span>
+                          <div
+                            className="h-9 w-9 rounded-full flex items-center justify-center text-white text-[15px] font-semibold"
+                            style={{ backgroundColor: avatarColor }}
+                          >
+                            {initial}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
