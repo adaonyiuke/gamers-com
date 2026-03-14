@@ -38,7 +38,7 @@ const Context = createContext<GroupContext>({
 });
 
 export function GroupProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -59,10 +59,15 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    // Wait for Supabase to resolve auth state before acting
+    if (authLoading) return;
+
     if (!user) {
       setGroupId(null);
       setGroups([]);
       setLoading(false);
+      // Redirect unauthenticated users to login
+      router.push("/login");
       return;
     }
 
@@ -138,7 +143,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     }
 
     loadGroups();
-  }, [user, supabase]);
+  }, [user, authLoading, supabase, router]);
 
   return (
     <Context.Provider value={{ groupId, loading, groups, setGroupId, switchGroup }}>
