@@ -467,7 +467,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                 </p>
                 <Link
                   href="/meetups/new"
-                  className="inline-block bg-black text-white text-[15px] font-semibold rounded-[12px] px-5 py-2.5 active:scale-[0.98] transition-transform"
+                  className="inline-block bg-[#007AFF] text-white text-[14px] font-semibold rounded-[10px] px-4 py-2 active:scale-[0.98] transition-transform"
                 >
                   Schedule a Meetup
                 </Link>
@@ -538,7 +538,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                 </p>
                 <Link
                   href="/meetups/new"
-                  className="inline-block bg-black text-white text-[15px] font-semibold rounded-[12px] px-5 py-2.5 active:scale-[0.98] transition-transform"
+                  className="inline-block bg-[#007AFF] text-white text-[14px] font-semibold rounded-[10px] px-4 py-2 active:scale-[0.98] transition-transform"
                 >
                   Start a Meetup
                 </Link>
