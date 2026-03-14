@@ -117,9 +117,9 @@ export default function ProfilesPage() {
                   <div
                     className="h-11 w-11 rounded-full flex items-center justify-center text-white text-[17px] font-bold shrink-0"
                     style={{
-                      backgroundColor: getAvatarColor(
-                        member.display_name ?? ""
-                      ),
+                      backgroundColor:
+                        member.avatar_url ??
+                        getAvatarColor(member.display_name ?? ""),
                     }}
                   >
                     {(member.display_name ?? "?")[0].toUpperCase()}

@@ -30,6 +30,18 @@ import { useGroupMembers } from "@/lib/queries/members";
 import { formatDate, getRelativeTime } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
 
+const AVATAR_COLORS = [
+  "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
+  "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
+];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function SkeletonBlock({ className }: { className?: string }) {
   return (
     <div
@@ -475,7 +487,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
             ) : (
               <div className="divide-y divide-gray-100">
                 {leaderboard.map((entry: any, idx: number) => {
-                  const medals = ["#FFD700", "#C0C0C0", "#CD7F32"];
+                  const entryColor = entry.avatar_url ?? getAvatarColor(entry.display_name ?? "");
                   return (
                     <div
                       key={entry.member_id}
@@ -483,9 +495,9 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                     >
                       <div
                         className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
-                        style={{ backgroundColor: medals[idx] ?? "#999" }}
+                        style={{ backgroundColor: entryColor }}
                       >
-                        {idx + 1}
+                        {(entry.display_name ?? "?")[0].toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[17px] font-semibold text-gray-900 truncate">
