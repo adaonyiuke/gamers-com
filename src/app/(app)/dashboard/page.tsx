@@ -68,8 +68,8 @@ function InstallBanner() {
         <p className="text-[15px] font-semibold text-gray-900">Add to Home Screen</p>
         <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">
           {isIOS
-            ? 'Tap the Share button below, then "Add to Home Screen" for the best experience.'
-            : 'Tap the browser menu, then "Add to Home Screen" or "Install App".'}
+            ? 'On your browser, tap the Share button, then "Add to Home Screen" for the best experience.'
+            : 'On your browser, tap the menu, then "Add to Home Screen" or "Install App".'}
         </p>
       </div>
       <button
