@@ -195,15 +195,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
     return members.find((m: any) => m.user_id === user.id) ?? null;
   }, [members, user]);
 
-  const [avatarColor, setAvatarColor] = useState("#007AFF");
-  useEffect(() => {
-    if (currentMember?.avatar_url) {
-      setAvatarColor(currentMember.avatar_url);
-    } else {
-      const saved = localStorage.getItem("avatar_color");
-      if (saved) setAvatarColor(saved);
-    }
-  }, [currentMember]);
+  const avatarColor = currentMember?.avatar_url ?? getAvatarColor(currentMember?.display_name ?? "");
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
