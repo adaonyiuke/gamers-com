@@ -57,16 +57,14 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-[16px] overflow-hidden mx-auto mb-4 shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
-            <Image
-              src="/app-icon.png"
-              alt="Game Night"
-              width={192}
-              height={192}
-              className="w-full h-full object-cover scale-[1.25]"
-              priority
-            />
-          </div>
+          <Image
+            src="/app-icon.png"
+            alt="Game Night"
+            width={72}
+            height={72}
+            className="rounded-[16px] mx-auto mb-4 shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+            priority
+          />
           <h1 className="text-[28px] font-bold text-black tracking-tight">
             Game Night
           </h1>
