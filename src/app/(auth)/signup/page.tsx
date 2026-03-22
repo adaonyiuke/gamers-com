@@ -1,25 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+
+  // Resend state
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+
   const supabase = createClient();
+
+  // Countdown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setError("");
 
-    // Preserve invite code through email confirmation so the user is
-    // auto-joined to the group after they verify their email.
     const inviteCode = new URLSearchParams(window.location.search).get("code");
     const callbackNext = inviteCode
       ? `?next=${encodeURIComponent("/join?code=" + inviteCode)}`
@@ -30,20 +45,108 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/callback${callbackNext}`,
-        data: {
-          display_name: displayName,
-        },
+        data: { display_name: displayName },
       },
     });
 
     if (error) {
-      setMessage(error.message);
+      setError(error.message);
     } else {
-      setMessage("Check your email to confirm your account!");
+      setConfirmed(true);
+      setResendCooldown(60);
     }
     setLoading(false);
   }
 
+  async function handleResend() {
+    if (resendCooldown > 0 || resendLoading) return;
+    setResendLoading(true);
+    setResendMessage("");
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) {
+      setResendMessage("Couldn't resend. Please try again.");
+    } else {
+      setResendMessage("Sent! Check your inbox.");
+      setResendCooldown(60);
+    }
+    setResendLoading(false);
+  }
+
+  // ── Confirmation screen ──────────────────────────────────────────────────
+  if (confirmed) {
+    return (
+      <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center justify-center px-5">
+        <div className="w-full max-w-sm text-center">
+          {/* Icon */}
+          <div className="w-16 h-16 bg-[#161719] rounded-full flex items-center justify-center mx-auto mb-5 shadow-[0_4px_16px_rgba(0,0,0,0.15)]">
+            <Mail className="h-7 w-7 text-white" />
+          </div>
+
+          <h1 className="text-[28px] font-bold text-black tracking-tight mb-2">
+            Check your inbox
+          </h1>
+          <p className="text-gray-500 text-[15px] leading-relaxed">
+            We sent a confirmation link to
+          </p>
+          <p className="text-[15px] font-semibold text-gray-900 mt-0.5 mb-6">
+            {email}
+          </p>
+
+          {/* Spam hint */}
+          <div className="bg-amber-50 border border-amber-200 rounded-[16px] px-4 py-3.5 mb-5 text-left">
+            <p className="text-[13px] text-amber-800 leading-snug">
+              <span className="font-semibold">Can&apos;t find it?</span> Check
+              your spam or junk folder — confirmation emails sometimes end up
+              there.
+            </p>
+          </div>
+
+          {/* Resend button */}
+          <button
+            onClick={handleResend}
+            disabled={resendCooldown > 0 || resendLoading}
+            className="w-full bg-white border border-gray-200 rounded-[14px] py-4 text-[17px] font-semibold text-gray-900 disabled:opacity-50 active:scale-[0.98] transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-3"
+          >
+            {resendLoading
+              ? "Sending..."
+              : resendCooldown > 0
+              ? `Resend in ${resendCooldown}s`
+              : "Resend confirmation email"}
+          </button>
+
+          {resendMessage && (
+            <p
+              className={`text-[13px] mb-4 ${
+                resendMessage.includes("Sent")
+                  ? "text-green-600"
+                  : "text-red-500"
+              }`}
+            >
+              {resendMessage}
+            </p>
+          )}
+
+          <button
+            onClick={() => {
+              setConfirmed(false);
+              setError("");
+              setResendMessage("");
+            }}
+            className="text-[15px] text-gray-400 font-medium"
+          >
+            Wrong email? Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Signup form ──────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
@@ -93,16 +196,8 @@ export default function SignupPage() {
             />
           </div>
 
-          {message && (
-            <p
-              className={`text-[14px] text-center ${
-                message.includes("Check your email")
-                  ? "text-green-600"
-                  : "text-red-500"
-              }`}
-            >
-              {message}
-            </p>
+          {error && (
+            <p className="text-[14px] text-center text-red-500">{error}</p>
           )}
 
           <button
