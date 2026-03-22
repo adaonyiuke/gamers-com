@@ -167,7 +167,7 @@ function PodiumCard({ entries }: { entries: LeaderboardEntry[] }) {
             </div>
             <p className="text-white text-[12px] font-semibold text-center truncate w-full px-1">{firstName(third)}</p>
             <p className="text-white/50 text-[11px] font-medium">{third.total_wins}W</p>
-            <div className="w-full h-[44px] rounded-t-[10px] flex flex-col items-center justify-center gap-0.5" style={{ background: "rgba(255,255,255,0.07)" }}>
+            <div className="w-full h-[68px] rounded-t-[10px] flex flex-col items-center justify-center gap-0.5" style={{ background: "rgba(255,255,255,0.07)" }}>
               <span className="text-[22px] leading-none">🥉</span>
               <span className="text-[10px] font-bold text-white/40">3rd</span>
             </div>
