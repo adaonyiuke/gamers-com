@@ -1,5 +1,5 @@
 {
-  "name": "Game Night HQ",
+  "name": "Game Night",
   "short_name": "Game Night",
   "description": "Track your game nights, crown champions, and build rivalries",
   "start_url": "/dashboard",
@@ -8,12 +8,12 @@
   "theme_color": "#F2F2F7",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/app-icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/app-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }

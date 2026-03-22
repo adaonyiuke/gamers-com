@@ -132,7 +132,7 @@ export default function DashboardPage() {
       .slice(0, 3)
       .map((s: any) => {
         const member = members.find((m: any) => m.id === s.member_id);
-        return { ...s, display_name: member?.display_name ?? "Unknown" };
+        return { ...s, display_name: member?.display_name ?? "Unknown", avatar_url: member?.avatar_url ?? null };
       });
   }, [stats, members]);
 
@@ -480,13 +480,18 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               <div className="divide-y divide-gray-100">
                 {leaderboard.map((entry: any, idx: number) => {
                   const entryColor = entry.avatar_url ?? getAvatarColor(entry.display_name ?? "");
+                  const medals = ["🥇", "🥈", "🥉"];
                   return (
                     <div
                       key={entry.member_id}
-                      className="flex items-center gap-3 px-4 py-3.5"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3.5",
+                        idx === 0 && "bg-amber-50"
+                      )}
                     >
+                      <span className="text-[20px] w-7 text-center shrink-0">{medals[idx]}</span>
                       <div
-                        className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
                         style={{ backgroundColor: entryColor }}
                       >
                         {(entry.display_name ?? "?")[0].toUpperCase()}

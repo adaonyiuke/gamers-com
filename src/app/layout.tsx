@@ -2,17 +2,17 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Game Night HQ",
+  title: "Game Night",
   description: "Track your game nights, record wins, and build rivalries",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon-192.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/app-icon.png",
+    apple: "/app-icon.png",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Game Night HQ",
+    title: "Game Night",
   },
 };
 
@@ -31,6 +31,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Aktiv Grotesk via Adobe Fonts */}
+        <link rel="stylesheet" href="https://use.typekit.net/vqc1rlv.css" />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

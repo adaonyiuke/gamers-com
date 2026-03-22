@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Shuffle, Copy, Check, Users, ChevronDown, ChevronUp, PartyPopper } from "lucide-react";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -53,6 +54,12 @@ export default function OnboardingPage() {
 
   // Step state
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+  function goToStep(next: number) {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  }
 
   // Step 1 state
   const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0]);
@@ -108,7 +115,7 @@ export default function OnboardingPage() {
           .eq("group_id", groupId)
           .eq("user_id", user.id);
       }
-      setStep(2);
+      goToStep(2);
     } finally {
       setSaving(false);
     }
@@ -133,7 +140,7 @@ export default function OnboardingPage() {
         .eq("id", groupId)
         .single();
       setInviteCode(data?.invite_code ?? null);
-      setStep(3);
+      goToStep(3);
     } finally {
       setSaving(false);
     }
@@ -184,7 +191,7 @@ export default function OnboardingPage() {
       setGroupName(group.name);
       setInviteCode(groupData?.invite_code ?? null);
       setJoinedExistingGroup(true);
-      setStep(3);
+      goToStep(3);
     } catch {
       setJoinError("Something went wrong. Please try again.");
     } finally {
@@ -233,7 +240,16 @@ export default function OnboardingPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-6 pb-12">
+      <main className="max-w-lg mx-auto px-6 pb-12 overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={step}
+          custom={direction}
+          initial={(d) => ({ opacity: 0, x: d * 40 })}
+          animate={{ opacity: 1, x: 0 }}
+          exit={(d) => ({ opacity: 0, x: d * -40 })}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+        >
 
         {/* ── STEP 1: Profile Setup ── */}
         {step === 1 && (
@@ -521,6 +537,8 @@ export default function OnboardingPage() {
           </>
         )}
 
+        </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );

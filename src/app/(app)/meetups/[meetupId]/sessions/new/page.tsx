@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils/game-rules";
 import type { GameScoringType } from "@/lib/utils/game-rules";
 import { WinnerReveal } from "@/components/features/sessions/winner-reveal";
+import { useSessionDraft } from "@/lib/hooks/use-session-draft";
 import { cn } from "@/lib/utils/cn";
 
 const TILE_COLORS = [
@@ -32,6 +33,22 @@ const TILE_COLORS = [
   "#FF3B30",
   "#00C7BE",
 ];
+
+const AVATAR_COLORS = [
+  "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
+  "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
+];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+function getParticipantColor(p: any): string {
+  if (p.guest_id) return "#8E8E93"; // gray for guests
+  return p.group_members?.avatar_url ?? getAvatarColor(p.group_members?.display_name ?? "");
+}
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
@@ -76,6 +93,51 @@ export default function NewSessionPage({
   // Rounds state
   const [rounds, setRounds] = useState<Record<string, string>[]>([{}]);
   const [currentRound, setCurrentRound] = useState(0);
+
+  // Draft persistence — restore on mount, auto-save on changes
+  const { restoreDraft, saveDraft, clearDraft } = useSessionDraft(meetupId);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // Restore draft when games/participants are loaded
+  useEffect(() => {
+    if (draftRestored || !games || !participants) return;
+    setDraftRestored(true);
+    const draft = restoreDraft();
+    if (!draft || !draft.selectedGameId) return;
+    const game = games.find((g: any) => g.id === draft.selectedGameId);
+    if (!game) return;
+    setSelectedGame(game);
+    setStep(draft.step);
+    setSelectedParticipantIds(new Set(draft.selectedParticipantIds));
+    setRounds(draft.rounds);
+    setCurrentRound(draft.currentRound);
+    setPlacements(draft.placements);
+    setManualWinnerId(draft.manualWinnerId);
+  }, [draftRestored, games, participants, restoreDraft]);
+
+  // Auto-save draft on state changes (after initial restore)
+  useEffect(() => {
+    if (!draftRestored) return;
+    saveDraft({
+      step,
+      selectedGameId: selectedGame?.id ?? null,
+      selectedParticipantIds: Array.from(selectedParticipantIds),
+      rounds,
+      currentRound,
+      placements,
+      manualWinnerId,
+    });
+  }, [
+    draftRestored,
+    step,
+    selectedGame,
+    selectedParticipantIds,
+    rounds,
+    currentRound,
+    placements,
+    manualWinnerId,
+    saveDraft,
+  ]);
 
   const scoringType: GameScoringType =
     isGameScoringType(selectedGame?.scoring_type ?? "")
@@ -237,6 +299,9 @@ export default function NewSessionPage({
         winnerParticipantId,
       });
 
+      // Clear draft on successful finalization
+      clearDraft();
+
       // Find winner name for reveal
       if (winnerParticipantId) {
         const winnerP = participants.find(
@@ -268,6 +333,7 @@ export default function NewSessionPage({
     selectedIds,
     createSession,
     finalizeSession,
+    clearDraft,
     router,
   ]);
 
@@ -343,12 +409,22 @@ export default function NewSessionPage({
         <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
           Record Game
         </h1>
-        {selectedGame && (
-          <p className="text-[15px] text-gray-500 mt-0.5">
-            {selectedGame.name}
-            {step === 3 && ` \u2022 ${selectedParticipants.length} players`}
-          </p>
-        )}
+        <div className="flex items-center gap-2 mt-1.5">
+          {[1, 2, 3].map((s) => (
+            <div
+              key={s}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                s === step ? "w-6 bg-black" : s < step ? "w-4 bg-gray-400" : "w-4 bg-gray-200"
+              )}
+            />
+          ))}
+          {selectedGame && (
+            <span className="text-[13px] text-gray-400 ml-1">
+              {selectedGame.name}{step === 3 && ` \u2022 ${selectedParticipants.length} players`}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="px-5 mt-2">
@@ -454,10 +530,8 @@ export default function NewSessionPage({
                         className="flex items-center gap-3 px-4 py-3.5 w-full text-left active:bg-gray-50 transition-colors"
                       >
                         <div
-                          className={cn(
-                            "h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0",
-                            isGuest ? "bg-orange-400" : "bg-[#007AFF]"
-                          )}
+                          className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0"
+                          style={{ backgroundColor: getParticipantColor(p) }}
                         >
                           {name[0].toUpperCase()}
                         </div>
@@ -567,10 +641,8 @@ export default function NewSessionPage({
                     >
                       <div className="relative">
                         <div
-                          className={cn(
-                            "h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0",
-                            isGuest ? "bg-orange-400" : "bg-[#007AFF]"
-                          )}
+                          className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0"
+                          style={{ backgroundColor: getParticipantColor(p) }}
                         >
                           {name[0].toUpperCase()}
                         </div>

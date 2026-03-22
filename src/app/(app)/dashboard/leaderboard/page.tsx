@@ -5,6 +5,7 @@ import { Trophy, Gamepad2, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useLeaderboard, type LeaderboardEntry } from "@/lib/queries/members";
+import { useGroupSettings } from "@/lib/queries/settings";
 import { cn } from "@/lib/utils/cn";
 
 const AVATAR_COLORS = [
@@ -38,9 +39,16 @@ function SkeletonBlock({ className }: { className?: string }) {
 export default function LeaderboardPage() {
   const { groupId, loading: groupLoading } = useGroupId();
   const [period, setPeriod] = useState<Period>("all");
+  const { data: settings } = useGroupSettings(groupId);
+  const [showGuests, setShowGuests] = useState<boolean | null>(null);
+
+  // Use group setting as default, allow local override
+  const includeGuests = showGuests ?? settings?.leaderboard_include_guests ?? false;
+
   const { data: rawEntries, isLoading: entriesLoading } = useLeaderboard(
     groupId,
-    period
+    period,
+    includeGuests
   );
 
   const entries = rawEntries?.filter((e) => e.total_sessions > 0) ?? undefined;
@@ -73,6 +81,20 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
+
+        {/* Guest toggle */}
+        <button
+          onClick={() => setShowGuests((prev) => !(prev ?? includeGuests))}
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all",
+            includeGuests
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-500"
+          )}
+        >
+          <span className="text-[15px]">👤</span>
+          Guests {includeGuests ? "ON" : "OFF"}
+        </button>
 
         {/* Table Header */}
         <div className="flex items-center gap-3 px-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
@@ -116,9 +138,23 @@ export default function LeaderboardPage() {
                 const avatarColor = entry.avatar_url ?? getAvatarColor(entry.display_name);
                 return (
                   <div
-                    key={entry.member_id}
-                    className="flex items-center gap-3 px-4 py-3.5"
+                    key={entry.id}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3.5",
+                      idx === 0 && "bg-amber-50",
+                    )}
                   >
+                    <div className="w-8 shrink-0 flex items-center justify-center">
+                      {idx === 0 ? (
+                        <span className="text-[20px]">🥇</span>
+                      ) : idx === 1 ? (
+                        <span className="text-[20px]">🥈</span>
+                      ) : idx === 2 ? (
+                        <span className="text-[20px]">🥉</span>
+                      ) : (
+                        <span className="text-[13px] font-semibold text-gray-400">{idx + 1}</span>
+                      )}
+                    </div>
                     <div
                       className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
                       style={{ backgroundColor: avatarColor }}
@@ -127,6 +163,11 @@ export default function LeaderboardPage() {
                     </div>
                     <p className="flex-1 min-w-0 text-[15px] font-semibold text-gray-900 truncate">
                       {entry.display_name}
+                      {entry.is_guest && (
+                        <span className="ml-1.5 text-[11px] font-medium text-gray-400 align-middle">
+                          GUEST
+                        </span>
+                      )}
                     </p>
                     <span className="w-12 text-center text-[14px] font-medium text-gray-500">
                       {entry.win_rate}%

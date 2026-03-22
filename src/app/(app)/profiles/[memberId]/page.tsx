@@ -23,6 +23,7 @@ import {
   useMemberGameStats,
 } from "@/lib/queries/members";
 import {
+  BADGES,
   computeBadges,
   type MemberBadgeInput,
   type Badge,
@@ -41,11 +42,11 @@ const AVATAR_COLORS = [
   "#00C7BE",
 ];
 
-const BADGE_GRADIENTS: Record<string, string> = {
-  champion: "linear-gradient(135deg, #FFD700, #FFA500)",
-  on_fire: "linear-gradient(135deg, #FF6B6B, #FF2D55)",
-  strategist: "linear-gradient(135deg, #5856D6, #007AFF)",
-  wildcard: "linear-gradient(135deg, #34C759, #00C7BE)",
+const BADGE_CONFIG: Record<string, { gradient: string; emoji: string }> = {
+  champion: { gradient: "linear-gradient(135deg, #FFD700, #FFA500)", emoji: "🏆" },
+  on_fire:  { gradient: "linear-gradient(135deg, #FF6B6B, #FF2D55)", emoji: "🔥" },
+  strategist: { gradient: "linear-gradient(135deg, #5856D6, #007AFF)", emoji: "🧠" },
+  wildcard: { gradient: "linear-gradient(135deg, #34C759, #00C7BE)", emoji: "🃏" },
 };
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -423,27 +424,32 @@ export default function MemberProfilePage() {
               <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
                 Badges
               </p>
-              {badges.length === 0 ? (
-                <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6 text-center">
-                  <p className="text-[15px] text-gray-400">
-                    Play more to earn badges
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {badges.map((badge: Badge) => (
+              <div className="grid grid-cols-2 gap-3">
+                {BADGES.map((badge: Badge) => {
+                  const earned = badges.some((b) => b.id === badge.id);
+                  const config = BADGE_CONFIG[badge.type];
+                  return (
                     <div
                       key={badge.id}
-                      className="px-4 py-2 rounded-full text-white text-[13px] font-bold shadow-sm"
-                      style={{
-                        background: BADGE_GRADIENTS[badge.type],
-                      }}
+                      className={cn(
+                        "rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+                        earned ? "text-white" : "bg-white"
+                      )}
+                      style={earned ? { background: config.gradient } : undefined}
                     >
-                      {badge.label}
+                      <span className={cn("text-[24px] block mb-1", !earned && "grayscale opacity-40")}>
+                        {config.emoji}
+                      </span>
+                      <p className={cn("text-[14px] font-bold", earned ? "text-white" : "text-gray-400")}>
+                        {badge.label}
+                      </p>
+                      <p className={cn("text-[12px] mt-0.5 leading-snug", earned ? "text-white/80" : "text-gray-300")}>
+                        {badge.description}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Sign Out — only on own profile */}
