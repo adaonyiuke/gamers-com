@@ -523,7 +523,7 @@ export default function OnboardingPage() {
             {inviteCode && typeof navigator !== "undefined" && "share" in navigator && (
               <button
                 type="button"
-                onClick={() => navigator.share({ title: `Join ${groupName} on Game Night HQ`, text: `Use code ${inviteCode} to join my group!` })}
+                onClick={() => navigator.share({ title: `Join ${groupName} on Game Night`, text: `Use code ${inviteCode} to join my group!` })}
                 className="w-full bg-[#007AFF] text-white rounded-[14px] py-4 text-[17px] font-semibold transition-opacity hover:opacity-90 active:opacity-70 mb-4"
               >
                 Share Invite

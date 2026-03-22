@@ -74,26 +74,23 @@ export default function LoginPage() {
         </div>
 
         {/* Segmented Control */}
-        <div
-          className="flex mb-6 p-0.5 rounded-[9px]"
-          style={{ background: "rgba(118, 118, 128, 0.12)" }}
-        >
+        <div className="flex mb-6 bg-gray-200/80 rounded-[10px] p-[3px]">
           <button
             onClick={() => setMode("password")}
-            className={`flex-1 py-1.5 text-[13px] font-medium rounded-[7px] transition-all ${
+            className={`flex-1 py-[7px] text-[13px] font-semibold rounded-[8px] transition-all ${
               mode === "password"
-                ? "bg-white shadow-sm font-semibold text-black"
-                : "text-gray-600"
+                ? "bg-white shadow-sm text-gray-900"
+                : "text-gray-500"
             }`}
           >
             Password
           </button>
           <button
             onClick={() => setMode("magic")}
-            className={`flex-1 py-1.5 text-[13px] font-medium rounded-[7px] transition-all ${
+            className={`flex-1 py-[7px] text-[13px] font-semibold rounded-[8px] transition-all ${
               mode === "magic"
-                ? "bg-white shadow-sm font-semibold text-black"
-                : "text-gray-600"
+                ? "bg-white shadow-sm text-gray-900"
+                : "text-gray-500"
             }`}
           >
             Magic Link

@@ -276,7 +276,7 @@ export default function GamesPage() {
       {/* FAB */}
       <Link
         href="/games/new"
-        className="fixed bottom-28 right-5 h-14 w-14 bg-[#007AFF] rounded-full flex items-center justify-center shadow-lg active:scale-[0.95] transition-transform z-30"
+        className="fixed bottom-28 right-5 h-14 w-14 bg-[#161719] rounded-full flex items-center justify-center shadow-lg shadow-black/20 active:scale-[0.95] transition-transform z-30"
         style={{
           maxWidth: "430px",
         }}

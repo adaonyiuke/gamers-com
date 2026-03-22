@@ -328,7 +328,7 @@ export default function MeetupsPage() {
       {!selectMode && (
         <Link
           href="/meetups/new"
-          className="fixed bottom-24 right-5 z-50 w-14 h-14 bg-[#007AFF] rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 active:scale-[0.94] transition-transform"
+          className="fixed bottom-24 right-5 z-50 w-14 h-14 bg-[#161719] rounded-full flex items-center justify-center shadow-lg shadow-black/20 active:scale-[0.94] transition-transform"
         >
           <Plus className="h-7 w-7 text-white" />
         </Link>
@@ -342,7 +342,7 @@ export default function MeetupsPage() {
             onClick={() => setShowConfirm(false)}
           />
           <div className="relative w-full max-w-sm space-y-2">
-            <div className="bg-white rounded-[14px] overflow-hidden">
+            <div className="bg-white rounded-[24px] overflow-hidden">
               <div className="px-4 pt-5 pb-3 text-center">
                 <p className="text-[13px] text-gray-500">
                   Delete {selectedIds.size}{" "}
@@ -360,7 +360,7 @@ export default function MeetupsPage() {
             </div>
             <button
               onClick={() => setShowConfirm(false)}
-              className="w-full py-3.5 text-[17px] font-semibold text-[#007AFF] bg-white rounded-[14px] active:bg-gray-50 transition-colors"
+              className="w-full py-3.5 text-[17px] font-semibold text-gray-900 bg-white rounded-[24px] active:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
@@ -439,7 +439,7 @@ function MeetupCard({
         className={cn(
           "w-full text-left rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] active:bg-gray-50 transition-all duration-150 flex items-start gap-3",
           isComplete ? "bg-white/70" : "bg-white",
-          isSelected && "ring-2 ring-[#007AFF]"
+          isSelected && "ring-2 ring-[#161719]"
         )}
       >
         <div
