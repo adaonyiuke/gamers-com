@@ -59,8 +59,8 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-[16px] overflow-hidden mx-auto mb-4 shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
             <Image
-              src="/icon-192.png"
-              alt="Game Night HQ"
+              src="/app-icon.png"
+              alt="Game Night"
               width={192}
               height={192}
               className="w-full h-full object-cover scale-[1.25]"
@@ -68,7 +68,7 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-[28px] font-bold text-black tracking-tight">
-            Game Night HQ
+            Game Night
           </h1>
           <p className="text-gray-500 text-[15px] mt-1">
             Track your game nights

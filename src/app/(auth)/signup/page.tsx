@@ -50,8 +50,8 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-[16px] overflow-hidden mx-auto mb-4 shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
             <Image
-              src="/icon-192.png"
-              alt="Game Night HQ"
+              src="/app-icon.png"
+              alt="Game Night"
               width={192}
               height={192}
               className="w-full h-full object-cover scale-[1.25]"
