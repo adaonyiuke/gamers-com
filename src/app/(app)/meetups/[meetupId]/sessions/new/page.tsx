@@ -95,6 +95,7 @@ export default function NewSessionPage({
   // Rounds state
   const [rounds, setRounds] = useState<Record<string, string>[]>([{}]);
   const [currentRound, setCurrentRound] = useState(0);
+  const [pendingRemoveRound, setPendingRemoveRound] = useState<number | null>(null);
 
   // Draft persistence — restore on mount, auto-save on changes
   const { restoreDraft, saveDraft, clearDraft } = useSessionDraft(meetupId);
@@ -232,10 +233,25 @@ export default function NewSessionPage({
     setCurrentRound(rounds.length);
   };
 
+  const roundHasData = (idx: number) => {
+    const round = rounds[idx];
+    if (!round) return false;
+    return Object.values(round).some((v) => v !== "" && v !== undefined);
+  };
+
   const handleRemoveRound = (idx: number) => {
     if (rounds.length <= 1) return;
+    if (roundHasData(idx)) {
+      setPendingRemoveRound(idx);
+      return;
+    }
+    confirmRemoveRound(idx);
+  };
+
+  const confirmRemoveRound = (idx: number) => {
     setRounds((prev) => prev.filter((_, i) => i !== idx));
     setCurrentRound((prev) => Math.min(prev, rounds.length - 2));
+    setPendingRemoveRound(null);
   };
 
   const handleFinalize = useCallback(async () => {
@@ -832,6 +848,38 @@ export default function NewSessionPage({
           </div>
         )}
       </div>
+
+      {/* Remove round confirmation dialog */}
+      {pendingRemoveRound !== null && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-5 pb-8">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setPendingRemoveRound(null)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-[20px] px-5 py-5 space-y-3">
+            <p className="text-[17px] font-semibold text-gray-900 text-center">
+              Delete Round {pendingRemoveRound + 1}?
+            </p>
+            <p className="text-[15px] text-gray-500 text-center">
+              This round has scores entered. Deleting it will discard that data.
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setPendingRemoveRound(null)}
+                className="flex-1 bg-gray-100 rounded-[14px] py-3.5 text-[17px] font-semibold text-gray-700 active:scale-[0.98] transition-transform"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => confirmRemoveRound(pendingRemoveRound)}
+                className="flex-1 bg-red-500 text-white rounded-[14px] py-3.5 text-[17px] font-semibold active:scale-[0.98] transition-transform"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
