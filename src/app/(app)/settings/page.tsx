@@ -9,6 +9,7 @@ import {
   BarChart3,
   Wrench,
   Users,
+  User,
   ChevronLeft,
   LogOut,
 } from "lucide-react";
@@ -43,6 +44,14 @@ export default function SettingsHubPage() {
   }, [members, user]);
 
   const sections = [
+    {
+      href: "/settings/account",
+      icon: User,
+      iconBg: "bg-gray-100",
+      iconColor: "text-gray-600",
+      title: "Account",
+      subtitle: "Name, email, password & avatar",
+    },
     {
       href: "/settings/groups",
       icon: Users,
