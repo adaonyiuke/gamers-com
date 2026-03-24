@@ -7,6 +7,8 @@ import { Trophy } from "lucide-react";
 interface WinnerRevealProps {
   winnerName: string;
   onDismiss: () => void;
+  confettiIntensity?: "off" | "low" | "medium" | "high";
+  reducedMotion?: boolean;
 }
 
 function ConfettiParticle({ delay, x }: { delay: number; x: number }) {
@@ -48,18 +50,26 @@ function ConfettiParticle({ delay, x }: { delay: number; x: number }) {
   );
 }
 
-export function WinnerReveal({ winnerName, onDismiss }: WinnerRevealProps) {
+const CONFETTI_COUNTS = { off: 0, low: 10, medium: 30, high: 60 };
+
+export function WinnerReveal({
+  winnerName,
+  onDismiss,
+  confettiIntensity = "medium",
+  reducedMotion = false,
+}: WinnerRevealProps) {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShow(false);
       setTimeout(onDismiss, 300);
-    }, 3500);
+    }, reducedMotion ? 2000 : 3500);
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+  }, [onDismiss, reducedMotion]);
 
-  const confettiParticles = Array.from({ length: 30 }, (_, i) => ({
+  const particleCount = reducedMotion ? 0 : (CONFETTI_COUNTS[confettiIntensity] ?? 30);
+  const confettiParticles = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     delay: 0.3 + Math.random() * 0.4,
     x: 10 + Math.random() * 80,
@@ -92,9 +102,9 @@ export function WinnerReveal({ winnerName, onDismiss }: WinnerRevealProps) {
 
             {/* Trophy */}
             <motion.div
-              initial={{ scale: 0, rotate: -20 }}
+              initial={reducedMotion ? { scale: 1 } : { scale: 0, rotate: -20 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{
+              transition={reducedMotion ? { duration: 0.2 } : {
                 type: "spring",
                 stiffness: 200,
                 damping: 12,

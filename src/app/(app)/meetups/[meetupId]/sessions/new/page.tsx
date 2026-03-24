@@ -21,6 +21,7 @@ import {
 } from "@/lib/utils/game-rules";
 import type { GameScoringType } from "@/lib/utils/game-rules";
 import { WinnerReveal } from "@/components/features/sessions/winner-reveal";
+import { useGroupSettings } from "@/lib/queries/settings";
 import { useSessionDraft } from "@/lib/hooks/use-session-draft";
 import { cn } from "@/lib/utils/cn";
 
@@ -76,6 +77,7 @@ export default function NewSessionPage({
   const supabase = createClient();
   const createSession = useCreateSession();
   const finalizeSession = useFinalizeSession();
+  const { data: settings } = useGroupSettings(groupId);
 
   const searchParams = useSearchParams();
   const preselectedGameId = searchParams.get("gameId");
@@ -391,10 +393,12 @@ export default function NewSessionPage({
   return (
     <div className="pb-28">
       {/* Winner Reveal Overlay */}
-      {winnerName && (
+      {winnerName && (settings?.winner_animation !== false) && (
         <WinnerReveal
           winnerName={winnerName}
           onDismiss={() => router.push(`/meetups/${meetupId}`)}
+          confettiIntensity={(settings?.confetti_intensity as any) ?? "medium"}
+          reducedMotion={settings?.reduced_motion ?? false}
         />
       )}
 
