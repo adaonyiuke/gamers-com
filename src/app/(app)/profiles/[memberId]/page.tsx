@@ -125,13 +125,13 @@ export default function MemberProfilePage() {
     const input: MemberBadgeInput = {
       winRate: memberStat.win_rate ?? 0,
       totalSessions: memberStat.total_sessions ?? 0,
-      currentStreak: 0,
-      uniqueGameWins: 0,
-      hasFirstPlayWin: false,
+      currentStreak: memberStat.current_streak ?? 0,
+      uniqueGameWins: gameStats?.uniqueGameWins ?? 0,
+      hasFirstPlayWin: gameStats?.hasFirstPlayWin ?? false,
       isTopWinRate,
     };
     return computeBadges(input);
-  }, [memberStat, isTopWinRate]);
+  }, [memberStat, gameStats, isTopWinRate]);
 
   const isLoading = groupLoading || profileLoading || statsLoading;
 

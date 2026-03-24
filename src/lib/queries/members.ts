@@ -107,7 +107,42 @@ export function useMemberGameStats(memberId: string | null) {
         }
       }
 
-      return { meetupsAttended, topGame };
+      const uniqueGameWins = Object.keys(gameCounts).length;
+
+      // Check "Wildcard" badge: did member win the first time they played any game?
+      const { data: allEntries } = await supabase
+        .from("score_entries")
+        .select(
+          `participant_id,
+          is_winner,
+          sessions:session_id(
+            id,
+            game_id,
+            created_at
+          ),
+          meetup_participants:participant_id(member_id)`
+        )
+        .order("created_at", { referencedTable: "sessions", ascending: true });
+
+      // Group sessions by game for this member, find first session per game
+      const firstSessionPerGame: Record<string, { sessionId: string; isWinner: boolean; createdAt: string }> = {};
+      for (const entry of allEntries ?? []) {
+        if ((entry as any).meetup_participants?.member_id !== memberId) continue;
+        const session = entry.sessions as any;
+        const gameId = session?.game_id;
+        if (!gameId) continue;
+        const existing = firstSessionPerGame[gameId];
+        if (!existing || session.created_at < existing.createdAt) {
+          firstSessionPerGame[gameId] = {
+            sessionId: session.id,
+            isWinner: entry.is_winner ?? false,
+            createdAt: session.created_at,
+          };
+        }
+      }
+      const hasFirstPlayWin = Object.values(firstSessionPerGame).some((s) => s.isWinner);
+
+      return { meetupsAttended, topGame, uniqueGameWins, hasFirstPlayWin };
     },
     enabled: !!memberId,
   });
