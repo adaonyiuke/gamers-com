@@ -9,6 +9,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -81,7 +82,7 @@ function GuestRow({
       setIsEditing(false);
       onUpdated();
     } catch {
-      // Error handled by mutation state
+      toast.error("Failed to update guest name");
     }
   };
 
@@ -90,7 +91,7 @@ function GuestRow({
       await deleteGuest.mutateAsync({ guestId: guest.id });
       onDeleted(guest.id);
     } catch {
-      // Error handled by mutation state
+      toast.error("Failed to delete guest");
     }
   };
 
@@ -276,7 +277,7 @@ export default function NewMeetupPage() {
       setSelectedGuestIds((prev) => [...prev, result.id]);
       setNewGuestName("");
     } catch {
-      // Error is handled by mutation state
+      toast.error("Failed to add guest");
     }
   };
 
@@ -296,7 +297,7 @@ export default function NewMeetupPage() {
       });
       router.push(`/meetups/${meetup.id}`);
     } catch {
-      // Error is handled by mutation state
+      toast.error("Failed to create meetup. Please try again.");
     }
   };
 
@@ -485,15 +486,6 @@ export default function NewMeetupPage() {
             </div>
           </div>
         </div>
-
-        {/* Error */}
-        {createMeetup.isError && (
-          <div className="bg-red-50 rounded-[14px] px-4 py-3">
-            <p className="text-red-600 text-[15px]">
-              Failed to create meetup. Please try again.
-            </p>
-          </div>
-        )}
 
         {/* Submit */}
         {selectedMemberIds.length + selectedGuestIds.length === 0 && (
