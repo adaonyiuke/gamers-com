@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "backfill-bgg": "npx tsx scripts/backfill-bgg-art.ts",
-    "seed:dev": "npx tsx scripts/seed-dev-members.ts"
+    "seed:dev": "npx tsx scripts/seed-dev-members.ts",
+    "email:dev": "email dev --dir emails --port 3001"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@react-email/components": "^1.0.10",
+    "@react-email/render": "^2.0.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "@tanstack/react-query": "^5.90.21",
@@ -19,14 +22,17 @@
     "fast-xml-parser": "^5.4.1",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
-    "next": "16.1.6",
+    "next": "^16.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-email": "^5.2.10",
     "react-hook-form": "^7.71.2",
+    "resend": "^6.9.4",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@react-email/preview-server": "^5.2.10",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

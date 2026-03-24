@@ -46,6 +46,7 @@ import {
   SettingRow,
 } from "@/components/settings/setting-components";
 import { cn } from "@/lib/utils/cn";
+import { sendInviteEmail } from "@/lib/actions/send-invite-email";
 
 const MAX_ADMINS = 3;
 
@@ -71,6 +72,9 @@ export default function GroupSettingsPage() {
 
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [editingGroup, setEditingGroup] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupDescription, setEditGroupDescription] = useState("");
@@ -157,16 +161,18 @@ export default function GroupSettingsPage() {
     }
   }
 
-  function handleEmailInvite() {
-    const link = getInviteLink();
-    if (!link) return;
-    const subject = encodeURIComponent(
-      `Join ${group?.name ?? "our group"} on Game Night HQ`
-    );
-    const body = encodeURIComponent(
-      `Hey! I'd like you to join our game night group "${group?.name ?? "our group"}" on Game Night HQ.\n\nClick this link to join:\n${link}`
-    );
-    window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
+  async function handleEmailInvite() {
+    if (!inviteEmail.trim() || !groupId) return;
+    setInviteSending(true);
+    setInviteStatus(null);
+    const result = await sendInviteEmail({ toEmail: inviteEmail.trim(), groupId });
+    setInviteSending(false);
+    if (result.success) {
+      setInviteStatus({ ok: true, msg: `Invite sent to ${inviteEmail.trim()}` });
+      setInviteEmail("");
+    } else {
+      setInviteStatus({ ok: false, msg: result.error ?? "Failed to send" });
+    }
   }
 
   function handleSettingChange(key: string, value: any) {
@@ -491,13 +497,43 @@ export default function GroupSettingsPage() {
                     )}
                   </button>
                 </div>
-                <button
-                  onClick={handleEmailInvite}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3.5 text-[15px] font-medium text-[#007AFF] active:bg-gray-50 transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                  Send Email Invite
-                </button>
+                <div className="px-5 pb-4 pt-2 space-y-2">
+                  <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+                    Send Email Invite
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => { setInviteEmail(e.target.value); setInviteStatus(null); }}
+                      onKeyDown={(e) => e.key === "Enter" && handleEmailInvite()}
+                      placeholder="friend@example.com"
+                      className="flex-1 bg-[#F2F2F7] rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                    <button
+                      onClick={handleEmailInvite}
+                      disabled={!inviteEmail.trim() || inviteSending}
+                      className="flex items-center justify-center gap-1.5 bg-[#161719] text-white rounded-[12px] px-4 py-3 text-[15px] font-semibold active:scale-[0.97] transition-transform disabled:opacity-40"
+                    >
+                      {inviteSending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          Send
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {inviteStatus && (
+                    <p className={cn(
+                      "text-[13px] px-1",
+                      inviteStatus.ok ? "text-green-600" : "text-red-500"
+                    )}>
+                      {inviteStatus.msg}
+                    </p>
+                  )}
+                </div>
               </>
             ) : (
               <div className="p-5 text-center">
