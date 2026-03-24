@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGroup } from "@/lib/queries/groups";
-import { useMemberStats } from "@/lib/queries/members";
+import { useMemberStats, useAdjustedStreak } from "@/lib/queries/members";
+import { useGroupSettings } from "@/lib/queries/settings";
 import { useMeetups, useMeetupParticipants } from "@/lib/queries/meetups";
 import { useRecentSessions, useMeetupSessions } from "@/lib/queries/sessions";
 import { useUser } from "@/components/providers/supabase-provider";
@@ -136,12 +137,23 @@ export default function DashboardPage() {
 
   const { data: recentSessions } = useRecentSessions(groupId);
 
+  const currentMemberId = useMemo(() => {
+    if (!members || !user) return null;
+    return members.find((m: any) => m.user_id === user.id)?.id ?? null;
+  }, [members, user]);
+
   const currentMemberStat = useMemo(() => {
-    if (!stats || !members || !user) return null;
-    const myMember = members.find((m: any) => m.user_id === user.id);
-    if (!myMember) return null;
-    return stats.find((s: any) => s.member_id === myMember.id) ?? null;
-  }, [stats, members, user]);
+    if (!stats || !currentMemberId) return null;
+    return stats.find((s: any) => s.member_id === currentMemberId) ?? null;
+  }, [stats, currentMemberId]);
+
+  const { data: settings } = useGroupSettings(groupId);
+  const { data: adjustedStreak } = useAdjustedStreak(
+    currentMemberId,
+    groupId,
+    settings?.streak_window ?? 10,
+    settings?.streak_include_guests ?? false
+  );
 
   const leaderboard = useMemo(() => {
     if (!stats || !members) return [];
@@ -462,7 +474,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
                 </span>
               </div>
               <p className="text-[28px] font-bold tracking-tight text-gray-900">
-                {currentMemberStat?.current_streak ?? 0}
+                {adjustedStreak ?? currentMemberStat?.current_streak ?? 0}
               </p>
             </div>
           </div>

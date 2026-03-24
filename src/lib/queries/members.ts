@@ -148,6 +148,74 @@ export function useMemberGameStats(memberId: string | null) {
   });
 }
 
+// ---------- Settings-aware streak calculation ----------
+export function useAdjustedStreak(
+  memberId: string | null,
+  groupId: string | null,
+  streakWindow: number = 10,
+  includeGuests: boolean = false
+) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["adjusted_streak", memberId, groupId, streakWindow, includeGuests],
+    queryFn: async (): Promise<number> => {
+      // Get recent meetups for this group (limited by streak_window)
+      const { data: meetups, error: meetupsError } = await supabase
+        .from("meetups")
+        .select("id")
+        .eq("group_id", groupId!)
+        .order("date", { ascending: false })
+        .limit(streakWindow);
+      if (meetupsError) throw meetupsError;
+      if (!meetups || meetups.length === 0) return 0;
+
+      const meetupIds = meetups.map((m) => m.id);
+
+      // Get this member's participations in those meetups
+      const { data: participations, error: partError } = await supabase
+        .from("meetup_participants")
+        .select("id, meetup_id")
+        .eq("member_id", memberId!)
+        .in("meetup_id", meetupIds);
+      if (partError) throw partError;
+      if (!participations || participations.length === 0) return 0;
+
+      const participantIds = participations.map((p) => p.id);
+
+      // Get score entries for these participations (finalized sessions only)
+      const { data: entries, error: entriesError } = await supabase
+        .from("score_entries")
+        .select(
+          `participant_id, is_winner, session_id,
+          sessions:session_id(finalized_at, status)`
+        )
+        .in("participant_id", participantIds);
+      if (entriesError) throw entriesError;
+
+      // Filter to finalized sessions, sort by finalized_at descending
+      const results = (entries ?? [])
+        .filter((e: any) => (e.sessions as any)?.status === "finalized")
+        .sort(
+          (a: any, b: any) =>
+            new Date((b.sessions as any).finalized_at).getTime() -
+            new Date((a.sessions as any).finalized_at).getTime()
+        );
+
+      // Count consecutive wins from most recent
+      let streak = 0;
+      for (const entry of results) {
+        if (entry.is_winner) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      return streak;
+    },
+    enabled: !!memberId && !!groupId,
+  });
+}
+
 // ---------- Leaderboard with time-period filtering ----------
 export type LeaderboardEntry = {
   id: string;

@@ -21,7 +21,9 @@ import {
   useGroupMembers,
   useUpdateMember,
   useMemberGameStats,
+  useAdjustedStreak,
 } from "@/lib/queries/members";
+import { useGroupSettings } from "@/lib/queries/settings";
 import {
   BADGES,
   computeBadges,
@@ -77,6 +79,13 @@ export default function MemberProfilePage() {
   const { data: allStats, isLoading: statsLoading } = useMemberStats(groupId);
   const { data: members } = useGroupMembers(groupId);
   const { data: gameStats } = useMemberGameStats(memberId);
+  const { data: settings } = useGroupSettings(groupId);
+  const { data: adjustedStreak } = useAdjustedStreak(
+    memberId,
+    groupId,
+    settings?.streak_window ?? 10,
+    settings?.streak_include_guests ?? false
+  );
   const updateMember = useUpdateMember();
 
   const [signingOut, setSigningOut] = useState(false);
@@ -125,13 +134,13 @@ export default function MemberProfilePage() {
     const input: MemberBadgeInput = {
       winRate: memberStat.win_rate ?? 0,
       totalSessions: memberStat.total_sessions ?? 0,
-      currentStreak: memberStat.current_streak ?? 0,
+      currentStreak: adjustedStreak ?? memberStat.current_streak ?? 0,
       uniqueGameWins: gameStats?.uniqueGameWins ?? 0,
       hasFirstPlayWin: gameStats?.hasFirstPlayWin ?? false,
       isTopWinRate,
     };
     return computeBadges(input);
-  }, [memberStat, gameStats, isTopWinRate]);
+  }, [memberStat, gameStats, adjustedStreak, isTopWinRate]);
 
   const isLoading = groupLoading || profileLoading || statsLoading;
 
