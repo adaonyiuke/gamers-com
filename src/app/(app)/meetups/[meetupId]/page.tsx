@@ -14,6 +14,7 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useMeetup, useMeetupParticipants, useUpdateMeetupStatus } from "@/lib/queries/meetups";
 import { useMeetupSessions } from "@/lib/queries/sessions";
 import { useCurrentMemberRole } from "@/lib/queries/members";
+import { useGroupSettings } from "@/lib/queries/settings";
 import { cn } from "@/lib/utils/cn";
 import { MeetupHeaderCard } from "@/components/features/meetups/meetup-header-card";
 import { ParticipantsSection } from "@/components/features/meetups/participants-section";
@@ -41,14 +42,20 @@ export default function MeetupDetailPage({
     useMeetupSessions(meetupId);
   const updateStatus = useUpdateMeetupStatus();
   const { data: role } = useCurrentMemberRole(groupId);
+  const { data: settings } = useGroupSettings(groupId);
 
   const router = useRouter();
   const [showInactiveModal, setShowInactiveModal] = useState(false);
 
   const isLoading = meetupLoading;
   const isAdmin = role === "admin" || role === "owner";
+  const isLocked = meetup?.status === "complete" && (settings?.lock_sessions_after_complete ?? true);
 
   function handleRecordGame() {
+    if (isLocked) {
+      setShowInactiveModal(true);
+      return;
+    }
     if (meetup?.status === "active") {
       router.push(`/meetups/${meetupId}/sessions/new`);
     } else {
@@ -140,7 +147,7 @@ export default function MeetupDetailPage({
             <div className="relative w-full max-w-[400px] bg-white rounded-[24px] p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[20px] font-bold text-gray-900">
-                  Meetup Not Started
+                  {isLocked ? "Meetup Locked" : "Meetup Not Started"}
                 </h3>
                 <button
                   onClick={() => setShowInactiveModal(false)}
@@ -150,9 +157,11 @@ export default function MeetupDetailPage({
                 </button>
               </div>
               <p className="text-[15px] text-gray-500 mb-6">
-                You can't record games until the meetup is active. Start the meetup to begin recording.
+                {isLocked
+                  ? "This meetup is complete and locked. New sessions can't be added. An admin can change this in group settings."
+                  : "You can't record games until the meetup is active. Start the meetup to begin recording."}
               </p>
-              {isAdmin && (
+              {isAdmin && !isLocked && (
                 <button
                   onClick={async () => {
                     setShowInactiveModal(false);
