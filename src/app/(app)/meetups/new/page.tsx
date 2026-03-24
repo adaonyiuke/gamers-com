@@ -239,6 +239,7 @@ export default function NewMeetupPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -247,6 +248,9 @@ export default function NewMeetupPage() {
       date: today,
     },
   });
+
+  const watchedDate = watch("date");
+  const isPastDate = watchedDate && watchedDate < today;
 
   const isLoading = groupLoading || membersLoading || guestsLoading;
 
@@ -331,6 +335,11 @@ export default function NewMeetupPage() {
           {errors.date && (
             <p className="text-red-500 text-[13px] mt-1 px-1">
               {errors.date.message}
+            </p>
+          )}
+          {isPastDate && !errors.date && (
+            <p className="text-amber-600 text-[13px] mt-1 px-1">
+              This date is in the past — recording a previous meetup?
             </p>
           )}
         </div>
