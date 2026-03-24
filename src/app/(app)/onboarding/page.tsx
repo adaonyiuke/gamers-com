@@ -201,6 +201,8 @@ export default function OnboardingPage() {
 
   // Step 3 → Dashboard: finish
   async function handleFinish() {
+    // Persist to DB (user_metadata) so it works across devices + clears localStorage
+    await supabase.auth.updateUser({ data: { onboarding_complete: true } });
     localStorage.setItem("onboarding_complete", "true");
     router.push("/dashboard");
   }

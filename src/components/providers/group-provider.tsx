@@ -131,10 +131,12 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           }
 
           // Redirect new users to onboarding
-          if (
-            typeof window !== "undefined" &&
-            !localStorage.getItem("onboarding_complete")
-          ) {
+          // Check DB (user_metadata) first, fall back to localStorage
+          const onboardingDone =
+            user!.user_metadata?.onboarding_complete ||
+            (typeof window !== "undefined" &&
+              localStorage.getItem("onboarding_complete"));
+          if (!onboardingDone) {
             router.push("/onboarding");
           }
         }
