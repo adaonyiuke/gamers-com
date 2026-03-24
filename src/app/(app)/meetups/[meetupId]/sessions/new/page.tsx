@@ -722,11 +722,14 @@ export default function NewSessionPage({
                         <input
                           type="number"
                           inputMode="numeric"
+                          min="0"
                           placeholder="0"
                           value={rounds[currentRound]?.[p.id] ?? ""}
-                          onChange={(e) =>
-                            handleScoreChange(p.id, e.target.value)
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val !== "" && Number(val) < 0) return;
+                            handleScoreChange(p.id, val);
+                          }}
                           className="w-[88px] bg-gray-50 rounded-[12px] px-3 py-3 text-[18px] text-center font-bold border border-gray-200 focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20 focus:outline-none shrink-0 transition-shadow"
                         />
                       )}
