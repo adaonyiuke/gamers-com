@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Game Night",
   description: "Track your game nights, record wins, and build rivalries",
+  metadataBase: new URL("https://gamenight.clubplay.io"),
   manifest: "/manifest.json",
   icons: {
     icon: "/app-icon.png",
@@ -13,6 +14,28 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Game Night",
+  },
+  openGraph: {
+    title: "Game Night",
+    description: "Track scores, build your leaderboard, and see who really is the best at game night.",
+    url: "https://gamenight.clubplay.io",
+    siteName: "Game Night",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Game Night — track your game nights",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Game Night",
+    description: "Track scores, build your leaderboard, and see who really is the best at game night.",
+    images: ["/og-image.png"],
   },
 };
 
