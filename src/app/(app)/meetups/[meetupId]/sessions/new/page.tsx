@@ -708,7 +708,7 @@ export default function NewSessionPage({
                               return next;
                             });
                           }}
-                          className="w-20 bg-gray-50 rounded-[10px] px-2 py-2.5 text-[17px] text-center font-semibold border border-gray-200 focus:border-[#007AFF] focus:outline-none shrink-0 appearance-none"
+                          className="w-[88px] bg-gray-50 rounded-[12px] px-2 py-3 text-[18px] text-center font-bold border border-gray-200 focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20 focus:outline-none shrink-0 appearance-none transition-shadow"
                         >
                           <option value="">—</option>
                           {selectedIds.map((_, idx) => (
@@ -727,7 +727,7 @@ export default function NewSessionPage({
                           onChange={(e) =>
                             handleScoreChange(p.id, e.target.value)
                           }
-                          className="w-20 bg-gray-50 rounded-[10px] px-3 py-2.5 text-[17px] text-center font-semibold border border-gray-200 focus:border-[#007AFF] focus:outline-none shrink-0"
+                          className="w-[88px] bg-gray-50 rounded-[12px] px-3 py-3 text-[18px] text-center font-bold border border-gray-200 focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20 focus:outline-none shrink-0 transition-shadow"
                         />
                       )}
                     </div>
