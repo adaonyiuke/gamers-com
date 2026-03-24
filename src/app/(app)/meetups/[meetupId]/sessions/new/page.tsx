@@ -7,6 +7,7 @@ import { ChevronLeft, Check, Plus, X, Crown } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGames } from "@/lib/queries/games";
 import { useMeetupParticipants } from "@/lib/queries/meetups";
+import { createClient } from "@/lib/supabase/client";
 import { useCreateSession, useFinalizeSession } from "@/lib/queries/sessions";
 import {
   calculateWinner,
@@ -72,6 +73,7 @@ export default function NewSessionPage({
   const { data: games, isLoading: gamesLoading } = useGames(groupId);
   const { data: participants, isLoading: participantsLoading } =
     useMeetupParticipants(meetupId);
+  const supabase = createClient();
   const createSession = useCreateSession();
   const finalizeSession = useFinalizeSession();
 
@@ -316,7 +318,18 @@ export default function NewSessionPage({
       if (!winnerParticipantId) {
         router.push(`/meetups/${meetupId}`);
       }
-    } catch {
+    } catch (err) {
+      // Rollback: delete the orphaned session if createSession succeeded but finalizeSession failed
+      if (createSession.data?.id) {
+        await supabase
+          .from("score_entries")
+          .delete()
+          .eq("session_id", createSession.data.id);
+        await supabase
+          .from("sessions")
+          .delete()
+          .eq("id", createSession.data.id);
+      }
       setSubmitting(false);
     }
   }, [
