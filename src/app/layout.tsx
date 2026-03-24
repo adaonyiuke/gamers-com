@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -58,7 +59,20 @@ export default function RootLayout({
         {/* Aktiv Grotesk via Adobe Fonts */}
         <link rel="stylesheet" href="https://use.typekit.net/vqc1rlv.css" />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              borderRadius: "14px",
+              fontSize: "15px",
+              fontWeight: 600,
+              padding: "12px 16px",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

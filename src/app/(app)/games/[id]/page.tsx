@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Pencil, Trophy, Clock, Calendar, ChevronDown, ChevronUp, User, Medal, Star } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { useGameById, useGameStats, useGamePlayHistory, useGameTopPerformers } from "@/lib/queries/games";
 import type { PlayHistoryEntry, TopPerformer } from "@/lib/queries/games";
@@ -116,7 +117,6 @@ export default function GameDetailPage() {
     useGameTopPerformers(gameId, game?.scoring_type ?? null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAllLeaders, setShowAllLeaders] = useState(false);
-  const [showEditSuccess, setShowEditSuccess] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
 
   const INITIAL_HISTORY_LIMIT = 6;
@@ -129,8 +129,7 @@ export default function GameDetailPage() {
 
   function handleEditSuccess() {
     setShowEditModal(false);
-    setShowEditSuccess(true);
-    setTimeout(() => setShowEditSuccess(false), 2500);
+    toast.success("Game updated successfully");
   }
 
   return (
@@ -181,20 +180,6 @@ export default function GameDetailPage() {
           </div>
         ) : (
           <>
-            {/* Success toast */}
-            {showEditSuccess && (
-              <div className="mb-4 bg-green-50 rounded-[14px] px-4 py-3 flex items-center gap-2">
-                <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
-                  <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <p className="text-[15px] text-green-700 font-medium">
-                  Game updated successfully
-                </p>
-              </div>
-            )}
-
             {/* Game info card */}
             <div className="bg-white rounded-[20px] p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="flex items-start gap-4">

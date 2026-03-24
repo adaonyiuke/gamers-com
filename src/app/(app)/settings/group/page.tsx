@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const AVATAR_COLORS = [
   "#007AFF", "#FF9500", "#FF2D55", "#5856D6",
@@ -74,7 +75,6 @@ export default function GroupSettingsPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
-  const [inviteStatus, setInviteStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [editingGroup, setEditingGroup] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupDescription, setEditGroupDescription] = useState("");
@@ -164,14 +164,13 @@ export default function GroupSettingsPage() {
   async function handleEmailInvite() {
     if (!inviteEmail.trim() || !groupId) return;
     setInviteSending(true);
-    setInviteStatus(null);
     const result = await sendInviteEmail({ toEmail: inviteEmail.trim(), groupId });
     setInviteSending(false);
     if (result.success) {
-      setInviteStatus({ ok: true, msg: `Invite sent to ${inviteEmail.trim()}` });
+      toast.success(`Invite sent to ${inviteEmail.trim()}`);
       setInviteEmail("");
     } else {
-      setInviteStatus({ ok: false, msg: result.error ?? "Failed to send" });
+      toast.error(result.error ?? "Failed to send invite");
     }
   }
 
@@ -505,7 +504,7 @@ export default function GroupSettingsPage() {
                     <input
                       type="email"
                       value={inviteEmail}
-                      onChange={(e) => { setInviteEmail(e.target.value); setInviteStatus(null); }}
+                      onChange={(e) => setInviteEmail(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleEmailInvite()}
                       placeholder="friend@example.com"
                       className="flex-1 bg-[#F2F2F7] rounded-[12px] px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/10"
@@ -525,14 +524,6 @@ export default function GroupSettingsPage() {
                       )}
                     </button>
                   </div>
-                  {inviteStatus && (
-                    <p className={cn(
-                      "text-[13px] px-1",
-                      inviteStatus.ok ? "text-green-600" : "text-red-500"
-                    )}>
-                      {inviteStatus.msg}
-                    </p>
-                  )}
                 </div>
               </>
             ) : (

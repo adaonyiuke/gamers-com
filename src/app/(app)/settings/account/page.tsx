@@ -10,6 +10,7 @@ import {
   Lock,
   Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/components/providers/supabase-provider";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -47,31 +48,21 @@ export default function AccountSettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [nameEditing, setNameEditing] = useState(false);
   const [nameSaving, setNameSaving] = useState(false);
-  const [nameSuccess, setNameSuccess] = useState(false);
 
   // Avatar color
   const [selectedColor, setSelectedColor] = useState("");
   const [colorSaving, setColorSaving] = useState(false);
-  const [colorSuccess, setColorSuccess] = useState(false);
 
   // Email
   const [newEmail, setNewEmail] = useState("");
   const [emailEditing, setEmailEditing] = useState(false);
   const [emailSaving, setEmailSaving] = useState(false);
-  const [emailMessage, setEmailMessage] = useState<{
-    ok: boolean;
-    msg: string;
-  } | null>(null);
 
   // Password
   const [passwordEditing, setPasswordEditing] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{
-    ok: boolean;
-    msg: string;
-  } | null>(null);
 
   // Delete account
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>(null);
@@ -105,8 +96,7 @@ export default function AccountSettingsPage() {
       });
 
       setNameEditing(false);
-      setNameSuccess(true);
-      setTimeout(() => setNameSuccess(false), 2000);
+      toast.success("Display name updated");
     } finally {
       setNameSaving(false);
     }
@@ -125,8 +115,7 @@ export default function AccountSettingsPage() {
         .eq("user_id", user.id);
 
       localStorage.setItem("avatar_color", color);
-      setColorSuccess(true);
-      setTimeout(() => setColorSuccess(false), 2000);
+      toast.success("Avatar color updated");
     } finally {
       setColorSaving(false);
     }
@@ -136,18 +125,14 @@ export default function AccountSettingsPage() {
   async function handleChangeEmail() {
     if (!newEmail.trim()) return;
     setEmailSaving(true);
-    setEmailMessage(null);
     try {
       const { error } = await supabase.auth.updateUser({
         email: newEmail.trim(),
       });
       if (error) {
-        setEmailMessage({ ok: false, msg: error.message });
+        toast.error(error.message);
       } else {
-        setEmailMessage({
-          ok: true,
-          msg: "Confirmation sent to your new email address.",
-        });
+        toast.success("Confirmation sent to your new email address");
         setNewEmail("");
         setEmailEditing(false);
       }
@@ -159,29 +144,22 @@ export default function AccountSettingsPage() {
   // ── Change password ─────────────────────────────────────────
   async function handleChangePassword() {
     if (newPassword.length < 6) {
-      setPasswordMessage({
-        ok: false,
-        msg: "Password must be at least 6 characters.",
-      });
+      toast.error("Password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ ok: false, msg: "Passwords don't match." });
+      toast.error("Passwords don't match");
       return;
     }
     setPasswordSaving(true);
-    setPasswordMessage(null);
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
       if (error) {
-        setPasswordMessage({ ok: false, msg: error.message });
+        toast.error(error.message);
       } else {
-        setPasswordMessage({
-          ok: true,
-          msg: "Password updated successfully.",
-        });
+        toast.success("Password updated successfully");
         setNewPassword("");
         setConfirmPassword("");
         setPasswordEditing(false);
@@ -201,9 +179,7 @@ export default function AccountSettingsPage() {
     setTimeout(() => {
       setDeleting(false);
       setConfirmDialog(null);
-      alert(
-        "To delete your account, please contact support at noreply@clubplay.io"
-      );
+      toast.info("To delete your account, please contact support at noreply@clubplay.io");
     }, 1000);
   }
 
@@ -260,7 +236,6 @@ export default function AccountSettingsPage() {
               <p className="text-[20px] font-bold text-gray-900">
                 {displayName || "Set your name"}
               </p>
-              {nameSuccess && <Check className="h-4 w-4 text-green-500" />}
             </button>
           )}
           <p className="text-[13px] text-gray-400 mt-1">
@@ -291,11 +266,6 @@ export default function AccountSettingsPage() {
                 </button>
               ))}
             </div>
-            {colorSuccess && (
-              <p className="text-[13px] text-green-600 text-center mt-3">
-                Avatar color updated
-              </p>
-            )}
           </div>
         </SettingSection>
 
@@ -311,10 +281,7 @@ export default function AccountSettingsPage() {
                 <input
                   type="email"
                   value={newEmail}
-                  onChange={(e) => {
-                    setNewEmail(e.target.value);
-                    setEmailMessage(null);
-                  }}
+                  onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="New email address"
                   className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/10"
                   autoFocus
@@ -324,7 +291,6 @@ export default function AccountSettingsPage() {
                     onClick={() => {
                       setEmailEditing(false);
                       setNewEmail("");
-                      setEmailMessage(null);
                     }}
                     className="flex-1 bg-gray-100 rounded-[12px] py-2.5 text-[15px] font-semibold text-gray-700"
                   >
@@ -351,16 +317,6 @@ export default function AccountSettingsPage() {
                 Change email
               </button>
             )}
-            {emailMessage && (
-              <p
-                className={cn(
-                  "text-[13px] mt-2",
-                  emailMessage.ok ? "text-green-600" : "text-red-500"
-                )}
-              >
-                {emailMessage.msg}
-              </p>
-            )}
           </div>
         </SettingSection>
 
@@ -373,10 +329,7 @@ export default function AccountSettingsPage() {
                   <input
                     type="password"
                     value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      setPasswordMessage(null);
-                    }}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="New password"
                     className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/10"
                     autoFocus
@@ -386,10 +339,7 @@ export default function AccountSettingsPage() {
                   <input
                     type="password"
                     value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setPasswordMessage(null);
-                    }}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
                     className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/10"
                   />
@@ -400,7 +350,6 @@ export default function AccountSettingsPage() {
                       setPasswordEditing(false);
                       setNewPassword("");
                       setConfirmPassword("");
-                      setPasswordMessage(null);
                     }}
                     className="flex-1 bg-gray-100 rounded-[12px] py-2.5 text-[15px] font-semibold text-gray-700"
                   >
@@ -432,16 +381,6 @@ export default function AccountSettingsPage() {
                   Change
                 </button>
               </div>
-            )}
-            {passwordMessage && (
-              <p
-                className={cn(
-                  "text-[13px] mt-2",
-                  passwordMessage.ok ? "text-green-600" : "text-red-500"
-                )}
-              >
-                {passwordMessage.msg}
-              </p>
             )}
           </div>
         </SettingSection>
