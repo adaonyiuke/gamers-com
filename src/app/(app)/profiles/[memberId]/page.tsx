@@ -379,9 +379,9 @@ export default function MemberProfilePage() {
               {isOwnProfile && (
                 <button
                   onClick={() => setEditing(true)}
-                  className="mt-2 flex items-center gap-1.5 text-[#007AFF] text-[15px] font-medium active:opacity-60 transition-opacity"
+                  className="mt-3 flex items-center gap-1.5 bg-gray-100 rounded-[12px] px-4 py-2.5 text-[15px] font-semibold text-gray-700 active:scale-[0.97] transition-transform"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="h-3.5 w-3.5" />
                   Edit Profile
                 </button>
               )}
@@ -392,6 +392,24 @@ export default function MemberProfilePage() {
               <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
                 Stats
               </p>
+              {/* Win Rate hero card */}
+              <div className="bg-[#161719] rounded-[20px] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.12)] mb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-semibold text-white/50 uppercase tracking-wide mb-1">
+                      Win Rate
+                    </p>
+                    <p className="text-[40px] font-bold tracking-tight text-white">
+                      {memberStat?.win_rate != null
+                        ? `${Math.round(memberStat.win_rate)}%`
+                        : "0%"}
+                    </p>
+                  </div>
+                  <div className="h-14 w-14 rounded-full bg-white/10 flex items-center justify-center">
+                    <Trophy className="h-7 w-7 text-[#EBC31C]" />
+                  </div>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {statCards.map((stat) => (
                   <div
@@ -437,13 +455,13 @@ export default function MemberProfilePage() {
                       )}
                       style={earned ? { background: config.gradient } : undefined}
                     >
-                      <span className={cn("text-[24px] block mb-1", !earned && "grayscale opacity-40")}>
+                      <span className={cn("text-[28px] block mb-2", !earned && "grayscale opacity-40")}>
                         {config.emoji}
                       </span>
-                      <p className={cn("text-[14px] font-bold", earned ? "text-white" : "text-gray-400")}>
+                      <p className={cn("text-[15px] font-bold", earned ? "text-white" : "text-gray-400")}>
                         {badge.label}
                       </p>
-                      <p className={cn("text-[12px] mt-0.5 leading-snug", earned ? "text-white/80" : "text-gray-300")}>
+                      <p className={cn("text-[13px] mt-0.5 leading-snug", earned ? "text-white/80" : "text-gray-400")}>
                         {badge.description}
                       </p>
                     </div>
