@@ -50,6 +50,25 @@ function SkeletonBlock({ className }: { className?: string }) {
   );
 }
 
+function FadeIn({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("animate-[fadeSlideIn_0.5s_ease_both]", className)}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function InstallBanner() {
   const [visible, setVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -305,8 +324,18 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
       )}
 
       <div className="px-5 space-y-5 mt-2">
+        {/* Featured Meetup Skeleton */}
+        {isLoading && (
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <SkeletonBlock className="h-3 w-24 mb-3" />
+            <SkeletonBlock className="h-6 w-48 mb-3" />
+            <SkeletonBlock className="h-4 w-32" />
+          </div>
+        )}
+
         {/* Featured Meetup Callout Card */}
         {!isLoading && featuredMeetup && (
+          <FadeIn>
           <Link
             href={`/meetups/${featuredMeetup.id}`}
             className="block active:scale-[0.98] transition-transform"
@@ -382,6 +411,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
             </div>
           </Link>
+          </FadeIn>
         )}
 
         {/* Stats Grid */}
@@ -398,6 +428,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
             ))}
           </div>
         ) : (
+          <FadeIn delay={100}>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="flex items-center gap-1.5 mb-2">
@@ -435,9 +466,11 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
               </p>
             </div>
           </div>
+          </FadeIn>
         )}
 
         {/* Leaderboard */}
+        <FadeIn delay={200}>
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
@@ -512,8 +545,10 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
             )}
           </div>
         </div>
+        </FadeIn>
 
         {/* Recent Activity */}
+        <FadeIn delay={300}>
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
@@ -597,14 +632,17 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
             )}
           </div>
         </div>
+        </FadeIn>
 
         {/* Record New Game */}
+        <FadeIn delay={400}>
         <button
           onClick={handleRecordNewGame}
           className="w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
         >
           Record New Game
         </button>
+        </FadeIn>
       </div>
 
       {/* No Active Meetup Modal */}
