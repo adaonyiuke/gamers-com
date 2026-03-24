@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Trophy, Gamepad2, Users, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -178,12 +178,30 @@ function PodiumCard({ entries }: { entries: LeaderboardEntry[] }) {
   );
 }
 
+type SortKey = "wins" | "win_rate" | "sessions";
+
+const SORT_OPTIONS: { label: string; value: SortKey }[] = [
+  { label: "Wins", value: "wins" },
+  { label: "Win %", value: "win_rate" },
+  { label: "Games", value: "sessions" },
+];
+
+function sortEntries(entries: LeaderboardEntry[], sortKey: SortKey): LeaderboardEntry[] {
+  return [...entries].sort((a, b) => {
+    if (sortKey === "win_rate") return b.win_rate - a.win_rate || b.total_wins - a.total_wins;
+    if (sortKey === "sessions") return b.total_sessions - a.total_sessions || b.total_wins - a.total_wins;
+    return b.total_wins - a.total_wins;
+  });
+}
+
 export default function LeaderboardPage() {
   const { groupId, loading: groupLoading } = useGroupId();
   const [period, setPeriod] = useState<Period>("all");
   const { data: settings } = useGroupSettings(groupId);
   const [showGuests, setShowGuests] = useState<boolean | null>(null);
+  const [sortOverride, setSortOverride] = useState<SortKey | null>(null);
 
+  const sortKey: SortKey = sortOverride ?? (settings?.leaderboard_default_sort as SortKey) ?? "wins";
   const includeGuests = showGuests ?? settings?.leaderboard_include_guests ?? false;
 
   const { data: rawEntries, isLoading: entriesLoading } = useLeaderboard(
@@ -192,7 +210,11 @@ export default function LeaderboardPage() {
     includeGuests
   );
 
-  const entries = rawEntries?.filter((e) => e.total_sessions > 0) ?? undefined;
+  const entries = useMemo(() => {
+    const filtered = rawEntries?.filter((e) => e.total_sessions > 0);
+    if (!filtered) return undefined;
+    return sortEntries(filtered, sortKey);
+  }, [rawEntries, sortKey]);
   const isLoading = groupLoading || entriesLoading;
 
   return (
@@ -241,6 +263,22 @@ export default function LeaderboardPage() {
               )}
             />
           </button>
+        </div>
+
+        {/* Sort selector */}
+        <div className="flex bg-gray-200/80 rounded-[10px] p-[3px]">
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setSortOverride(opt.value)}
+              className={cn(
+                "flex-1 py-[7px] text-[13px] font-semibold rounded-[8px] transition-all",
+                sortKey === opt.value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
 
         {/* Loading */}
