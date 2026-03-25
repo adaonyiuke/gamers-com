@@ -35,10 +35,16 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
-    const inviteCode = new URLSearchParams(window.location.search).get("code");
-    const callbackNext = inviteCode
-      ? `?next=${encodeURIComponent("/join?code=" + inviteCode)}`
-      : "";
+    const params = new URLSearchParams(window.location.search);
+    const inviteCode = params.get("code");
+    const promoteGuestId = params.get("promote");
+
+    let callbackNext = "";
+    if (inviteCode) {
+      let joinPath = `/join?code=${inviteCode}`;
+      if (promoteGuestId) joinPath += `&promote=${promoteGuestId}`;
+      callbackNext = `?next=${encodeURIComponent(joinPath)}`;
+    }
 
     const { error } = await supabase.auth.signUp({
       email,

@@ -22,6 +22,7 @@ function JoinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const code = searchParams.get("code");
+  const promoteGuestId = searchParams.get("promote");
 
   const [status, setStatus] = useState<
     "loading" | "joining" | "error" | "no-code"
@@ -80,25 +81,75 @@ function JoinContent() {
         return;
       }
 
-      // Join the group
-      const displayName =
+      // If promoting a guest, use the guest's name as display name
+      let displayName =
         user.user_metadata?.display_name ||
         user.email?.split("@")[0] ||
         "Member";
 
-      const { error: joinError } = await supabase
+      // Pre-fetch guest data if promoting
+      let guestRecord: any = null;
+      if (promoteGuestId) {
+        const { data: guest } = await supabase
+          .from("guests")
+          .select("id, name, promoted_to_user_id")
+          .eq("id", promoteGuestId)
+          .eq("group_id", group.id)
+          .single();
+
+        if (guest && !guest.promoted_to_user_id) {
+          guestRecord = guest;
+          // Use guest name as display name if user didn't set one
+          if (!user.user_metadata?.display_name && guest.name) {
+            displayName = guest.name;
+          }
+        }
+      }
+
+      // Join the group
+      const { data: newMember, error: joinError } = await supabase
         .from("group_members")
         .insert({
           group_id: group.id,
           user_id: user.id,
           role: "member",
           display_name: displayName,
-        });
+        })
+        .select("id")
+        .single();
 
       if (joinError) {
         setErrorMessage("Failed to join group. Please try again.");
         setStatus("error");
         return;
+      }
+
+      // ── Guest promotion: migrate historical data ──
+      if (guestRecord && newMember) {
+        // 1. Find all meetup_participants for this guest
+        const { data: guestParticipants } = await supabase
+          .from("meetup_participants")
+          .select("id")
+          .eq("guest_id", guestRecord.id);
+
+        if (guestParticipants && guestParticipants.length > 0) {
+          // 2. Reassign participants: point them to the new member instead of the guest
+          for (const participant of guestParticipants) {
+            await supabase
+              .from("meetup_participants")
+              .update({
+                member_id: newMember.id,
+                guest_id: null,
+              })
+              .eq("id", participant.id);
+          }
+        }
+
+        // 3. Mark the guest as promoted
+        await supabase
+          .from("guests")
+          .update({ promoted_to_user_id: user.id })
+          .eq("id", guestRecord.id);
       }
 
       // Store joined group so GroupProvider picks it up
