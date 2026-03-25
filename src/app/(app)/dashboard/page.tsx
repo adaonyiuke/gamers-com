@@ -19,11 +19,15 @@ import {
   X,
   MapPin,
   Users,
+  Zap,
+  Swords,
+  Sparkles,
 } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGroup } from "@/lib/queries/groups";
 import { useMemberStats, useAdjustedStreak } from "@/lib/queries/members";
 import { useGroupSettings } from "@/lib/queries/settings";
+import { useDashboardInsights } from "@/lib/queries/insights";
 import { useMeetups, useMeetupParticipants } from "@/lib/queries/meetups";
 import { useRecentSessions, useMeetupSessions } from "@/lib/queries/sessions";
 import { useUser } from "@/components/providers/supabase-provider";
@@ -154,6 +158,8 @@ export default function DashboardPage() {
     settings?.streak_window ?? 10,
     settings?.streak_include_guests ?? false
   );
+
+  const { data: insights } = useDashboardInsights(groupId);
 
   const leaderboard = useMemo(() => {
     if (!stats || !members) return [];
@@ -481,8 +487,163 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
           </FadeIn>
         )}
 
+        {/* ── Insight Sections ── */}
+
+        {/* Most Improved */}
+        {!isLoading && settings?.show_most_improved && insights?.mostImproved && (
+          <FadeIn delay={150}>
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <TrendingUp className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="text-[13px] font-semibold text-emerald-700 uppercase tracking-wide">
+                  Most Improved
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0"
+                  style={{ backgroundColor: insights.mostImproved.avatarUrl ?? getAvatarColor(insights.mostImproved.displayName) }}
+                >
+                  {insights.mostImproved.displayName[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[17px] font-semibold text-gray-900 truncate">
+                    {insights.mostImproved.displayName}
+                  </p>
+                  <p className="text-[13px] text-emerald-600">
+                    {insights.mostImproved.recentWinRate}% recent vs {insights.mostImproved.allTimeWinRate}% all-time
+                  </p>
+                </div>
+                <div className="bg-emerald-500 text-white text-[14px] font-bold rounded-full px-3 py-1 shrink-0">
+                  +{insights.mostImproved.delta}%
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* Rivalry Stats */}
+        {!isLoading && settings?.show_rivalry_stats && insights?.rivalry && (
+          <FadeIn delay={175}>
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-[20px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 rounded-full bg-orange-500 flex items-center justify-center">
+                  <Swords className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="text-[13px] font-semibold text-orange-700 uppercase tracking-wide">
+                  Top Rivalry
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Player A */}
+                <div className="flex-1 flex flex-col items-center gap-1.5">
+                  <div
+                    className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
+                    style={{ backgroundColor: insights.rivalry.playerA.avatarUrl ?? getAvatarColor(insights.rivalry.playerA.name) }}
+                  >
+                    {insights.rivalry.playerA.name[0].toUpperCase()}
+                  </div>
+                  <p className="text-[13px] font-semibold text-gray-900 truncate max-w-full text-center">
+                    {insights.rivalry.playerA.name.split(" ")[0]}
+                  </p>
+                  <p className="text-[22px] font-bold text-gray-900">
+                    {insights.rivalry.playerA.wins}
+                  </p>
+                </div>
+
+                {/* VS */}
+                <div className="flex flex-col items-center gap-0.5 shrink-0">
+                  <span className="text-[12px] font-bold text-orange-400 uppercase">vs</span>
+                  <span className="text-[12px] text-gray-400">{insights.rivalry.totalGames} games</span>
+                </div>
+
+                {/* Player B */}
+                <div className="flex-1 flex flex-col items-center gap-1.5">
+                  <div
+                    className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
+                    style={{ backgroundColor: insights.rivalry.playerB.avatarUrl ?? getAvatarColor(insights.rivalry.playerB.name) }}
+                  >
+                    {insights.rivalry.playerB.name[0].toUpperCase()}
+                  </div>
+                  <p className="text-[13px] font-semibold text-gray-900 truncate max-w-full text-center">
+                    {insights.rivalry.playerB.name.split(" ")[0]}
+                  </p>
+                  <p className="text-[22px] font-bold text-gray-900">
+                    {insights.rivalry.playerB.wins}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* Fun Stats */}
+        {!isLoading && settings?.show_fun_stats && insights?.funStats && (
+          insights.funStats.longestLosingStreak || insights.funStats.mostGamesInOneNight || insights.funStats.luckyFirstTimer
+        ) && (
+          <FadeIn delay={200}>
+            <div>
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                <span className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
+                  Fun Stats
+                </span>
+              </div>
+              <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] divide-y divide-gray-100 overflow-hidden">
+                {insights.funStats.longestLosingStreak && (
+                  <div className="flex items-center gap-3 px-4 py-3.5">
+                    <div className="h-9 w-9 rounded-[10px] bg-red-100 flex items-center justify-center shrink-0">
+                      <span className="text-[18px]">😅</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-gray-900">
+                        Longest Losing Streak
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        {insights.funStats.longestLosingStreak.name} — {insights.funStats.longestLosingStreak.streak} games in a row
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {insights.funStats.mostGamesInOneNight && (
+                  <div className="flex items-center gap-3 px-4 py-3.5">
+                    <div className="h-9 w-9 rounded-[10px] bg-blue-100 flex items-center justify-center shrink-0">
+                      <span className="text-[18px]">🎲</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-gray-900">
+                        Marathon Gamer
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        {insights.funStats.mostGamesInOneNight.name} — {insights.funStats.mostGamesInOneNight.count} games at {insights.funStats.mostGamesInOneNight.meetupTitle}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {insights.funStats.luckyFirstTimer && (
+                  <div className="flex items-center gap-3 px-4 py-3.5">
+                    <div className="h-9 w-9 rounded-[10px] bg-amber-100 flex items-center justify-center shrink-0">
+                      <span className="text-[18px]">🍀</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-gray-900">
+                        Beginner&apos;s Luck
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        {insights.funStats.luckyFirstTimer.name} won their first ever game of {insights.funStats.luckyFirstTimer.gameName}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
         {/* Leaderboard */}
-        <FadeIn delay={200}>
+        <FadeIn delay={250}>
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
@@ -560,7 +721,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
         </FadeIn>
 
         {/* Recent Activity */}
-        <FadeIn delay={300}>
+        <FadeIn delay={350}>
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
@@ -647,7 +808,7 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
         </FadeIn>
 
         {/* Record New Game */}
-        <FadeIn delay={400}>
+        <FadeIn delay={450}>
         <button
           onClick={handleRecordNewGame}
           className="w-full bg-black text-white rounded-[14px] py-4 text-[17px] font-semibold active:scale-[0.98] transition-transform"
