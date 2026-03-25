@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupContent />
+    </Suspense>
+  );
+}
+
+function SignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -20,6 +29,18 @@ export default function SignupPage() {
   const [resendMessage, setResendMessage] = useState("");
 
   const supabase = createClient();
+  const searchParams = useSearchParams();
+
+  const loginHref = useMemo(() => {
+    const code = searchParams.get("code");
+    const promote = searchParams.get("promote");
+    if (code) {
+      let joinPath = `/join?code=${code}`;
+      if (promote) joinPath += `&promote=${promote}`;
+      return `/login?redirect=${encodeURIComponent(joinPath)}`;
+    }
+    return "/login";
+  }, [searchParams]);
 
   // Countdown timer
   useEffect(() => {
@@ -217,7 +238,7 @@ export default function SignupPage() {
 
         <p className="text-center text-gray-500 text-[15px] mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#007AFF] font-medium">
+          <Link href={loginHref} className="text-[#007AFF] font-medium">
             Sign In
           </Link>
         </p>

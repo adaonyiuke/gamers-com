@@ -15,6 +15,12 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Read optional redirect param (used by promotion flow, etc.)
+  const redirectTo =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("redirect")
+      : null;
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -29,7 +35,7 @@ export default function LoginPage() {
       setMessage(error.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push(redirectTo ?? "/dashboard");
     }
   }
 
@@ -38,10 +44,14 @@ export default function LoginPage() {
     setLoading(true);
     setMessage("");
 
+    const callbackUrl = redirectTo
+      ? `${window.location.origin}/callback?next=${encodeURIComponent(redirectTo)}`
+      : `${window.location.origin}/callback`;
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/callback`,
+        emailRedirectTo: callbackUrl,
       },
     });
 

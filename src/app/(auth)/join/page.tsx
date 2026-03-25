@@ -45,8 +45,10 @@ function JoinContent() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        // Not logged in - redirect to signup with the invite code
-        router.replace(`/signup?code=${code}`);
+        // Not logged in - redirect to signup with the invite code (+ promote param if present)
+        const signupParams = new URLSearchParams({ code: code! });
+        if (promoteGuestId) signupParams.set("promote", promoteGuestId);
+        router.replace(`/signup?${signupParams.toString()}`);
         return;
       }
 
@@ -76,7 +78,44 @@ function JoinContent() {
         .single();
 
       if (existingMember) {
-        // Already a member, just redirect
+        // Already a member — but still run promotion if needed
+        if (promoteGuestId) {
+          const { data: guest } = await supabase
+            .from("guests")
+            .select("id, name, promoted_to_user_id")
+            .eq("id", promoteGuestId)
+            .eq("group_id", group.id)
+            .single();
+
+          if (guest && !guest.promoted_to_user_id) {
+            // Reassign guest's meetup_participants to this existing member
+            const { data: guestParticipants } = await supabase
+              .from("meetup_participants")
+              .select("id")
+              .eq("guest_id", guest.id);
+
+            if (guestParticipants && guestParticipants.length > 0) {
+              for (const participant of guestParticipants) {
+                await supabase
+                  .from("meetup_participants")
+                  .update({
+                    member_id: existingMember.id,
+                    guest_id: null,
+                  })
+                  .eq("id", participant.id);
+              }
+            }
+
+            await supabase
+              .from("guests")
+              .update({ promoted_to_user_id: user.id })
+              .eq("id", guest.id);
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("selected_group_id", group.id);
+        }
         router.replace("/dashboard");
         return;
       }

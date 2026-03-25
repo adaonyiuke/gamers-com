@@ -68,7 +68,7 @@ export async function sendPromoteEmail({
     }
 
     const inviterName = currentMember.display_name ?? user.email ?? "Someone";
-    const signupUrl = `https://gamenight.clubplay.io/signup?code=${group.invite_code}&promote=${guestId}`;
+    const signupUrl = `https://gamenight.clubplay.io/join?code=${group.invite_code}&promote=${guestId}`;
 
     const { error: sendError } = await resend.emails.send({
       from: "Game Night <noreply@clubplay.io>",
