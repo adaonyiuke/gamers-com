@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, UserPlus, AlertCircle } from "lucide-react";
@@ -22,7 +22,28 @@ function JoinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const code = searchParams.get("code");
-  const promoteGuestId = searchParams.get("promote");
+  const promoteFromUrl = searchParams.get("promote");
+
+  // Recover promote guest ID from localStorage if not in URL
+  // (Supabase email confirmation redirects can lose query params)
+  const promoteGuestId = useMemo(() => {
+    if (promoteFromUrl) {
+      // Store in localStorage as backup for redirect chain
+      if (typeof window !== "undefined" && code) {
+        localStorage.setItem("promote_guest_id", promoteFromUrl);
+        localStorage.setItem("promote_invite_code", code);
+      }
+      return promoteFromUrl;
+    }
+    // Try to recover from localStorage
+    if (typeof window !== "undefined" && code) {
+      const storedCode = localStorage.getItem("promote_invite_code");
+      if (storedCode && storedCode.toUpperCase() === code.toUpperCase()) {
+        return localStorage.getItem("promote_guest_id");
+      }
+    }
+    return null;
+  }, [promoteFromUrl, code]);
 
   const [status, setStatus] = useState<
     "loading" | "joining" | "error" | "no-code"
@@ -54,146 +75,44 @@ function JoinContent() {
 
       setStatus("joining");
 
-      // Look up the group by invite code
-      const { data: group, error: groupError } = await supabase
-        .from("groups")
-        .select("id, name")
-        .eq("invite_code", code!)
-        .single();
-
-      if (groupError || !group) {
-        setErrorMessage("Invalid or expired invite code.");
-        setStatus("error");
-        return;
-      }
-
-      setGroupName(group.name);
-
-      // Check if user is already a member
-      const { data: existingMember } = await supabase
-        .from("group_members")
-        .select("id")
-        .eq("group_id", group.id)
-        .eq("user_id", user.id)
-        .single();
-
-      if (existingMember) {
-        // Already a member — but still run promotion if needed
-        if (promoteGuestId) {
-          const { data: guest } = await supabase
-            .from("guests")
-            .select("id, name, promoted_to_user_id")
-            .eq("id", promoteGuestId)
-            .eq("group_id", group.id)
-            .single();
-
-          if (guest && !guest.promoted_to_user_id) {
-            // Reassign guest's meetup_participants to this existing member
-            const { data: guestParticipants } = await supabase
-              .from("meetup_participants")
-              .select("id")
-              .eq("guest_id", guest.id);
-
-            if (guestParticipants && guestParticipants.length > 0) {
-              for (const participant of guestParticipants) {
-                await supabase
-                  .from("meetup_participants")
-                  .update({
-                    member_id: existingMember.id,
-                    guest_id: null,
-                  })
-                  .eq("id", participant.id);
-              }
-            }
-
-            await supabase
-              .from("guests")
-              .update({ promoted_to_user_id: user.id })
-              .eq("id", guest.id);
-          }
-        }
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("selected_group_id", group.id);
-        }
-        router.replace("/dashboard");
-        return;
-      }
-
-      // If promoting a guest, use the guest's name as display name
-      let displayName =
+      // Determine display name
+      const displayName =
         user.user_metadata?.display_name ||
         user.email?.split("@")[0] ||
         "Member";
 
-      // Pre-fetch guest data if promoting
-      let guestRecord: any = null;
-      if (promoteGuestId) {
-        const { data: guest } = await supabase
-          .from("guests")
-          .select("id, name, promoted_to_user_id")
-          .eq("id", promoteGuestId)
-          .eq("group_id", group.id)
-          .single();
-
-        if (guest && !guest.promoted_to_user_id) {
-          guestRecord = guest;
-          // Use guest name as display name if user didn't set one
-          if (!user.user_metadata?.display_name && guest.name) {
-            displayName = guest.name;
-          }
+      // Use SECURITY DEFINER RPC to join the group (bypasses RLS)
+      // This handles: group lookup, membership check, insert, and guest promotion
+      const { data, error: rpcError } = await supabase.rpc(
+        "join_group_by_invite_code",
+        {
+          invite_code: code!.trim().toUpperCase(),
+          p_display_name: displayName,
+          p_promote_guest_id: promoteGuestId || null,
         }
-      }
+      );
 
-      // Join the group
-      const { data: newMember, error: joinError } = await supabase
-        .from("group_members")
-        .insert({
-          group_id: group.id,
-          user_id: user.id,
-          role: "member",
-          display_name: displayName,
-        })
-        .select("id")
-        .single();
-
-      if (joinError) {
+      if (rpcError) {
         setErrorMessage("Failed to join group. Please try again.");
         setStatus("error");
         return;
       }
 
-      // ── Guest promotion: migrate historical data ──
-      if (guestRecord && newMember) {
-        // 1. Find all meetup_participants for this guest
-        const { data: guestParticipants } = await supabase
-          .from("meetup_participants")
-          .select("id")
-          .eq("guest_id", guestRecord.id);
-
-        if (guestParticipants && guestParticipants.length > 0) {
-          // 2. Reassign participants: point them to the new member instead of the guest
-          for (const participant of guestParticipants) {
-            await supabase
-              .from("meetup_participants")
-              .update({
-                member_id: newMember.id,
-                guest_id: null,
-              })
-              .eq("id", participant.id);
-          }
-        }
-
-        // 3. Mark the guest as promoted
-        await supabase
-          .from("guests")
-          .update({ promoted_to_user_id: user.id })
-          .eq("id", guestRecord.id);
+      // The RPC returns a jsonb object with error or success info
+      if (data?.error) {
+        setErrorMessage(data.error);
+        setStatus("error");
+        return;
       }
 
+      setGroupName(data.group_name ?? "");
+
       // Store joined group so GroupProvider picks it up
-      if (typeof window !== "undefined") {
-        localStorage.setItem("selected_group_id", group.id);
+      if (typeof window !== "undefined" && data.group_id) {
+        localStorage.setItem("selected_group_id", data.group_id);
+        // Clean up promote localStorage entries
+        localStorage.removeItem("promote_guest_id");
+        localStorage.removeItem("promote_invite_code");
       }
 
       // Success - redirect to dashboard
@@ -201,7 +120,7 @@ function JoinContent() {
     }
 
     handleJoin();
-  }, [code, router]);
+  }, [code, router, promoteGuestId]);
 
   if (status === "no-code") {
     return (

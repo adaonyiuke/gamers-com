@@ -657,6 +657,20 @@ export type Database = {
           name: string
         }[]
       }
+      join_group_by_invite_code: {
+        Args: {
+          invite_code: string
+          p_display_name?: string
+          p_promote_guest_id?: string | null
+        }
+        Returns: {
+          member_id?: string
+          group_id?: string
+          group_name?: string
+          already_member?: boolean
+          error?: string
+        }
+      }
     }
     Enums: {
       [_ in never]: never

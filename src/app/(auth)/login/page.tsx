@@ -159,7 +159,23 @@ export default function LoginPage() {
 
         <p className="text-center text-gray-500 text-[15px] mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[#007AFF] font-medium">
+          <Link
+            href={(() => {
+              if (!redirectTo) return "/signup";
+              try {
+                const redirectParams = new URL(redirectTo, "http://x").searchParams;
+                const code = redirectParams.get("code");
+                const promote = redirectParams.get("promote");
+                if (!code) return "/signup";
+                let href = `/signup?code=${code}`;
+                if (promote) href += `&promote=${promote}`;
+                return href;
+              } catch {
+                return "/signup";
+              }
+            })()}
+            className="text-[#007AFF] font-medium"
+          >
             Sign Up
           </Link>
         </p>
