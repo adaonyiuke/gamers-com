@@ -22,15 +22,32 @@ import { cn } from "@/lib/utils/cn";
    ═══════════════════════════════════════════════════════════════ */
 
 const COLORS = {
-  accent: { value: "#007AFF", label: "Accent / iOS Blue" },
-  orange: { value: "#FF9500", label: "Orange" },
-  pink: { value: "#FF2D55", label: "Pink" },
-  purple: { value: "#5856D6", label: "Purple" },
-  green: { value: "#34C759", label: "Green" },
-  magenta: { value: "#AF52DE", label: "Magenta" },
-  red: { value: "#FF3B30", label: "Red / Destructive" },
-  teal: { value: "#00C7BE", label: "Teal" },
+  yellow: { value: "#FFD62A", label: "Yellow (Primary)" },
+  purple: { value: "#842AEB", label: "Purple" },
+  blue: { value: "#3F48EB", label: "Blue" },
+  black: { value: "#161719", label: "Black" },
 } as const;
+
+const GRADIENTS = [
+  {
+    label: "Purple gradient",
+    css: "linear-gradient(135deg, #160728 0%, #842AEB 100%)",
+    desc: "Hero / dark sections",
+  },
+  {
+    label: "Grey gradient",
+    css: "linear-gradient(135deg, #D9D9D9 0%, #B8B8B8 100%)",
+    desc: "Secondary cards",
+  },
+] as const;
+
+const CHART_COLORS = [
+  { var: "--chart-1", value: "#FFD62A", label: "Chart 1 — Yellow (primary)" },
+  { var: "--chart-2", value: "#842AEB", label: "Chart 2 — Purple" },
+  { var: "--chart-3", value: "#3F48EB", label: "Chart 3 — Blue" },
+  { var: "--chart-4", value: "#FFD62A99", label: "Chart 4 — Yellow 60%" },
+  { var: "--chart-5", value: "#FFD62A33", label: "Chart 5 — Yellow 20%" },
+] as const;
 
 const NEUTRALS = {
   background: { value: "#F2F2F7", label: "Background" },
@@ -157,6 +174,7 @@ function Code({ children }: { children: React.ReactNode }) {
 
 const NAV_ITEMS = [
   { id: "colors", label: "Colors" },
+  { id: "charts", label: "Charts" },
   { id: "typography", label: "Type" },
   { id: "spacing", label: "Spacing" },
   { id: "radii", label: "Radii" },
@@ -183,8 +201,8 @@ export function UILabContent() {
       >
         <div className="max-w-3xl mx-auto px-5 pt-4 pb-3">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-[10px] bg-[#007AFF] flex items-center justify-center">
-              <Layers className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-[10px] bg-[#FFD62A] flex items-center justify-center">
+              <Layers className="w-4 h-4 text-[#161719]" />
             </div>
             <div>
               <h1 className="text-[17px] font-semibold text-gray-900">
@@ -206,7 +224,7 @@ export function UILabContent() {
                 className={cn(
                   "shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors",
                   activeSection === item.id
-                    ? "bg-[#007AFF] text-white"
+                    ? "bg-[#FFD62A] text-[#161719]"
                     : "bg-white/60 text-gray-500 hover:text-gray-700"
                 )}
               >
@@ -224,13 +242,13 @@ export function UILabContent() {
           <div className="space-y-4">
             <TokenCard>
               <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Brand / Accent
+                Brand
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {Object.entries(COLORS).map(([key, { value, label }]) => (
                   <div key={key} className="space-y-1.5">
                     <div
-                      className="h-14 rounded-[14px]"
+                      className="h-14 rounded-[14px] border border-black/5"
                       style={{ backgroundColor: value }}
                     />
                     <p className="text-[13px] font-medium text-gray-900">
@@ -239,6 +257,24 @@ export function UILabContent() {
                     <p className="text-[11px] text-gray-400 font-mono">
                       {value}
                     </p>
+                  </div>
+                ))}
+              </div>
+            </TokenCard>
+
+            <TokenCard>
+              <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Gradients
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {GRADIENTS.map((g) => (
+                  <div key={g.label} className="space-y-1.5">
+                    <div
+                      className="h-14 rounded-[14px]"
+                      style={{ background: g.css }}
+                    />
+                    <p className="text-[13px] font-medium text-gray-900">{g.label}</p>
+                    <p className="text-[11px] text-gray-400">{g.desc}</p>
                   </div>
                 ))}
               </div>
@@ -262,6 +298,64 @@ export function UILabContent() {
                       {value}
                     </p>
                   </div>
+                ))}
+              </div>
+            </TokenCard>
+          </div>
+        </Section>
+
+        {/* ── Charts ──────────────────────────────────────────── */}
+        <Section id="charts" title="Chart Colors">
+          <div className="space-y-4">
+            <TokenCard>
+              <p className="text-[13px] text-gray-500 mb-4">
+                CSS variables used by <Code>recharts</Code> via shadcn chart primitives. Monochromatic approach — one color per card with opacity steps for inactive bars.
+              </p>
+              <div className="space-y-3">
+                {CHART_COLORS.map((c) => (
+                  <div key={c.var} className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-[10px] shrink-0 border border-black/5"
+                      style={{ backgroundColor: c.value }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-gray-900">{c.label}</p>
+                      <p className="text-[11px] text-gray-400 font-mono">{c.var}</p>
+                    </div>
+                    <p className="text-[11px] text-gray-400 font-mono shrink-0">{c.value}</p>
+                  </div>
+                ))}
+              </div>
+            </TokenCard>
+
+            <TokenCard>
+              <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                Monochromatic Bar Pattern
+              </p>
+              <p className="text-[13px] text-gray-500 mb-4">
+                Active bar: <Code>--chart-1</Code> · Semi-active: <Code>--chart-4</Code> (60%) · Inactive: <Code>--chart-5</Code> (20%) · Highlight: white
+              </p>
+              <div className="flex items-end gap-2 h-24 px-2">
+                {[40, 65, 50, 100, 35, 80].map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-[6px] rounded-b-[6px]"
+                    style={{
+                      height: `${h}%`,
+                      backgroundColor:
+                        i === 3
+                          ? "#ffffff"
+                          : i === 1 || i === 5
+                          ? "#FFD62A99"
+                          : "#FFD62A33",
+                      border: i === 3 ? "1.5px solid #FFD62A" : undefined,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-end gap-2 px-2 mt-1">
+                {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((m) => (
+                  <p key={m} className="flex-1 text-center text-[10px] text-gray-400">{m}</p>
                 ))}
               </div>
             </TokenCard>
@@ -309,7 +403,7 @@ export function UILabContent() {
                     {px}px
                   </span>
                   <div
-                    className="h-4 rounded-[4px] bg-[#007AFF]/20"
+                    className="h-4 rounded-[4px] bg-[#FFD62A]/30"
                     style={{ width: px * 3 }}
                   />
                   <span className="text-[11px] text-gray-400 font-mono">
@@ -329,7 +423,7 @@ export function UILabContent() {
                 <div key={r.label} className="text-center space-y-2">
                   <div
                     className={cn(
-                      "w-16 h-16 mx-auto bg-[#007AFF]/10 border-2 border-[#007AFF]/30",
+                      "w-16 h-16 mx-auto bg-[#FFD62A]/15 border-2 border-[#FFD62A]/40",
                       r.value
                     )}
                   />
@@ -370,12 +464,12 @@ export function UILabContent() {
               Used on sticky headers & bottom nav. <Code>backdrop-filter: blur(20px)</Code>
             </p>
             <div className="relative h-40 rounded-[20px] overflow-hidden">
-              {/* Colorful background */}
+              {/* Brand color background */}
               <div className="absolute inset-0 flex">
-                <div className="flex-1 bg-[#007AFF]" />
-                <div className="flex-1 bg-[#FF9500]" />
-                <div className="flex-1 bg-[#34C759]" />
-                <div className="flex-1 bg-[#FF2D55]" />
+                <div className="flex-1 bg-[#842AEB]" />
+                <div className="flex-1 bg-[#FFD62A]" />
+                <div className="flex-1 bg-[#3F48EB]" />
+                <div className="flex-1 bg-[#161719]" />
               </div>
               {/* Glass overlay */}
               <div
@@ -416,8 +510,11 @@ export function UILabContent() {
               </p>
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-3">
-                  <button className="bg-[#007AFF] text-white text-[15px] font-semibold px-5 py-3 rounded-[14px] active:opacity-80 transition-opacity">
+                  <button className="bg-[#FFD62A] text-[#161719] text-[15px] font-semibold px-5 py-3 rounded-[14px] active:opacity-80 transition-opacity">
                     Primary
+                  </button>
+                  <button className="bg-[#842AEB] text-white text-[15px] font-semibold px-5 py-3 rounded-[14px] active:opacity-80 transition-opacity">
+                    Purple
                   </button>
                   <button className="bg-[#F2F2F7] text-gray-700 text-[15px] font-medium px-5 py-3 rounded-[14px] active:opacity-80 transition-opacity">
                     Secondary
@@ -427,11 +524,11 @@ export function UILabContent() {
                   </button>
                 </div>
                 <div className="flex gap-3">
-                  <button className="text-[#007AFF] text-[17px] active:opacity-60 transition-opacity flex items-center gap-1">
+                  <button className="text-[#842AEB] text-[17px] active:opacity-60 transition-opacity flex items-center gap-1">
                     <ChevronLeft className="h-6 w-6" />
                     <span>Back</span>
                   </button>
-                  <button className="text-[#007AFF] text-[17px] font-semibold active:opacity-60 transition-opacity">
+                  <button className="text-[#842AEB] text-[17px] font-semibold active:opacity-60 transition-opacity">
                     Save
                   </button>
                 </div>
@@ -502,32 +599,30 @@ export function UILabContent() {
                 Game Tiles
               </p>
               <div className="flex gap-3 flex-wrap">
-                {["CA", "TM", "WS", "SC", "7W"].map((abbr, i) => (
+                {[
+                  { abbr: "CA", color: "#FFD62A", text: "#161719" },
+                  { abbr: "TM", color: "#842AEB", text: "#ffffff" },
+                  { abbr: "WS", color: "#3F48EB", text: "#ffffff" },
+                  { abbr: "SC", color: "#161719", text: "#FFD62A" },
+                  { abbr: "7W", color: "#842AEB", text: "#ffffff" },
+                ].map(({ abbr, color, text }) => (
                   <div
                     key={abbr}
-                    className="rounded-[14px] flex items-center justify-center text-white text-[22px] font-bold"
-                    style={{
-                      width: 64,
-                      height: 64,
-                      backgroundColor:
-                        Object.values(COLORS)[i % Object.keys(COLORS).length]
-                          .value,
-                    }}
+                    className="rounded-[14px] flex items-center justify-center text-[22px] font-bold"
+                    style={{ width: 64, height: 64, backgroundColor: color, color: text }}
                   >
                     {abbr}
                   </div>
                 ))}
-                {["CA", "TM", "WS"].map((abbr, i) => (
+                {[
+                  { abbr: "CA", color: "#FFD62A", text: "#161719" },
+                  { abbr: "TM", color: "#842AEB", text: "#ffffff" },
+                  { abbr: "WS", color: "#3F48EB", text: "#ffffff" },
+                ].map(({ abbr, color, text }) => (
                   <div
                     key={`sm-${abbr}`}
-                    className="rounded-[10px] flex items-center justify-center text-white text-[17px] font-bold"
-                    style={{
-                      width: 48,
-                      height: 48,
-                      backgroundColor:
-                        Object.values(COLORS)[i % Object.keys(COLORS).length]
-                          .value,
-                    }}
+                    className="rounded-[10px] flex items-center justify-center text-[17px] font-bold"
+                    style={{ width: 48, height: 48, backgroundColor: color, color: text }}
                   >
                     {abbr}
                   </div>
@@ -636,7 +731,7 @@ export function UILabContent() {
               <div className="max-w-[430px] mx-auto space-y-3">
                 <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-5 border border-gray-100">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-[14px] bg-[#007AFF] flex items-center justify-center text-white font-bold">
+                    <div className="w-12 h-12 rounded-[14px] bg-[#FFD62A] flex items-center justify-center text-[#161719] font-bold">
                       CA
                     </div>
                     <div className="flex-1">
@@ -655,7 +750,7 @@ export function UILabContent() {
                       <p className="text-[11px] text-gray-400">Plays</p>
                     </div>
                     <div>
-                      <p className="text-[22px] font-bold text-[#34C759]">
+                      <p className="text-[22px] font-bold text-[#FFD62A]">
                         67%
                       </p>
                       <p className="text-[11px] text-gray-400">Win rate</p>
@@ -680,7 +775,7 @@ export function UILabContent() {
                 <p className="text-[15px] text-gray-500 mb-6 max-w-[260px]">
                   Add your first game to start tracking sessions and stats.
                 </p>
-                <button className="bg-[#007AFF] text-white text-[15px] font-semibold px-6 py-3 rounded-[14px] flex items-center gap-2">
+                <button className="bg-[#FFD62A] text-[#161719] text-[15px] font-semibold px-6 py-3 rounded-[14px] flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Add Game
                 </button>
@@ -712,7 +807,7 @@ export function UILabContent() {
                     className="px-5 pt-4 pb-3 flex items-center gap-3"
                     style={{ background: "rgba(242,242,247,0.95)" }}
                   >
-                    <div className="flex items-center text-[#007AFF] -ml-1">
+                    <div className="flex items-center text-[#842AEB] -ml-1">
                       <ChevronLeft className="h-6 w-6" />
                       <span className="text-[17px]">Games</span>
                     </div>
@@ -750,7 +845,7 @@ export function UILabContent() {
                         key={tab.label}
                         className={cn(
                           "flex flex-col items-center p-2 min-w-[64px]",
-                          tab.active ? "text-[#007AFF]" : "text-gray-400"
+                          tab.active ? "text-[#FFD62A]" : "text-gray-400"
                         )}
                       >
                         <tab.icon className="h-7 w-7 mb-1" />
@@ -791,7 +886,7 @@ export function UILabContent() {
         {/* Footer */}
         <div className="text-center pt-4 pb-8">
           <p className="text-[13px] text-gray-400">
-            Game Night HQ — UI Lab · Development only
+            Game Night — UI Lab · Development only
           </p>
         </div>
       </div>
@@ -811,7 +906,7 @@ function ToggleDemo() {
         onClick={() => setOn(!on)}
         className={cn(
           "relative inline-flex h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200",
-          on ? "bg-[#34C759]" : "bg-gray-300"
+          on ? "bg-[#FFD62A]" : "bg-gray-300"
         )}
       >
         <span
@@ -842,7 +937,7 @@ function SegmentDemo() {
           className={cn(
             "flex-1 rounded-[10px] py-2.5 text-[15px] font-medium transition-colors",
             value === opt.value
-              ? "bg-[#007AFF] text-white"
+              ? "bg-[#FFD62A] text-[#161719]"
               : "bg-[#F2F2F7] text-gray-700"
           )}
         >
@@ -894,10 +989,10 @@ function MotionDemo({
         <AnimatePresence mode="wait">
           <motion.div
             key={key}
-            className="w-10 h-10 rounded-[10px] bg-[#007AFF] flex items-center justify-center"
+            className="w-10 h-10 rounded-[10px] bg-[#FFD62A] flex items-center justify-center"
             {...preset}
           >
-            <Star className="w-5 h-5 text-white" />
+            <Star className="w-5 h-5 text-[#161719]" />
           </motion.div>
         </AnimatePresence>
         <div>
@@ -916,13 +1011,13 @@ function MotionDemo({
 
 function ConfettiDemo() {
   const [key, setKey] = useState(0);
-  const colors = ["#FFD700", "#FF6B6B", "#4ECDC4", "#007AFF", "#FF9F43", "#A55EEA"];
+  const colors = ["#FFD62A", "#842AEB", "#3F48EB", "#161719", "#FFD62A99", "#842AEB99"];
 
   return (
     <div>
       <button
         onClick={() => setKey((k) => k + 1)}
-        className="bg-[#007AFF] text-white text-[15px] font-semibold px-5 py-2.5 rounded-[14px] mb-4"
+        className="bg-[#FFD62A] text-[#161719] text-[15px] font-semibold px-5 py-2.5 rounded-[14px] mb-4"
       >
         Fire confetti
       </button>
@@ -975,7 +1070,7 @@ function StaggerDemo() {
     <div>
       <button
         onClick={() => setKey((k) => k + 1)}
-        className="bg-[#007AFF] text-white text-[15px] font-semibold px-5 py-2.5 rounded-[14px] mb-4"
+        className="bg-[#FFD62A] text-[#161719] text-[15px] font-semibold px-5 py-2.5 rounded-[14px] mb-4"
       >
         Replay stagger
       </button>

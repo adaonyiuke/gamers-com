@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils/cn";
 
 const BRAND_COLORS = [
   { label: "Black",  value: "#161719", text: "white" },
-  { label: "Yellow", value: "#EBC31C", text: "black" },
+  { label: "Yellow", value: "#FFD62A", text: "black" },
   { label: "Purple", value: "#842AEB", text: "white" },
   { label: "Blue",   value: "#3F48EB", text: "white" },
 ] as const;
@@ -70,7 +70,7 @@ const SHADOWS = [
   { label: "Elevated", css: "0 4px 16px rgba(0,0,0,0.08)",  use: "Modals, sheets" },
   { label: "Card",     css: "0 12px 40px rgba(0,0,0,0.12)", use: "Marketing cards" },
   { label: "Heavy",    css: "0 20px 60px rgba(0,0,0,0.35)", use: "Overlapping cards" },
-  { label: "Glow — Yellow", css: "0 8px 32px rgba(235,195,28,0.5)",  use: "CTA buttons (marketing)" },
+  { label: "Glow — Yellow", css: "0 8px 32px rgba(255,214,42,0.5)",  use: "CTA buttons (marketing)" },
   { label: "Glow — Purple", css: "0 8px 28px rgba(132,42,235,0.4)", use: "Accent elements" },
 ] as const;
 
@@ -87,8 +87,17 @@ const ASSETS_3D = [
   { file: "confetti.png",              label: "Confetti" },
 ] as const;
 
+const CHART_COLORS = [
+  { var: "--chart-1", value: "#FFD62A",   label: "Yellow — primary stat" },
+  { var: "--chart-2", value: "#842AEB",   label: "Purple — rival/comparison" },
+  { var: "--chart-3", value: "#3F48EB",   label: "Blue — activity/time" },
+  { var: "--chart-4", value: "#FFD62A99", label: "Yellow 60% — semi-active" },
+  { var: "--chart-5", value: "#FFD62A33", label: "Yellow 20% — inactive" },
+] as const;
+
 const NAV_ITEMS = [
   { id: "colors",     label: "Colors" },
+  { id: "charts",     label: "Charts" },
   { id: "gradients",  label: "Gradients" },
   { id: "avatars",    label: "Avatars" },
   { id: "type",       label: "Type" },
@@ -175,10 +184,58 @@ export default function BrandPage() {
             <p className="text-[13px] font-semibold text-gray-500 mb-3">Usage</p>
             <ul className="space-y-1.5 text-[14px] text-gray-700">
               <li><span className="font-bold">Black #161719</span> — Dark backgrounds, nav, footer, body text on light</li>
-              <li><span className="font-bold">Yellow #EBC31C</span> — Primary CTA buttons, highlights, accents</li>
+              <li><span className="font-bold">Yellow #FFD62A</span> — Primary CTA buttons, highlights, accents</li>
               <li><span className="font-bold">Purple #842AEB</span> — Brand primary, section labels, icon fills</li>
               <li><span className="font-bold">Blue #3F48EB</span> — Secondary headers (leaderboard), interactive states</li>
             </ul>
+          </div>
+        </Section>
+
+        {/* ── Charts ── */}
+        <Section id="charts" title="Chart Colors">
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-3">
+            <p className="text-[13px] text-gray-500 mb-4">
+              CSS variables used by <code className="text-[12px] bg-gray-100 rounded px-1">recharts</code> via shadcn chart primitives. Monochromatic per card — one color with opacity steps for inactive bars.
+            </p>
+            <div className="space-y-3">
+              {CHART_COLORS.map((c) => (
+                <div key={c.var} className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-[10px] shrink-0 border border-black/5"
+                    style={{ backgroundColor: c.value }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-gray-900">{c.label}</p>
+                    <code className="text-[11px] text-gray-400 font-mono">{c.var}</code>
+                  </div>
+                  <code className="text-[11px] text-gray-400 font-mono shrink-0">{c.value}</code>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <p className="text-[13px] font-semibold text-gray-500 mb-3">Bar pattern preview</p>
+            <div className="flex items-end gap-2 h-20 px-1">
+              {[40, 65, 50, 100, 35, 80].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t-[5px] rounded-b-[5px]"
+                  style={{
+                    height: `${h}%`,
+                    backgroundColor:
+                      i === 3 ? "#ffffff"
+                      : i === 1 || i === 5 ? "#FFD62A99"
+                      : "#FFD62A33",
+                    border: i === 3 ? "1.5px solid #FFD62A" : undefined,
+                  }}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2 mt-1 px-1">
+              {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((m) => (
+                <p key={m} className="flex-1 text-center text-[10px] text-gray-400">{m}</p>
+              ))}
+            </div>
           </div>
         </Section>
 
@@ -233,7 +290,7 @@ export default function BrandPage() {
                     className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full mt-1"
                     style={
                       t.font === "Aktiv Grotesk"
-                        ? { backgroundColor: "#EBC31C", color: "#161719" }
+                        ? { backgroundColor: "#FFD62A", color: "#161719" }
                         : { backgroundColor: "#F2F2F7", color: "#6B7280" }
                     }
                   >
@@ -327,7 +384,7 @@ export default function BrandPage() {
             <div className="space-y-3">
               <button
                 className="w-full rounded-[16px] py-4 text-[17px] font-black text-[#161719]"
-                style={{ backgroundColor: "#EBC31C", boxShadow: "0 8px 32px rgba(235,195,28,0.5)" }}
+                style={{ backgroundColor: "#FFD62A", boxShadow: "0 8px 32px rgba(235,195,28,0.5)" }}
               >
                 Marketing Primary (Yellow)
               </button>
@@ -348,7 +405,7 @@ export default function BrandPage() {
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-4">Leaderboard Row</p>
             {[
               { name: "Mojoyin", wins: 12, color: "#842AEB", medal: "🥇", bg: "bg-amber-50" },
-              { name: "Ada",     wins: 9,  color: "#EBC31C", medal: "🥈", bg: "" },
+              { name: "Ada",     wins: 9,  color: "#FFD62A", medal: "🥈", bg: "" },
               { name: "Aradi",   wins: 7,  color: "#3F48EB", medal: "🥉", bg: "" },
             ].map((p) => (
               <div key={p.name} className={cn("flex items-center gap-3 px-2 py-3.5 rounded-[12px]", p.bg)}>
@@ -385,7 +442,7 @@ export default function BrandPage() {
           <div className="bg-white rounded-[20px] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-4">Input</p>
             <input
-              className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+              className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#842AEB]/30"
               placeholder="Placeholder text"
               readOnly
             />
