@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Pencil, Check, X } from "lucide-react";
-import { useUpdateMeetupTitle } from "@/lib/queries/meetups";
+import { useUpdateMeetupTitle, useUpdateMeetupDate } from "@/lib/queries/meetups";
 import { formatDateLong } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
 
@@ -33,8 +33,10 @@ export function MeetupHeaderCard({
 }: MeetupHeaderCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
+  const [isEditingDate, setIsEditingDate] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const updateTitle = useUpdateMeetupTitle();
+  const updateDate = useUpdateMeetupDate();
 
   // Focus input when entering edit mode
   useEffect(() => {
@@ -137,10 +139,40 @@ export function MeetupHeaderCard({
       {/* Status + Date */}
       <div className="flex items-center gap-3 mt-3">
         <StatusBadge status={status} />
-        <p className="text-[15px] text-gray-500">
-          {formatDateLong(date)}
-        </p>
+        {isEditingDate ? (
+          <input
+            type="date"
+            defaultValue={date}
+            autoFocus
+            onChange={async (e) => {
+              if (!e.target.value) return;
+              try {
+                await updateDate.mutateAsync({ meetupId, date: e.target.value });
+              } catch {
+                // Error handled by mutation state
+              }
+              setIsEditingDate(false);
+            }}
+            onBlur={() => setIsEditingDate(false)}
+            className="text-[15px] text-gray-700 bg-gray-50 rounded-[10px] px-2 py-1 border border-gray-200 focus:border-[#007AFF] focus:outline-none"
+          />
+        ) : (
+          <button
+            onClick={() => { if (isAdmin) setIsEditingDate(true); }}
+            className={cn(
+              "text-[15px] text-gray-500",
+              isAdmin && "active:text-[#007AFF] transition-colors"
+            )}
+          >
+            {formatDateLong(date)}
+          </button>
+        )}
       </div>
+      {updateDate.isError && (
+        <p className="text-[13px] text-red-500 mt-1 px-1">
+          Failed to update date. You may not have permission.
+        </p>
+      )}
     </div>
   );
 }

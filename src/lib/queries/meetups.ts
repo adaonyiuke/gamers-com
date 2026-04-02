@@ -278,6 +278,37 @@ export function useUpdateMeetupTitle() {
   });
 }
 
+// ---------- Update meetup date (admin only — enforced via RLS) ----------
+export function useUpdateMeetupDate() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      meetupId,
+      date,
+    }: {
+      meetupId: string;
+      date: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("meetups")
+        .update({ date })
+        .eq("id", meetupId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["meetups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["meetups", "detail", data.id],
+      });
+    },
+  });
+}
+
 export function useUpdateMeetupStatus() {
   const supabase = createClient();
   const queryClient = useQueryClient();
