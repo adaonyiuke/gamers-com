@@ -232,7 +232,16 @@
       "mcp__figma-desktop__get_variable_defs",
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; import re; nodes=re.findall\\(r''''\"\"id\"\":\"\"\\([^\"\"]+\\)\"\".*?\"\"name\"\":\"\"\\([^\"\"]+\\)\"\".*?\"\"type\"\":\"\"\\([^\"\"]+\\)\"\"'''', text[:3000]\\); [print\\(n\\) for n in nodes[:30]]\")",
       "mcp__figma-desktop__get_screenshot",
-      "Bash(npx shadcn@latest init --defaults)"
+      "Bash(npx shadcn@latest init --defaults)",
+      "Bash(npx shadcn@latest add chart)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/f3e73bf6-7abe-4d6b-b089-1c6e6c80a910\" -o \"/Users/ada/code/gamers.com/public/game-night-wordmark.svg\")",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/149ef1a6-541e-4a91-8db0-f5914d268244\" -o \"/Users/ada/code/gamers.com/public/clubplay-logo.svg\")",
+      "WebFetch(domain:joi.software)",
+      "WebFetch(domain:pin.it)",
+      "WebFetch(domain:api.pinterest.com)",
+      "WebFetch(domain:www.pinterest.com)",
+      "Bash(git push:*)",
+      "Bash(file \"/Users/ada/code/gamers.com/public/3D image assets/\"*)"
     ]
   }
 }
