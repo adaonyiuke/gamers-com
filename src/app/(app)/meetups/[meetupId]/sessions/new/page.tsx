@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, Check, Plus, X, Crown } from "lucide-react";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGames } from "@/lib/queries/games";
-import { useMeetupParticipants } from "@/lib/queries/meetups";
+import { useMeetup, useMeetupParticipants } from "@/lib/queries/meetups";
 import { createClient } from "@/lib/supabase/client";
 import { useCreateSession, useFinalizeSession } from "@/lib/queries/sessions";
 import {
@@ -78,6 +78,15 @@ export default function NewSessionPage({
   const createSession = useCreateSession();
   const finalizeSession = useFinalizeSession();
   const { data: settings } = useGroupSettings(groupId);
+  const { data: meetup } = useMeetup(meetupId);
+
+  // Block new sessions on completed+locked meetups
+  const isLocked = meetup?.status === "complete" && (settings?.lock_sessions_after_complete ?? true);
+  useEffect(() => {
+    if (isLocked) {
+      router.replace(`/meetups/${meetupId}`);
+    }
+  }, [isLocked, meetupId, router]);
 
   const searchParams = useSearchParams();
   const preselectedGameId = searchParams.get("gameId");

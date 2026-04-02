@@ -1,4 +1,5 @@
 -- Allow group owners to delete their own group
+DROP POLICY IF EXISTS "Owners can delete their groups" ON public.groups;
 CREATE POLICY "Owners can delete their groups"
 ON public.groups
 FOR DELETE

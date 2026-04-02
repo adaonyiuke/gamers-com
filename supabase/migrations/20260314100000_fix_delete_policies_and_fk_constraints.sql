@@ -27,12 +27,14 @@ ALTER TABLE public.guests
 -- ── 2. DELETE RLS policies ────────────────────────────────────────────────────
 
 -- meetups: admins can hard-delete meetups in their group
+DROP POLICY IF EXISTS "Admins can delete meetups" ON public.meetups;
 CREATE POLICY "Admins can delete meetups"
 ON public.meetups
 FOR DELETE
 USING (private.is_group_admin(meetups.group_id));
 
 -- sessions: admins can delete sessions (cascades to score_entries via FK)
+DROP POLICY IF EXISTS "Admins can delete sessions" ON public.sessions;
 CREATE POLICY "Admins can delete sessions"
 ON public.sessions
 FOR DELETE
@@ -45,6 +47,7 @@ USING (
 );
 
 -- score_entries: admins can delete score entries for their group's sessions
+DROP POLICY IF EXISTS "Admins can delete score entries" ON public.score_entries;
 CREATE POLICY "Admins can delete score entries"
 ON public.score_entries
 FOR DELETE
@@ -58,12 +61,14 @@ USING (
 );
 
 -- games: admins can delete games in their group
+DROP POLICY IF EXISTS "Admins can delete games" ON public.games;
 CREATE POLICY "Admins can delete games"
 ON public.games
 FOR DELETE
 USING (private.is_group_admin(games.group_id));
 
 -- guests: admins can delete guests in their group
+DROP POLICY IF EXISTS "Admins can delete guests" ON public.guests;
 CREATE POLICY "Admins can delete guests"
 ON public.guests
 FOR DELETE
