@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Users, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Users,
+  ChevronDown,
+  ChevronUp,
+  UserPlus,
+  X,
+  Minus,
+} from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
+import {
+  useAddMeetupParticipant,
+  useRemoveMeetupParticipant,
+} from "@/lib/queries/meetups";
+import { useGroupMembers } from "@/lib/queries/members";
+import { useGuests, useCreateGuest } from "@/lib/queries/guests";
 
 const INITIAL_LIMIT = 4;
 
@@ -46,19 +60,101 @@ function SkeletonBlock({ className }: { className?: string }) {
 interface ParticipantsSectionProps {
   participants: Record<string, unknown>[] | undefined;
   isLoading: boolean;
+  meetupId?: string;
+  meetupStatus?: string;
+  groupId?: string | null;
 }
 
 export function ParticipantsSection({
   participants,
   isLoading,
+  meetupId,
+  meetupStatus,
+  groupId,
 }: ParticipantsSectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [newGuestName, setNewGuestName] = useState("");
+
+  const addParticipant = useAddMeetupParticipant();
+  const removeParticipant = useRemoveMeetupParticipant();
+  const createGuest = useCreateGuest();
+  const { data: allMembers } = useGroupMembers(
+    meetupStatus === "planned" ? groupId ?? null : null
+  );
+  const { data: allGuests } = useGuests(
+    meetupStatus === "planned" ? groupId ?? null : null
+  );
+
+  const canModifyParticipants = meetupStatus === "planned" && meetupId;
 
   const total = participants?.length ?? 0;
-  const showToggle = total > INITIAL_LIMIT;
-  const displayed = expanded
-    ? participants
-    : participants?.slice(0, INITIAL_LIMIT);
+  const showToggle = total > INITIAL_LIMIT && !showAddPanel;
+  const displayed =
+    showAddPanel || expanded
+      ? participants
+      : participants?.slice(0, INITIAL_LIMIT);
+
+  // IDs already in this meetup
+  const existingMemberIds = new Set(
+    (participants ?? [])
+      .filter((p) => p.member_id)
+      .map((p) => p.member_id as string)
+  );
+  const existingGuestIds = new Set(
+    (participants ?? [])
+      .filter((p) => p.guest_id)
+      .map((p) => p.guest_id as string)
+  );
+
+  // Available to add
+  const availableMembers = (allMembers ?? []).filter(
+    (m: any) => !existingMemberIds.has(m.id)
+  );
+  const availableGuests = (allGuests ?? []).filter(
+    (g: any) => !existingGuestIds.has(g.id)
+  );
+
+  async function handleAddMember(memberId: string) {
+    if (!meetupId) return;
+    try {
+      await addParticipant.mutateAsync({ meetupId, memberId });
+    } catch {
+      toast.error("Failed to add player");
+    }
+  }
+
+  async function handleAddExistingGuest(guestId: string) {
+    if (!meetupId) return;
+    try {
+      await addParticipant.mutateAsync({ meetupId, guestId });
+    } catch {
+      toast.error("Failed to add guest");
+    }
+  }
+
+  async function handleCreateAndAddGuest() {
+    if (!meetupId || !groupId || !newGuestName.trim()) return;
+    try {
+      const guest = await createGuest.mutateAsync({
+        groupId,
+        name: newGuestName.trim(),
+      });
+      await addParticipant.mutateAsync({ meetupId, guestId: guest.id });
+      setNewGuestName("");
+    } catch {
+      toast.error("Failed to add guest");
+    }
+  }
+
+  async function handleRemoveParticipant(participantId: string) {
+    if (!meetupId) return;
+    try {
+      await removeParticipant.mutateAsync({ participantId, meetupId });
+    } catch {
+      toast.error("Failed to remove player");
+    }
+  }
 
   return (
     <div>
@@ -67,24 +163,35 @@ export function ParticipantsSection({
         <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">
           Participants{!isLoading && total > 0 ? ` (${total})` : ""}
         </p>
-        {showToggle && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-0.5 text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
-          >
-            {expanded ? (
-              <>
-                See less
-                <ChevronUp className="h-3.5 w-3.5" />
-              </>
-            ) : (
-              <>
-                See more
-                <ChevronDown className="h-3.5 w-3.5" />
-              </>
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {canModifyParticipants && (
+            <button
+              onClick={() => setShowAddPanel(!showAddPanel)}
+              className="flex items-center gap-1 text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              {showAddPanel ? "Done" : "Add Players"}
+            </button>
+          )}
+          {showToggle && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-0.5 text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+            >
+              {expanded ? (
+                <>
+                  See less
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </>
+              ) : (
+                <>
+                  See more
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Card */}
@@ -118,7 +225,7 @@ export function ParticipantsSection({
                   className="flex items-center gap-3 px-4 py-3.5"
                 >
                   <div
-                    className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold"
+                    className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0"
                     style={{ backgroundColor: avatarColor }}
                   >
                     {name[0].toUpperCase()}
@@ -136,9 +243,97 @@ export function ParticipantsSection({
                       </p>
                     )}
                   </div>
+                  {/* Remove button — only in edit mode on planned meetups */}
+                  {showAddPanel && canModifyParticipants && (
+                    <button
+                      onClick={() => handleRemoveParticipant(p.id as string)}
+                      disabled={removeParticipant.isPending}
+                      className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0 active:scale-95 transition-transform disabled:opacity-50"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Add Players panel — shown when meetup is planned */}
+        {showAddPanel && canModifyParticipants && (
+          <div className="border-t border-gray-100">
+            {/* Available members */}
+            {availableMembers.length > 0 && (
+              <div className="px-4 pt-3 pb-1">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Members
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableMembers.map((member: any) => (
+                    <button
+                      key={member.id}
+                      onClick={() => handleAddMember(member.id)}
+                      disabled={addParticipant.isPending}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#007AFF] rounded-full text-[13px] font-medium active:scale-95 transition-transform disabled:opacity-50"
+                    >
+                      <UserPlus className="h-3 w-3" />
+                      {member.display_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Available guests */}
+            {availableGuests.length > 0 && (
+              <div className="px-4 pt-3 pb-1">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Guests
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableGuests.map((guest: any) => (
+                    <button
+                      key={guest.id}
+                      onClick={() => handleAddExistingGuest(guest.id)}
+                      disabled={addParticipant.isPending}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full text-[13px] font-medium active:scale-95 transition-transform disabled:opacity-50"
+                    >
+                      <UserPlus className="h-3 w-3" />
+                      {guest.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Create new guest */}
+            <div className="flex items-center gap-2 px-4 py-3">
+              <UserPlus className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={newGuestName}
+                onChange={(e) => setNewGuestName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateAndAddGuest();
+                  }
+                }}
+                placeholder="New guest name"
+                className="flex-1 bg-gray-50 rounded-[10px] px-3 py-2.5 text-[15px] focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
+              />
+              <button
+                onClick={handleCreateAndAddGuest}
+                disabled={!newGuestName.trim() || createGuest.isPending || addParticipant.isPending}
+                className={cn(
+                  "bg-[#007AFF] text-white rounded-[10px] px-4 py-2.5 text-[15px] font-semibold flex-shrink-0",
+                  (!newGuestName.trim() || createGuest.isPending || addParticipant.isPending) &&
+                    "opacity-50"
+                )}
+              >
+                {createGuest.isPending || addParticipant.isPending ? "Adding..." : "Add"}
+              </button>
+            </div>
           </div>
         )}
       </div>
