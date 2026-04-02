@@ -311,6 +311,8 @@ export type Database = {
           id: string
           invited_by: string | null
           name: string
+          promote_email: string | null
+          promote_email_sent_at: string | null
           promoted_to_user_id: string | null
         }
         Insert: {
@@ -321,6 +323,8 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name: string
+          promote_email?: string | null
+          promote_email_sent_at?: string | null
           promoted_to_user_id?: string | null
         }
         Update: {
@@ -331,6 +335,8 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name?: string
+          promote_email?: string | null
+          promote_email_sent_at?: string | null
           promoted_to_user_id?: string | null
         }
         Relationships: [
