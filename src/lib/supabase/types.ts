@@ -671,6 +671,10 @@ export type Database = {
           error?: string
         }
       }
+      get_dashboard_insights: {
+        Args: { p_group_id: string }
+        Returns: Record<string, unknown>
+      }
     }
     Enums: {
       [_ in never]: never
