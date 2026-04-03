@@ -87,8 +87,6 @@ export type Database = {
           image_status: string | null
           image_updated_at: string | null
           image_url: string | null
-          max_players: number | null
-          min_players: number | null
           name: string
           scoring_type: string
           thumbnail_url: string | null
@@ -105,8 +103,6 @@ export type Database = {
           image_status?: string | null
           image_updated_at?: string | null
           image_url?: string | null
-          max_players?: number | null
-          min_players?: number | null
           name: string
           scoring_type?: string
           thumbnail_url?: string | null
@@ -123,8 +119,6 @@ export type Database = {
           image_status?: string | null
           image_updated_at?: string | null
           image_url?: string | null
-          max_players?: number | null
-          min_players?: number | null
           name?: string
           scoring_type?: string
           thumbnail_url?: string | null

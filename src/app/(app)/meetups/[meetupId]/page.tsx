@@ -102,6 +102,9 @@ export default function MeetupDetailPage({
         <ParticipantsSection
           participants={participants as Record<string, unknown>[] | undefined}
           isLoading={participantsLoading}
+          meetupId={meetupId}
+          meetupStatus={meetup?.status}
+          groupId={groupId}
         />
 
         {/* Games Played */}

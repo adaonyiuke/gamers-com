@@ -60,6 +60,69 @@ export function useMeetupParticipants(meetupId: string | null) {
   });
 }
 
+export function useAddMeetupParticipant() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      meetupId,
+      memberId,
+      guestId,
+      invitedBy,
+    }: {
+      meetupId: string;
+      memberId?: string;
+      guestId?: string;
+      invitedBy?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("meetup_participants")
+        .insert({
+          meetup_id: meetupId,
+          member_id: memberId ?? null,
+          guest_id: guestId ?? null,
+          invited_by: invitedBy ?? null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["meetup_participants", variables.meetupId],
+      });
+    },
+  });
+}
+
+export function useRemoveMeetupParticipant() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      participantId,
+      meetupId,
+    }: {
+      participantId: string;
+      meetupId: string;
+    }) => {
+      const { error } = await supabase
+        .from("meetup_participants")
+        .delete()
+        .eq("id", participantId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["meetup_participants", variables.meetupId],
+      });
+    },
+  });
+}
+
 export function useMeetupGamesCount(meetupId: string | null) {
   const supabase = createClient();
   return useQuery({
@@ -263,6 +326,37 @@ export function useUpdateMeetupTitle() {
       const { data, error } = await supabase
         .from("meetups")
         .update({ title })
+        .eq("id", meetupId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["meetups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["meetups", "detail", data.id],
+      });
+    },
+  });
+}
+
+// ---------- Update meetup date (admin only — enforced via RLS) ----------
+export function useUpdateMeetupDate() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      meetupId,
+      date,
+    }: {
+      meetupId: string;
+      date: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("meetups")
+        .update({ date })
         .eq("id", meetupId)
         .select()
         .single();

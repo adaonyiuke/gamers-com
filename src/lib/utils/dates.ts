@@ -1,5 +1,17 @@
+// Parse date strings as local time, not UTC.
+// "2026-03-14" → treated as local midnight, not UTC midnight.
+function parseLocalDate(date: string | Date): Date {
+  if (date instanceof Date) return date;
+  // YYYY-MM-DD format: split and construct as local
+  const parts = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (parts) {
+    return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+  }
+  return new Date(date);
+}
+
 export function formatDate(date: string | Date): string {
-  const d = new Date(date);
+  const d = parseLocalDate(date);
   return d.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
@@ -8,7 +20,7 @@ export function formatDate(date: string | Date): string {
 }
 
 export function formatDateLong(date: string | Date): string {
-  const d = new Date(date);
+  const d = parseLocalDate(date);
   return d.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
