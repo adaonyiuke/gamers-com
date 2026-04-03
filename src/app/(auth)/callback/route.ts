@@ -19,13 +19,37 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Redirect helper: checks if user needs onboarding before landing
+  async function resolveRedirect() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return next;
+
+    // If the user has a specific destination (e.g. /join), honour it
+    if (next !== "/dashboard") return next;
+
+    // Check if user has any group memberships — if not, they're new
+    const { count } = await supabase
+      .from("group_members")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if (!count || count === 0) return "/onboarding";
+
+    // Existing user with groups — check onboarding status
+    const onboardingDone = user.user_metadata?.onboarding_complete;
+    if (!onboardingDone) return "/onboarding";
+
+    return next;
+  }
+
   // Flow 1: PKCE code exchange (password sign-in, OAuth)
   const code = searchParams.get("code");
   if (code) {
     const { error: exchangeError } =
       await supabase.auth.exchangeCodeForSession(code);
     if (!exchangeError) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const destination = await resolveRedirect();
+      return NextResponse.redirect(`${origin}${destination}`);
     }
     const message = encodeURIComponent(exchangeError.message);
     return NextResponse.redirect(`${origin}/login?error=${message}`);
@@ -40,7 +64,8 @@ export async function GET(request: NextRequest) {
       type,
     });
     if (!verifyError) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const destination = await resolveRedirect();
+      return NextResponse.redirect(`${origin}${destination}`);
     }
     const message = encodeURIComponent(verifyError.message);
     return NextResponse.redirect(`${origin}/login?error=${message}`);

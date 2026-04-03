@@ -51,11 +51,7 @@ function SignupContent() {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
+  function buildRedirectUrl() {
     const params = new URLSearchParams(window.location.search);
     const inviteCode = params.get("code");
     const promoteGuestId = params.get("promote");
@@ -66,12 +62,19 @@ function SignupContent() {
       if (promoteGuestId) joinPath += `&promote=${promoteGuestId}`;
       callbackNext = `?next=${encodeURIComponent(joinPath)}`;
     }
+    return `${window.location.origin}/callback${callbackNext}`;
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/callback${callbackNext}`,
+        emailRedirectTo: buildRedirectUrl(),
         data: { display_name: displayName },
       },
     });
@@ -93,6 +96,9 @@ function SignupContent() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
+      options: {
+        emailRedirectTo: buildRedirectUrl(),
+      },
     });
 
     if (error) {

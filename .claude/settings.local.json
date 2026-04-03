@@ -259,7 +259,21 @@
       "Bash(/opt/homebrew/bin/supabase --version)",
       "Bash(/opt/homebrew/bin/supabase projects:*)",
       "Bash(/opt/homebrew/bin/supabase db:*)",
-      "Bash(/opt/homebrew/bin/supabase migration:*)"
+      "Bash(/opt/homebrew/bin/supabase migration:*)",
+      "Bash(/opt/homebrew/bin/gh pr:*)",
+      "Bash(PATH=/opt/homebrew/bin:$PATH npx tsc --noEmit --pretty)",
+      "Bash(grep -n \"WinnerReveal\\\\|confetti_intensity\\\\|winner_animation\\\\|reduced_motion\" /Users/ada/code/gamers.com/src/app/\\\\\\(app\\\\\\)/meetups/[meetupId]/sessions/new/page.tsx)",
+      "Bash(find /Users/ada/code/gamers.com -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -path */app/* -o -path */pages/* -o -path */components/*)",
+      "Bash(wc -l \"/Users/ada/code/gamers.com/src/app/\\(app\\)/dashboard/page.tsx\")",
+      "Bash(git -C /Users/ada/code/gamers.com log --all --grep=\"GAM-26\" --oneline)",
+      "Bash(git -C /Users/ada/code/gamers.com log --all --oneline)",
+      "Bash(git -C /Users/ada/code/gamers.com show fdd7716 --stat)",
+      "Bash(git -C /Users/ada/code/gamers.com show fdd7716 --no-patch --format=fuller)",
+      "Bash(cat /Users/ada/code/gamers.com/src/app/\\\\\\(auth\\\\\\)/callback/route.ts)",
+      "Bash(cat /Users/ada/code/gamers.com/src/app/\\\\\\(auth\\\\\\)/signup/page.tsx)",
+      "Bash(grep -l \"guests\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)",
+      "Bash(grep -l \"join_group_by_invite_code\\\\|promote_guest_to_member\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)",
+      "Bash(grep -l \"CREATE TABLE.*guests\\\\|guests.*invite_code\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)"
     ]
   }
 }
