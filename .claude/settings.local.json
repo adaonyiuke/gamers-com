@@ -273,7 +273,30 @@
       "Bash(cat /Users/ada/code/gamers.com/src/app/\\\\\\(auth\\\\\\)/signup/page.tsx)",
       "Bash(grep -l \"guests\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)",
       "Bash(grep -l \"join_group_by_invite_code\\\\|promote_guest_to_member\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)",
-      "Bash(grep -l \"CREATE TABLE.*guests\\\\|guests.*invite_code\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)"
+      "Bash(grep -l \"CREATE TABLE.*guests\\\\|guests.*invite_code\" /Users/ada/code/gamers.com/supabase/migrations/*.sql)",
+      "Bash(PATH=/opt/homebrew/bin:$PATH git push origin session-locking)",
+      "Bash(PATH=/opt/homebrew/bin:$PATH npx lucide-react --list)",
+      "Bash(cp \"/Users/ada/Documents/Documents \\(1\\)/Personal/gamers.com/coin-toss/coin-yellow-heads.svg\" /Users/ada/code/gamers.com/public/coin-heads.svg)",
+      "Bash(cp \"/Users/ada/Documents/Documents \\(1\\)/Personal/gamers.com/coin-toss/coin-yellow-tails.svg\" /Users/ada/code/gamers.com/public/coin-tails.svg)",
+      "Bash(git reset:*)",
+      "Bash(cat \"/Users/ada/code/gamers.com/src/app/\\(app\\)/guests/page.tsx\")",
+      "Bash(cat \"/Users/ada/code/gamers.com/src/app/\\(app\\)/meetups/page.tsx\")",
+      "Bash(cat \"/Users/ada/code/gamers.com/src/app/\\(app\\)/profiles/page.tsx\")",
+      "Bash(cat \"/Users/ada/code/gamers.com/src/app/\\(app\\)/onboarding/page.tsx\")",
+      "Bash(ls -lh /Users/ada/code/gamers.com/public/og*)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/c31cb974-e992-4205-97d5-8aee90f7d2e3\" -o welcome/trophy-render.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/bff75723-f3ec-43c3-bea8-a92597091d5f\" -o welcome/clubplay-logo.svg)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/fe5835d6-2c09-4b61-adb1-339782e2c325\" -o welcome/app-badge.svg)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/6605f9c2-975d-4bd5-a07a-d44cdc441e20\" -o welcome/game-night-title.svg)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/ea12e53a-7e50-42fe-bd6c-85f894dcda64\" -o welcome/glow-ellipse.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/bd3d507f-bdbf-4b11-a4fc-34fc84897336\" -o welcome/polygon-ray-1.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/49905450-0d16-4450-ab70-344a623675bd\" -o welcome/polygon-ray-2.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/6b98bf73-51f8-426a-a28a-3fb23567934d\" -o welcome/polygon-ray-3.png)",
+      "Bash(file welcome/polygon-ray-*.png)",
+      "Bash(mv glow-ellipse.png glow-ellipse.svg)",
+      "Bash(mv polygon-ray-1.png polygon-ray-1.svg)",
+      "Bash(mv polygon-ray-2.png polygon-ray-2.svg)",
+      "Bash(mv polygon-ray-3.png polygon-ray-3.svg)"
     ]
   }
 }
