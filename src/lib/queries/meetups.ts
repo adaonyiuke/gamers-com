@@ -139,6 +139,43 @@ export function useMeetupGamesCount(meetupId: string | null) {
   });
 }
 
+export function useMeetupWinner(meetupId: string | null) {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["meetup_winner", meetupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(`
+          id,
+          score_entries(
+            is_winner, participant_id,
+            meetup_participants:participant_id(
+              group_members:member_id(display_name),
+              guests:guest_id(name)
+            )
+          )
+        `)
+        .eq("meetup_id", meetupId!);
+      if (error) throw error;
+      if (!data) return null;
+      const counts: Record<string, { name: string; count: number }> = {};
+      for (const session of data) {
+        for (const entry of (session.score_entries ?? []) as any[]) {
+          if (!entry.is_winner) continue;
+          const p = entry.meetup_participants;
+          const name = p?.group_members?.display_name ?? p?.guests?.name ?? "Unknown";
+          counts[name] ??= { name, count: 0 };
+          counts[name].count++;
+        }
+      }
+      const top = Object.values(counts).sort((a, b) => b.count - a.count)[0];
+      return top?.name ?? null;
+    },
+    enabled: !!meetupId,
+  });
+}
+
 export function useCreateMeetup() {
   const supabase = createClient();
   const queryClient = useQueryClient();

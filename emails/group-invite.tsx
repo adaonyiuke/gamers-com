@@ -54,7 +54,7 @@ export default function GroupInviteEmail({
                   lineHeight: 1,
                 }}
               >
-                🎲
+                🏆
               </div>
               <Heading
                 style={{
@@ -183,7 +183,7 @@ export default function GroupInviteEmail({
                 margin: "12px 0 0",
               }}
             >
-              Game Night HQ · Sent from{" "}
+              Game Night · Sent from{" "}
               <a href="mailto:noreply@clubplay.io" style={{ color: "#9ca3af" }}>
                 noreply@clubplay.io
               </a>

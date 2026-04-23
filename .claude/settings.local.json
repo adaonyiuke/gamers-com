@@ -296,7 +296,19 @@
       "Bash(mv glow-ellipse.png glow-ellipse.svg)",
       "Bash(mv polygon-ray-1.png polygon-ray-1.svg)",
       "Bash(mv polygon-ray-2.png polygon-ray-2.svg)",
-      "Bash(mv polygon-ray-3.png polygon-ray-3.svg)"
+      "Bash(mv polygon-ray-3.png polygon-ray-3.svg)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/2bda13e8-e5f5-4cab-bcc7-0f3d959e9445\" -o /Users/ada/code/gamers.com/public/welcome/splash-combined.png)",
+      "Bash(brew list:*)",
+      "mcp__9ce4af7f-8134-42f5-a4e3-39fa17415d34__save_comment",
+      "Bash(npx react-email:*)",
+      "Bash(PATH=\"/opt/homebrew/bin:$PATH\" npx react-email render emails/guest-promote.tsx --html)",
+      "Bash(git -C /Users/ada/code/gamers.com status emails/rendered/)",
+      "Bash(PATH=\"/opt/homebrew/bin:$PATH\" npx react-email export --outDir /tmp/email-out --src emails)",
+      "Bash(PATH=\"/opt/homebrew/bin:$PATH\" npx react-email export --help)",
+      "Bash(PATH=\"/opt/homebrew/bin:$PATH\" npx react-email export --outDir /Users/ada/code/gamers.com/emails/html --pretty)",
+      "Bash(supabase status *)",
+      "mcp__4ade0e53-7662-4ec2-8f76-431b5826a51c__get_design_context",
+      "mcp__9ce4af7f-8134-42f5-a4e3-39fa17415d34__save_issue"
     ]
   }
 }
