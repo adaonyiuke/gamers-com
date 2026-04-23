@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Home, Trophy, Gamepad2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useUser } from "@/components/providers/supabase-provider";
+import { useGroupId } from "@/components/providers/group-provider";
+import { useGroupMembers } from "@/lib/queries/members";
 
 const tabs = [
   {
@@ -14,10 +16,9 @@ const tabs = [
     isActive: (p: string) => p === "/dashboard",
   },
   {
-    href: "/dashboard",
+    href: "/stats",
     label: "Stats",
     icon: Trophy,
-    // Links to dashboard for now; a dedicated /stats page is planned
     isActive: (p: string) => p === "/stats",
   },
   {
@@ -37,14 +38,21 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
   const { user } = useUser();
+  const { groupId } = useGroupId();
+  const { data: members } = useGroupMembers(groupId);
+
+  const currentMember = members?.find((m: any) => m.user_id === user?.id);
 
   const initial = (
+    currentMember?.display_name?.[0] ||
     user?.user_metadata?.display_name?.[0] ||
     user?.email?.[0] ||
     "?"
   ).toUpperCase();
 
-  const profileActive = pathname.startsWith("/profiles");
+  const avatarColor = currentMember?.avatar_url ?? "#7c3aed";
+
+  const profileActive = pathname.startsWith("/profiles") || pathname === "/profile";
 
   return (
     <nav
@@ -86,23 +94,18 @@ export function BottomNav() {
           })}
 
           <Link
-            href="/profiles"
+            href="/profile"
             className={cn(
               "flex flex-col items-center gap-1.5 w-[72px] transition-colors",
               profileActive ? "text-blue-500" : "text-neutral-500"
             )}
           >
-            <div
-              className={cn(
-                "h-6 w-6 rounded-full flex items-center justify-center",
-                profileActive ? "bg-blue-500" : "bg-violet-600"
-              )}
-            >
+            <div className="h-6 w-6 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarColor }}>
               <span className="text-[11px] font-semibold text-white leading-none">
                 {initial}
               </span>
             </div>
-            <span className="text-[10px] font-medium leading-none">Profile</span>
+            <span className={cn("text-[10px] font-medium leading-none", profileActive ? "text-blue-500" : "text-neutral-500")}>Profile</span>
           </Link>
         </div>
       </div>

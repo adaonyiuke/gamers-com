@@ -1,7 +1,7 @@
 export interface Badge {
   id: string;
   label: string;
-  type: "champion" | "on_fire" | "strategist" | "wildcard";
+  type: "champion" | "on_fire" | "strategist" | "wildcard" | "regular" | "veteran";
   description: string;
 }
 
@@ -10,7 +10,7 @@ export const BADGES: Badge[] = [
     id: "champion",
     label: "Champion",
     type: "champion",
-    description: "Highest overall win rate (min 5 sessions)",
+    description: "#1 win rate in the group",
   },
   {
     id: "on_fire",
@@ -22,13 +22,25 @@ export const BADGES: Badge[] = [
     id: "strategist",
     label: "Strategist",
     type: "strategist",
-    description: "Won with 3+ different games",
+    description: "Wins across 3+ different games",
   },
   {
     id: "wildcard",
     label: "Wildcard",
     type: "wildcard",
     description: "Won a game on first play",
+  },
+  {
+    id: "regular",
+    label: "Regular",
+    type: "regular",
+    description: "Attended 5+ meetups",
+  },
+  {
+    id: "veteran",
+    label: "Veteran",
+    type: "veteran",
+    description: "Played 15+ games",
   },
 ];
 
@@ -39,6 +51,7 @@ export interface MemberBadgeInput {
   uniqueGameWins: number;
   hasFirstPlayWin: boolean;
   isTopWinRate: boolean;
+  meetupsAttended: number;
 }
 
 export function computeBadges(input: MemberBadgeInput): Badge[] {
@@ -55,6 +68,12 @@ export function computeBadges(input: MemberBadgeInput): Badge[] {
   }
   if (input.hasFirstPlayWin) {
     earned.push(BADGES[3]); // Wildcard
+  }
+  if (input.meetupsAttended >= 5) {
+    earned.push(BADGES[4]); // Regular
+  }
+  if (input.totalSessions >= 15) {
+    earned.push(BADGES[5]); // Veteran
   }
 
   return earned;

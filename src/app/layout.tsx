@@ -2,10 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import "@fontsource-variable/inter";
 
 export const metadata: Metadata = {
   title: "Game Night",
@@ -59,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" className="font-sans">
       <head>
         {/* Aktiv Grotesk via Adobe Fonts */}
         <link rel="stylesheet" href="https://use.typekit.net/vqc1rlv.css" />
