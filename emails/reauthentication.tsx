@@ -35,14 +35,14 @@ export default function ReauthenticationEmail({
                   display: "inline-block",
                   width: 64,
                   height: 64,
-                  backgroundColor: "#161719",
+                  backgroundColor: "#842AEB",
                   borderRadius: 16,
                   textAlign: "center",
                   lineHeight: "64px",
                   fontSize: 32,
                 }}
               >
-                🎲
+                🏆
               </div>
             </Section>
 

@@ -4,7 +4,6 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
-  Plus,
   Users,
   Trash2,
   Check,
@@ -324,15 +323,6 @@ export default function MeetupsPage() {
         )}
       </div>
 
-      {/* FAB — hidden in select mode */}
-      {!selectMode && (
-        <Link
-          href="/meetups/new"
-          className="fixed bottom-24 right-5 z-50 w-14 h-14 bg-[#161719] rounded-full flex items-center justify-center shadow-lg shadow-black/20 active:scale-[0.94] transition-transform"
-        >
-          <Plus className="h-7 w-7 text-white" />
-        </Link>
-      )}
 
       {/* Confirmation dialog */}
       {showConfirm && (
@@ -388,7 +378,6 @@ function MeetupCard({
   const isComplete = meetup.status === "complete";
   const { data: participants } = useMeetupParticipants(meetupId);
   const { data: gamesCount } = useMeetupGamesCount(meetupId);
-
   const cardContent = (
     <>
       <div className="flex items-center justify-between mb-2">
@@ -445,9 +434,7 @@ function MeetupCard({
         <div
           className={cn(
             "h-6 w-6 rounded-full flex items-center justify-center border-2 mt-0.5 shrink-0 transition-colors",
-            isSelected
-              ? "bg-[#007AFF] border-[#007AFF]"
-              : "border-gray-300"
+            isSelected ? "bg-[#007AFF] border-[#007AFF]" : "border-gray-300"
           )}
         >
           {isSelected && <Check className="h-3.5 w-3.5 text-white" />}

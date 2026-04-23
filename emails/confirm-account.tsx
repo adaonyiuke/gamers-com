@@ -37,14 +37,14 @@ export default function ConfirmAccountEmail({
                   display: "inline-block",
                   width: 64,
                   height: 64,
-                  backgroundColor: "#161719",
+                  backgroundColor: "#842AEB",
                   borderRadius: 16,
                   textAlign: "center",
                   lineHeight: "64px",
                   fontSize: 32,
                 }}
               >
-                🎲
+                🏆
               </div>
             </Section>
 
@@ -148,7 +148,7 @@ export default function ConfirmAccountEmail({
                 margin: "12px 0 0",
               }}
             >
-              Game Night HQ · Sent from{" "}
+              Game Night · Sent from{" "}
               <a href="mailto:noreply@clubplay.io" style={{ color: "#9ca3af" }}>
                 noreply@clubplay.io
               </a>

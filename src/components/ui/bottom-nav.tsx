@@ -2,46 +2,109 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Layers, Users, Gamepad2 } from "lucide-react";
+import { Home, Trophy, Gamepad2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useUser } from "@/components/providers/supabase-provider";
 
 const tabs = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/games", label: "Games", icon: Gamepad2 },
-  { href: "/meetups", label: "Meetups", icon: Layers },
-  { href: "/profiles", label: "Players", icon: Users },
+  {
+    href: "/dashboard",
+    label: "Home",
+    icon: Home,
+    isActive: (p: string) => p === "/dashboard",
+  },
+  {
+    href: "/dashboard",
+    label: "Stats",
+    icon: Trophy,
+    // Links to dashboard for now; a dedicated /stats page is planned
+    isActive: (p: string) => p === "/stats",
+  },
+  {
+    href: "/games",
+    label: "Games",
+    icon: Gamepad2,
+    isActive: (p: string) => p.startsWith("/games"),
+  },
+  {
+    href: "/meetups",
+    label: "Meetups",
+    icon: Layers,
+    isActive: (p: string) => p.startsWith("/meetups"),
+  },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+
+  const initial = (
+    user?.user_metadata?.display_name?.[0] ||
+    user?.email?.[0] ||
+    "?"
+  ).toUpperCase();
+
+  const profileActive = pathname.startsWith("/profiles");
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 pt-2 z-50 pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-50 pt-2"
       style={{
-        background: "rgba(249, 249, 249, 0.85)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderTop: "0.5px solid rgba(0,0,0,0.15)",
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
       }}
     >
-      <div className="flex justify-around items-center px-2 pb-2 max-w-[430px] mx-auto">
-        {tabs.map((tab) => {
-          const isActive = pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
+      <div className="max-w-[430px] mx-auto px-6">
+        <div
+          className="flex h-14 items-center justify-between rounded-full px-2"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.2) 100%)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            border: "0.5px solid rgba(255,255,255,0.6)",
+            boxShadow:
+              "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.05)",
+          }}
+        >
+          {tabs.map((tab) => {
+            const active = tab.isActive(pathname);
+            return (
+              <Link
+                key={tab.label}
+                href={tab.href}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 w-[72px] transition-colors",
+                  active ? "text-blue-500" : "text-neutral-500"
+                )}
+              >
+                <tab.icon className="h-6 w-6" />
+                <span className="text-[10px] font-medium leading-none">
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <Link
+            href="/profiles"
+            className={cn(
+              "flex flex-col items-center gap-1.5 w-[72px] transition-colors",
+              profileActive ? "text-blue-500" : "text-neutral-500"
+            )}
+          >
+            <div
               className={cn(
-                "flex flex-col items-center p-2 min-w-[64px] transition-colors",
-                isActive ? "text-[#007AFF]" : "text-gray-400"
+                "h-6 w-6 rounded-full flex items-center justify-center",
+                profileActive ? "bg-blue-500" : "bg-violet-600"
               )}
             >
-              <tab.icon className="h-7 w-7 mb-1" />
-              <span className="text-[10px] font-medium">{tab.label}</span>
-            </Link>
-          );
-        })}
+              <span className="text-[11px] font-semibold text-white leading-none">
+                {initial}
+              </span>
+            </div>
+            <span className="text-[10px] font-medium leading-none">Profile</span>
+          </Link>
+        </div>
       </div>
     </nav>
   );

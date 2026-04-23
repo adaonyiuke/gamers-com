@@ -22,7 +22,16 @@ import {
   Zap,
   Swords,
   Sparkles,
+  Ellipsis,
+  Settings,
+  CircleHelp,
+  Check,
+  Plus,
+  UserRoundPlus,
+  LogOut,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { MeetupSessionCard } from "@/components/ui/meetup-session-card";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGroup } from "@/lib/queries/groups";
 import { useMemberStats, useAdjustedStreak } from "@/lib/queries/members";
@@ -133,6 +142,18 @@ export default function DashboardPage() {
   const { data: meetups, isLoading: meetupsLoading } = useMeetups(groupId);
 
   const [showNoMeetupModal, setShowNoMeetupModal] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("selected_group_id");
+    }
+    router.push("/login");
+  }
 
   const activeMeetup = useMemo(() => {
     if (!meetups) return null;
@@ -250,9 +271,9 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
 
   return (
     <div className="pb-28">
-      {/* Sticky top nav: group selector + avatar */}
+      {/* Sticky top nav: group selector + ellipsis */}
       <div
-        className="sticky top-0 z-40 px-5 pt-14 pb-2"
+        className="sticky top-0 z-40 px-5 pt-14 pb-3"
         style={{
           background: "rgba(242,242,247,0.85)",
           backdropFilter: "blur(20px)",
@@ -260,32 +281,169 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
         }}
       >
         <div className="flex items-center justify-between">
+          {/* Group selector pill */}
           <button
             onClick={() => setShowGroupPicker(!showGroupPicker)}
-            className="flex items-center gap-1.5 active:opacity-60 transition-opacity"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-full active:opacity-60 transition-opacity max-w-[220px]"
+            style={{
+              background: "rgba(255,255,255,0.6)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "0.5px solid rgba(255,255,255,0.8)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+            }}
           >
-            <span className="text-[17px] font-semibold text-gray-900 truncate max-w-[240px]">
+            <span className="text-base leading-none">🎮</span>
+            <span className="text-[16px] font-semibold text-gray-900 truncate">
               {group?.name ?? "Loading..."}
             </span>
             <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />
           </button>
-          <Link
-            href={currentMember ? `/profiles/${currentMember.id}` : "/profiles"}
-            className="active:scale-95 transition-transform"
+
+          {/* Ellipsis / options button */}
+          <button
+            onClick={() => setShowPopover(!showPopover)}
+            className="flex items-center justify-center h-9 w-9 rounded-full active:opacity-60 transition-opacity"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            }}
           >
-            <div
-              className="h-9 w-9 rounded-full flex items-center justify-center text-white text-[15px] font-bold shadow-sm"
-              style={{ backgroundColor: avatarColor }}
-            >
-              {(
-                user?.user_metadata?.display_name ||
-                user?.email ||
-                "?"
-              )[0].toUpperCase()}
-            </div>
-          </Link>
+            <Ellipsis className="h-6 w-6 text-gray-600" />
+          </button>
         </div>
       </div>
+
+      {/* Group switcher bottom sheet */}
+      {showGroupPicker && (
+        <div className="fixed inset-0 z-[70] flex items-end" onClick={() => setShowGroupPicker(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full max-w-[430px] mx-auto" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="rounded-t-[32px] px-4 pt-3 pb-6 flex flex-col gap-6"
+              style={{
+                background: "rgba(255,255,255,0.5)",
+                backdropFilter: "blur(40px) saturate(180%)",
+                WebkitBackdropFilter: "blur(40px) saturate(180%)",
+                boxShadow: "0px 25px 50px -12px rgba(0,0,0,0.1)",
+              }}
+            >
+              {/* Drag handle + title */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-1 w-10 rounded-full bg-black/20" />
+                <p className="text-[14px] font-medium text-black">Accounts</p>
+              </div>
+
+              {/* Groups list */}
+              <div className="rounded-[16px] overflow-hidden" style={{ background: "rgba(0,0,0,0.03)" }}>
+                {groups.map((g) => {
+                  const isActive = g.group_id === groupId;
+                  const roleLabel = g.role === "owner" ? "Admin" : "Member";
+                  return (
+                    <button
+                      key={g.group_id}
+                      onClick={() => { switchGroup(g.group_id); setShowGroupPicker(false); }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 text-left transition-colors"
+                      style={isActive ? { background: "rgba(255,255,255,0.25)" } : undefined}
+                    >
+                      <div
+                        className="h-[38px] w-[38px] rounded-[4px] flex items-center justify-center shrink-0 text-[20px]"
+                        style={{ background: "rgba(255,255,255,0.6)" }}
+                      >
+                        🎮
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-medium text-[#0a0a0a] truncate">{g.group_name}</p>
+                        <p className="text-[12px] text-[#737373]">{roleLabel}</p>
+                      </div>
+                      {isActive && <Check className="h-4 w-4 text-[#007AFF] shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Actions */}
+              <div className="rounded-[16px] overflow-hidden" style={{ background: "rgba(0,0,0,0.03)" }}>
+                <Link
+                  href="/settings/groups?action=create"
+                  onClick={() => setShowGroupPicker(false)}
+                  className="flex items-center gap-2 px-2 py-1.5 active:bg-black/5 transition-colors"
+                >
+                  <div className="h-[38px] w-[38px] flex items-center justify-center shrink-0">
+                    <Plus className="h-4 w-4 text-[#0a0a0a]" />
+                  </div>
+                  <span className="text-[14px] text-[#0a0a0a]">Create new group</span>
+                </Link>
+                <Link
+                  href="/settings/groups?action=join"
+                  onClick={() => setShowGroupPicker(false)}
+                  className="flex items-center gap-2 px-2 py-1.5 active:bg-black/5 transition-colors"
+                >
+                  <div className="h-[38px] w-[38px] flex items-center justify-center shrink-0">
+                    <UserRoundPlus className="h-4 w-4 text-[#0a0a0a]" />
+                  </div>
+                  <span className="text-[14px] text-[#0a0a0a]">Join existing group</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 active:bg-black/5 transition-colors disabled:opacity-50"
+                >
+                  <div className="h-[38px] w-[38px] flex items-center justify-center shrink-0">
+                    <LogOut className="h-4 w-4 text-red-600" />
+                  </div>
+                  <span className="text-[14px] text-red-600">{loggingOut ? "Signing out…" : "Log out"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ellipsis popover */}
+      {showPopover && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowPopover(false)}>
+          <div className="max-w-[430px] mx-auto relative h-full">
+          <div
+            className="absolute right-5 top-[108px] min-w-[160px] rounded-[8px] overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.7)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+              boxShadow: "0 25px 50px rgba(0,0,0,0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-2">
+              <Link
+                href="/profiles"
+                onClick={() => setShowPopover(false)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] active:bg-black/5 transition-colors"
+              >
+                <Users className="h-4 w-4 text-gray-500 shrink-0" />
+                <span className="text-[14px] text-gray-900">Members</span>
+              </Link>
+              <Link
+                href="/settings/group"
+                onClick={() => setShowPopover(false)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] active:bg-black/5 transition-colors"
+              >
+                <Settings className="h-4 w-4 text-gray-500 shrink-0" />
+                <span className="text-[14px] text-gray-900">Group Settings</span>
+              </Link>
+              <Link
+                href="#"
+                onClick={() => setShowPopover(false)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] active:bg-black/5 transition-colors"
+              >
+                <CircleHelp className="h-4 w-4 text-gray-500 shrink-0" />
+                <span className="text-[14px] text-gray-900">Help & Support</span>
+              </Link>
+            </div>
+          </div>
+          </div>
+        </div>
+      )}
 
       {/* Date + title (scrolls with content) */}
       <div className="px-5 mt-1 mb-2">
@@ -300,47 +458,6 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
       {/* PWA install nudge for first-time mobile visitors */}
       <InstallBanner />
 
-      {/* Group picker dropdown */}
-      {showGroupPicker && (
-        <div className="fixed inset-0 z-50" onClick={() => setShowGroupPicker(false)}>
-          <div
-            className="absolute left-5 right-5 top-[120px] max-w-[400px] mx-auto bg-white rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {groups.map((g) => {
-              const isActive = g.group_id === groupId;
-              return (
-                <button
-                  key={g.group_id}
-                  onClick={() => {
-                    switchGroup(g.group_id);
-                    setShowGroupPicker(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors border-b border-gray-50 last:border-0",
-                    isActive ? "bg-[#007AFF]/[0.04]" : "active:bg-gray-50"
-                  )}
-                >
-                  <span className="text-[15px] font-semibold text-gray-900 flex-1 truncate">
-                    {g.group_name}
-                  </span>
-                  {isActive && (
-                    <div className="h-2 w-2 rounded-full bg-[#007AFF] shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-            <Link
-              href="/settings/groups"
-              onClick={() => setShowGroupPicker(false)}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-[14px] font-semibold text-[#007AFF] bg-gray-50 active:bg-gray-100 transition-colors"
-            >
-              Manage Groups
-            </Link>
-          </div>
-        </div>
-      )}
-
       <div className="px-5 space-y-5 mt-2">
         {/* Featured Meetup Skeleton */}
         {isLoading && (
@@ -354,81 +471,15 @@ const featuredMeetup = useMemo<FeaturedMeetup | null>(() => {
         {/* Featured Meetup Callout Card */}
         {!isLoading && featuredMeetup && (
           <FadeIn>
-          <Link
-            href={`/meetups/${featuredMeetup.id}`}
-            className="block active:scale-[0.98] transition-transform"
-          >
-            <div
-              className={cn(
-                "bg-gradient-to-br rounded-[20px] p-5 shadow-lg relative overflow-hidden",
-                featuredMeetup.gradient
-              )}
-            >
-              {/* Decorative circles */}
-              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/10" />
-              <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/5" />
-
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[12px] font-bold uppercase tracking-wider text-white/70">
-                    {featuredMeetup.label}
-                  </span>
-                  {featuredMeetup.status === "active" && (
-                    <div className="flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-[12px] font-bold uppercase tracking-wider text-green-300">
-                        Live
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <h2 className="text-[22px] font-bold text-white mb-1">
-                  {featuredMeetup.title}
-                </h2>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/80">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span className="text-[14px]">
-                      {formatDate(featuredMeetup.date)}
-                    </span>
-                  </div>
-                  {featuredMeetup.location && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span className="text-[14px]">
-                        {featuredMeetup.location}
-                      </span>
-                    </div>
-                  )}
-                  {(featuredMeetup.status === "active" || featuredMeetup.status === "planned") && featuredParticipants && (
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5" />
-                      <span className="text-[14px]">
-                        {featuredParticipants.length} {featuredMeetup.status === "planned" ? "RSVP" : "attendees"}
-                      </span>
-                    </div>
-                  )}
-                  {featuredMeetup.status === "complete" && featuredWinner && (
-                    <div className="flex items-center gap-1.5">
-                      <Trophy className="h-3.5 w-3.5" />
-                      <span className="text-[14px]">
-                        {featuredWinner.name}
-                      </span>
-                    </div>
-                  )}
-                  {featuredMeetup.status === "complete" && featuredGamesPlayed > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <Gamepad2 className="h-3.5 w-3.5" />
-                      <span className="text-[14px]">
-                        {featuredGamesPlayed} games
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
-            </div>
-          </Link>
+            <MeetupSessionCard
+              href={`/meetups/${featuredMeetup.id}`}
+              title={featuredMeetup.title}
+              date={featuredMeetup.date}
+              status={featuredMeetup.status as "active" | "complete" | "planned"}
+              participantCount={featuredParticipants?.length}
+              winnerName={featuredWinner?.name}
+              gamesCount={featuredGamesPlayed}
+            />
           </FadeIn>
         )}
 

@@ -38,7 +38,7 @@ export default function GuestPromoteEmail({
             {/* Hero banner */}
             <Section
               style={{
-                background: "linear-gradient(160deg, #0a2540 0%, #3F48EB 100%)",
+                background: "linear-gradient(160deg, #160728 0%, #842AEB 100%)",
                 borderRadius: 24,
                 padding: "32px 32px 28px",
                 textAlign: "center",
@@ -52,7 +52,7 @@ export default function GuestPromoteEmail({
                   lineHeight: 1,
                 }}
               >
-                🎉
+                🏆
               </div>
               <Heading
                 style={{
@@ -150,7 +150,7 @@ export default function GuestPromoteEmail({
                 margin: "12px 0 0",
               }}
             >
-              Game Night HQ &middot; Sent from{" "}
+              Game Night &middot; Sent from{" "}
               <a href="mailto:noreply@clubplay.io" style={{ color: "#9ca3af" }}>
                 noreply@clubplay.io
               </a>
