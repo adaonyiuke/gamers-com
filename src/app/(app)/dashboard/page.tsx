@@ -412,7 +412,7 @@ export default function DashboardPage() {
                   <Settings className="h-4 w-4 text-gray-500 shrink-0" />
                   <span className="text-[14px] text-gray-900">Group Settings</span>
                 </Link>
-                <Link href="#" onClick={() => setShowPopover(false)} className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] active:bg-black/5 transition-colors">
+                <Link href="/support" onClick={() => setShowPopover(false)} className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] active:bg-black/5 transition-colors">
                   <CircleHelp className="h-4 w-4 text-gray-500 shrink-0" />
                   <span className="text-[14px] text-gray-900">Help & Support</span>
                 </Link>
