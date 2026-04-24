@@ -468,7 +468,7 @@ export default function SupportPage() {
         >
           <div
             className="h-11 w-11 rounded-[12px] flex items-center justify-center"
-            style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
           >
             <Mail className="h-5 w-5 text-white" />
           </div>
