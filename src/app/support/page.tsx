@@ -372,11 +372,11 @@ export default function SupportPage() {
         {/* Hero */}
         <div className="text-center space-y-3 pt-2">
           <Image
-            src="/welcome/app-badge.svg"
+            src="/app-icon.png"
             alt="Game Night"
-            width={80}
-            height={28}
-            className="mx-auto mb-2"
+            width={72}
+            height={72}
+            className="mx-auto mb-2 rounded-[16px]"
           />
           <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
             How can we help?
