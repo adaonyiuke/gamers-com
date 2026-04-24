@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, Mail, Gamepad2, Users, Trophy, User, Wrench, Rocket, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -343,14 +344,21 @@ export default function SupportPage() {
           borderBottom: "0.5px solid rgba(0,0,0,0.08)",
         }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2 active:opacity-60 transition-opacity">
-          <div
-            className="h-7 w-7 rounded-[8px] flex items-center justify-center"
-            style={{ backgroundColor: "#FFD62A" }}
-          >
-            <Gamepad2 className="h-4 w-4 text-[#161719]" />
-          </div>
-          <span className="text-[15px] font-semibold text-gray-900">Game Night</span>
+        <Link href="/dashboard" className="flex items-center gap-3 active:opacity-60 transition-opacity">
+          <Image
+            src="/welcome/clubplay-logo.svg"
+            alt="Club Play"
+            width={110}
+            height={16}
+            priority
+          />
+          <div className="h-4 w-px bg-black/15" />
+          <Image
+            src="/game-night-wordmark.svg"
+            alt="Game Night"
+            width={90}
+            height={16}
+          />
         </Link>
         <a
           href="mailto:hello@clubplay.io"
@@ -363,12 +371,13 @@ export default function SupportPage() {
       <main className="max-w-2xl mx-auto px-5 py-10 space-y-10">
         {/* Hero */}
         <div className="text-center space-y-3 pt-2">
-          <div
-            className="inline-flex items-center justify-center h-14 w-14 rounded-[16px] mx-auto mb-2"
-            style={{ backgroundColor: "#FFD62A" }}
-          >
-            <MessageCircle className="h-7 w-7 text-[#161719]" />
-          </div>
+          <Image
+            src="/welcome/app-badge.svg"
+            alt="Game Night"
+            width={80}
+            height={28}
+            className="mx-auto mb-2"
+          />
           <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
             How can we help?
           </h1>
