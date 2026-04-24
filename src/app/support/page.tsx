@@ -468,9 +468,9 @@ export default function SupportPage() {
         >
           <div
             className="h-11 w-11 rounded-[12px] flex items-center justify-center"
-            style={{ backgroundColor: "#FFD62A" }}
+            style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
           >
-            <Mail className="h-5 w-5 text-[#161719]" />
+            <Mail className="h-5 w-5 text-white" />
           </div>
           <div className="space-y-1">
             <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
