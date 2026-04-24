@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Mail, Gamepad2, Users, Trophy, User, Wrench, Rocket, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { ChevronDown, Mail, ArrowRight, Gamepad2, Users, Trophy, User, Wrench, Rocket, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const categories = [
@@ -343,14 +344,21 @@ export default function SupportPage() {
           borderBottom: "0.5px solid rgba(0,0,0,0.08)",
         }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2 active:opacity-60 transition-opacity">
-          <div
-            className="h-7 w-7 rounded-[8px] flex items-center justify-center"
-            style={{ backgroundColor: "#FFD62A" }}
-          >
-            <Gamepad2 className="h-4 w-4 text-[#161719]" />
-          </div>
-          <span className="text-[15px] font-semibold text-gray-900">Game Night</span>
+        <Link href="/dashboard" className="flex items-center gap-3 active:opacity-60 transition-opacity">
+          <Image
+            src="/welcome/clubplay-logo.svg"
+            alt="Club Play"
+            width={110}
+            height={16}
+            priority
+          />
+          <div className="h-4 w-px bg-black/15" />
+          <Image
+            src="/game-night-wordmark.svg"
+            alt="Game Night"
+            width={90}
+            height={16}
+          />
         </Link>
         <a
           href="mailto:hello@clubplay.io"
@@ -363,12 +371,13 @@ export default function SupportPage() {
       <main className="max-w-2xl mx-auto px-5 py-10 space-y-10">
         {/* Hero */}
         <div className="text-center space-y-3 pt-2">
-          <div
-            className="inline-flex items-center justify-center h-14 w-14 rounded-[16px] mx-auto mb-2"
-            style={{ backgroundColor: "#FFD62A" }}
-          >
-            <MessageCircle className="h-7 w-7 text-[#161719]" />
-          </div>
+          <Image
+            src="/app-icon.png"
+            alt="Game Night"
+            width={72}
+            height={72}
+            className="mx-auto mb-2 rounded-[16px]"
+          />
           <h1 className="text-[34px] font-bold tracking-tight text-gray-900">
             How can we help?
           </h1>
@@ -451,29 +460,31 @@ export default function SupportPage() {
 
         {/* Contact block */}
         <div
-          className="rounded-[20px] p-6 text-center space-y-3"
+          className="rounded-[20px] p-6 flex flex-col gap-4"
           style={{
-            background: "linear-gradient(135deg, #161719 0%, #2d2f33 100%)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+            background: "linear-gradient(135deg, rgb(22,7,40) 0%, rgb(132,42,235) 100%)",
+            boxShadow: "0 4px 16px rgba(132,42,235,0.25)",
           }}
         >
           <div
-            className="inline-flex items-center justify-center h-12 w-12 rounded-[14px] mx-auto"
-            style={{ backgroundColor: "#FFD62A" }}
+            className="h-11 w-11 rounded-[12px] flex items-center justify-center"
+            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
           >
-            <Mail className="h-5 w-5 text-[#161719]" />
+            <Mail className="h-5 w-5 text-white" />
           </div>
-          <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
-          <p className="text-[14px] text-white/60 leading-relaxed max-w-xs mx-auto">
-            Can't find what you're looking for? Send us a message and we'll get back to you within one business day.
-          </p>
+          <div className="space-y-1">
+            <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
+            <p className="text-[14px] text-white/60 leading-relaxed">
+              Can't find what you're looking for? We typically respond<br />within one business day.
+            </p>
+          </div>
           <a
             href="mailto:hello@clubplay.io"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[14px] font-semibold text-[#161719] active:opacity-80 transition-opacity"
-            style={{ backgroundColor: "#FFD62A" }}
+            className="w-full flex items-center justify-between px-4 h-12 rounded-[14px] text-[15px] font-semibold text-white active:opacity-80 transition-opacity"
+            style={{ backgroundColor: "#161719" }}
           >
-            <Mail className="h-4 w-4" />
-            hello@clubplay.io
+            <span>hello@clubplay.io</span>
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
 
