@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Mail, Gamepad2, Users, Trophy, User, Wrench, Rocket, MessageCircle } from "lucide-react";
+import { ChevronDown, Mail, ArrowRight, Gamepad2, Users, Trophy, User, Wrench, Rocket, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const categories = [
@@ -480,11 +480,11 @@ export default function SupportPage() {
           </div>
           <a
             href="mailto:hello@clubplay.io"
-            className="w-full flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-semibold text-white active:opacity-80 transition-opacity"
+            className="w-full flex items-center justify-between px-4 h-12 rounded-[14px] text-[15px] font-semibold text-white active:opacity-80 transition-opacity"
             style={{ backgroundColor: "#161719" }}
           >
-            <Mail className="h-4 w-4" />
-            hello@clubplay.io
+            <span>hello@clubplay.io</span>
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
 
