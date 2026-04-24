@@ -480,8 +480,8 @@ export default function SupportPage() {
           </div>
           <a
             href="mailto:hello@clubplay.io"
-            className="w-full flex items-center justify-between px-4 h-12 rounded-[14px] text-[15px] font-semibold text-[#161719] active:opacity-80 transition-opacity"
-            style={{ backgroundColor: "#FFD62A" }}
+            className="w-full flex items-center justify-between px-4 h-12 rounded-[14px] text-[15px] font-semibold text-white active:opacity-80 transition-opacity"
+            style={{ backgroundColor: "#161719" }}
           >
             <span>hello@clubplay.io</span>
             <ArrowRight className="h-4 w-4" />
