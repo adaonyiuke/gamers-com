@@ -475,7 +475,7 @@ export default function SupportPage() {
           <div className="space-y-1">
             <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
             <p className="text-[14px] text-white/60 leading-relaxed">
-              Can't find what you're looking for? We typically respond within one business day.
+              Can't find what you're looking for? We typically respond<br />within one business day.
             </p>
           </div>
           <a
