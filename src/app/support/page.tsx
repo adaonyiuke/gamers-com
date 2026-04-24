@@ -460,25 +460,28 @@ export default function SupportPage() {
 
         {/* Contact block */}
         <div
-          className="bg-white rounded-[20px] p-6 flex flex-col items-center gap-4"
-          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
+          className="rounded-[20px] p-6 flex flex-col gap-4"
+          style={{
+            background: "linear-gradient(135deg, rgb(22,7,40) 0%, rgb(132,42,235) 100%)",
+            boxShadow: "0 4px 16px rgba(132,42,235,0.25)",
+          }}
         >
           <div
-            className="h-12 w-12 rounded-[14px] flex items-center justify-center"
+            className="h-11 w-11 rounded-[12px] flex items-center justify-center"
             style={{ backgroundColor: "#FFD62A" }}
           >
             <Mail className="h-5 w-5 text-[#161719]" />
           </div>
-          <div className="text-center space-y-1">
-            <h3 className="text-[17px] font-bold text-gray-900">Still need help?</h3>
-            <p className="text-[14px] text-gray-500 leading-relaxed max-w-xs mx-auto">
+          <div className="space-y-1">
+            <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
+            <p className="text-[14px] text-white/60 leading-relaxed">
               Can't find what you're looking for? We typically respond within one business day.
             </p>
           </div>
           <a
             href="mailto:hello@clubplay.io"
-            className="w-full flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-semibold text-[#161719] active:opacity-80 transition-opacity"
-            style={{ backgroundColor: "#FFD62A" }}
+            className="w-full flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-semibold text-white active:opacity-80 transition-opacity"
+            style={{ backgroundColor: "#161719" }}
           >
             <Mail className="h-4 w-4" />
             hello@clubplay.io
