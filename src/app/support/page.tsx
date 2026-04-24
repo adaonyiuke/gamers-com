@@ -460,25 +460,24 @@ export default function SupportPage() {
 
         {/* Contact block */}
         <div
-          className="rounded-[20px] p-6 text-center space-y-3"
-          style={{
-            background: "linear-gradient(135deg, #161719 0%, #2d2f33 100%)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-          }}
+          className="bg-white rounded-[20px] p-6 flex flex-col items-center gap-4"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
         >
           <div
-            className="inline-flex items-center justify-center h-12 w-12 rounded-[14px] mx-auto"
+            className="h-12 w-12 rounded-[14px] flex items-center justify-center"
             style={{ backgroundColor: "#FFD62A" }}
           >
             <Mail className="h-5 w-5 text-[#161719]" />
           </div>
-          <h3 className="text-[20px] font-bold text-white">Still need help?</h3>
-          <p className="text-[14px] text-white/60 leading-relaxed max-w-xs mx-auto">
-            Can't find what you're looking for? Send us a message and we'll get back to you within one business day.
-          </p>
+          <div className="text-center space-y-1">
+            <h3 className="text-[17px] font-bold text-gray-900">Still need help?</h3>
+            <p className="text-[14px] text-gray-500 leading-relaxed max-w-xs mx-auto">
+              Can't find what you're looking for? We typically respond within one business day.
+            </p>
+          </div>
           <a
             href="mailto:hello@clubplay.io"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[14px] font-semibold text-[#161719] active:opacity-80 transition-opacity"
+            className="w-full flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-semibold text-[#161719] active:opacity-80 transition-opacity"
             style={{ backgroundColor: "#FFD62A" }}
           >
             <Mail className="h-4 w-4" />
