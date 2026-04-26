@@ -344,25 +344,16 @@ export default function SupportPage() {
           borderBottom: "0.5px solid rgba(0,0,0,0.08)",
         }}
       >
-        <Link href="/dashboard" className="flex items-center gap-3 active:opacity-60 transition-opacity">
-          <Image
-            src="/welcome/clubplay-logo.svg"
-            alt="Club Play"
-            width={110}
-            height={16}
-            priority
-          />
+        <Link href="/dashboard" className="flex items-center gap-2.5 active:opacity-60 transition-opacity">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/welcome/clubplay-icon.svg" alt="Club Play" style={{ height: 20, width: "auto" }} />
           <div className="h-4 w-px bg-black/15" />
-          <Image
-            src="/game-night-wordmark.svg"
-            alt="Game Night"
-            width={90}
-            height={16}
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/game-night-wordmark.svg" alt="Game Night" style={{ height: 20, width: "auto" }} />
         </Link>
         <a
           href="mailto:hello@clubplay.io"
-          className="text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+          className="px-4 h-9 flex items-center rounded-[14px] text-[13px] font-semibold bg-[#161719] text-white active:opacity-80 transition-opacity"
         >
           Contact Us
         </a>
