@@ -353,7 +353,7 @@ export default function SupportPage() {
         </Link>
         <a
           href="mailto:hello@clubplay.io"
-          className="text-[13px] font-medium text-[#007AFF] active:opacity-60 transition-opacity"
+          className="px-4 h-9 flex items-center rounded-full text-[13px] font-semibold bg-gray-100 text-gray-900 active:bg-gray-200 transition-colors"
         >
           Contact Us
         </a>
