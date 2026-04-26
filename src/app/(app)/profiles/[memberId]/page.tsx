@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -39,14 +40,30 @@ const AVATAR_COLORS = [
   "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
 ];
 
-const BADGE_CONFIG: Record<string, { gradient: string; emoji: string }> = {
-  champion:   { gradient: "linear-gradient(135deg, #FFD700, #FFA500)", emoji: "🏆" },
-  on_fire:    { gradient: "linear-gradient(135deg, #FF6B6B, #FF2D55)", emoji: "🔥" },
-  strategist: { gradient: "linear-gradient(135deg, #5856D6, #007AFF)", emoji: "🧠" },
-  wildcard:   { gradient: "linear-gradient(135deg, #34C759, #00C7BE)", emoji: "🃏" },
-  regular:    { gradient: "linear-gradient(135deg, #F59E0B, #F97316)", emoji: "🗓️" },
-  veteran:    { gradient: "linear-gradient(135deg, #1E3A5F, #3B82F6)", emoji: "⚔️" },
+const BADGE_GLOW: Record<string, string> = {
+  champion:   "rgba(245,158,11,0.4)",
+  on_fire:    "rgba(255,45,234,0.4)",
+  strategist: "rgba(0,122,255,0.4)",
+  wildcard:   "rgba(0,199,190,0.4)",
+  regular:    "rgba(245,158,11,0.4)",
+  veteran:    "rgba(75,85,99,0.4)",
 };
+
+const BADGE_IMAGES: Record<string, {
+  front: { d3: string; d3Matiz: string; borda: string; meio: string; icon: string; sombra: string; luz: string; matiz: string };
+  back: { borda: string; matiz: string };
+}> = {
+  champion:   { front: { d3: "/badges/champion-front-3d.png",   d3Matiz: "/badges/champion-front-3d-matiz.png",   borda: "/badges/champion-front-borda.png",   meio: "/badges/champion-front-meio.png",   icon: "/badges/champion-front-icon.png",   sombra: "/badges/champion-front-sombra.png",   luz: "/badges/champion-front-luz.png",   matiz: "/badges/champion-front-matiz.png"   }, back: { borda: "/badges/champion-back-borda.png",   matiz: "/badges/champion-back-matiz.png"   } },
+  on_fire:    { front: { d3: "/badges/on_fire-front-3d.png",    d3Matiz: "/badges/on_fire-front-3d-matiz.png",    borda: "/badges/on_fire-front-borda.png",    meio: "/badges/on_fire-front-meio.png",    icon: "/badges/on_fire-front-icon.png",    sombra: "/badges/on_fire-front-sombra.png",    luz: "/badges/on_fire-front-luz.png",    matiz: "/badges/on_fire-front-matiz.png"    }, back: { borda: "/badges/on_fire-back-borda.png",    matiz: "/badges/on_fire-back-matiz.png"    } },
+  strategist: { front: { d3: "/badges/strategist-front-3d.png", d3Matiz: "/badges/strategist-front-3d-matiz.png", borda: "/badges/strategist-front-borda.png", meio: "/badges/strategist-front-meio.png", icon: "/badges/strategist-front-icon.png", sombra: "/badges/strategist-front-sombra.png", luz: "/badges/strategist-front-luz.png", matiz: "/badges/strategist-front-matiz.png" }, back: { borda: "/badges/strategist-back-borda.png", matiz: "/badges/strategist-back-matiz.png" } },
+  wildcard:   { front: { d3: "/badges/wildcard-front-3d.png",   d3Matiz: "/badges/wildcard-front-3d-matiz.png",   borda: "/badges/wildcard-front-borda.png",   meio: "/badges/wildcard-front-meio.png",   icon: "/badges/wildcard-front-icon.png",   sombra: "/badges/wildcard-front-sombra.png",   luz: "/badges/wildcard-front-luz.png",   matiz: "/badges/wildcard-front-matiz.png"   }, back: { borda: "/badges/wildcard-back-borda.png",   matiz: "/badges/wildcard-back-matiz.png"   } },
+  regular:    { front: { d3: "/badges/regular-front-3d.png",    d3Matiz: "/badges/regular-front-3d-matiz.png",    borda: "/badges/regular-front-borda.png",    meio: "/badges/regular-front-meio.png",    icon: "/badges/regular-front-icon.png",    sombra: "/badges/regular-front-sombra.png",    luz: "/badges/regular-front-luz.png",    matiz: "/badges/regular-front-matiz.png"    }, back: { borda: "/badges/regular-back-borda.png",    matiz: "/badges/regular-back-matiz.png"    } },
+  veteran:    { front: { d3: "/badges/veteran-front-3d.png",    d3Matiz: "/badges/veteran-front-3d-matiz.png",    borda: "/badges/veteran-front-borda.png",    meio: "/badges/veteran-front-meio.png",    icon: "/badges/veteran-front-icon.png",    sombra: "/badges/veteran-front-sombra.png",    luz: "/badges/veteran-front-luz.png",    matiz: "/badges/veteran-front-matiz.png"    }, back: { borda: "/badges/veteran-back-borda.png",    matiz: "/badges/veteran-back-matiz.png"    } },
+};
+
+function BL({ src, style }: { src: string; style?: React.CSSProperties }) {
+  return <img src={src} alt="" style={style} />;
+}
 
 const CARD_SHADOW = "0px 4px 6px 0px rgba(0,0,0,0.1), 0px 2px 4px 0px rgba(0,0,0,0.1)";
 
@@ -462,85 +479,86 @@ export default function MemberProfilePage() {
         <div className="grid grid-cols-3 gap-3">
           {BADGES.map((badge: Badge) => {
             const earned = badges.some((b) => b.id === badge.id);
-            const config = BADGE_CONFIG[badge.type];
             const isFlipped = flippedBadge === badge.id;
-
-            const glowColor: Record<string, string> = {
-              champion:   "0 8px 28px rgba(255,165,0,0.45)",
-              on_fire:    "0 8px 28px rgba(255,45,85,0.4)",
-              strategist: "0 8px 28px rgba(88,86,214,0.4)",
-              wildcard:   "0 8px 28px rgba(52,199,89,0.4)",
-              regular:    "0 8px 28px rgba(249,115,22,0.4)",
-              veteran:    "0 8px 28px rgba(59,130,246,0.4)",
-            };
-
-            const sharedStyle = {
-              backfaceVisibility: "hidden" as const,
-              WebkitBackfaceVisibility: "hidden" as const,
-              position: "absolute" as const,
-              inset: 0,
-              borderRadius: "50%",
-              display: "flex",
-              flexDirection: "column" as const,
-              alignItems: "center" as const,
-              justifyContent: "center" as const,
-              background: earned ? config.gradient : "white",
-              boxShadow: earned
-                ? glowColor[badge.type]
-                : "0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 0.5px #f0f0f0",
-            };
+            const glow = BADGE_GLOW[badge.type];
+            const imgs = BADGE_IMAGES[badge.type];
 
             return (
               <div
                 key={badge.id}
-                className="aspect-square cursor-pointer"
-                style={{ perspective: "900px" }}
+                className="flex flex-col items-center gap-1.5 cursor-pointer select-none"
                 onClick={() => setFlippedBadge(isFlipped ? null : badge.id)}
               >
-                <div
-                  style={{
-                    transformStyle: "preserve-3d",
-                    transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
-                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                    position: "relative",
-                    width: "100%",
-                    height: "100%",
-                  }}
-                >
-                  {/* Front */}
-                  <div style={sharedStyle}>
-                    <span
-                      className="leading-none mb-2"
+                {/* Flip card */}
+                <div className="w-full aspect-square" style={{ perspective: "900px" }}>
+                  <div
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
+                      transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    {/* ── Front ── */}
+                    <div
                       style={{
-                        fontSize: 38,
-                        filter: earned ? "none" : "grayscale(1) opacity(0.22)",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        position: "absolute",
+                        inset: 0,
+                        filter: earned
+                          ? `drop-shadow(0 8px 20px ${glow})`
+                          : "grayscale(1) opacity(0.35)",
                       }}
                     >
-                      {config.emoji}
-                    </span>
-                    <span
-                      className="text-[13px] font-semibold text-center leading-tight px-3"
-                      style={{ color: earned ? "white" : "#d4d4d4" }}
-                    >
-                      {badge.label}
-                    </span>
-                  </div>
+                      <div style={{ position: "relative", width: "100%", height: "100%", isolation: "isolate" }}>
+                        <BL src={imgs.front.d3}      style={{ position: "absolute", left: "8.56%",  top: "10.50%", width: "82.89%", height: "89.51%" }} />
+                        <BL src={imgs.front.d3Matiz} style={{ position: "absolute", left: "8.56%",  top: "10.50%", width: "82.89%", height: "89.51%", mixBlendMode: "color" }} />
+                        <BL src={imgs.front.borda}   style={{ position: "absolute", left: "8.58%",  top: "3.85%",  width: "82.84%", height: "89.85%" }} />
+                        <BL src={imgs.front.meio}    style={{ position: "absolute", left: "15.83%", top: "11.55%", width: "68.33%", height: "74.47%" }} />
+                        <BL src={imgs.front.icon}    style={{ position: "absolute", left: "32.60%", top: "31.51%", width: "34.80%", height: "34.80%" }} />
+                        <BL src={imgs.front.sombra}  style={{ position: "absolute", left: "8.40%",  top: "60.26%", width: "40.16%", height: "39.67%", mixBlendMode: "multiply" }} />
+                        <BL src={imgs.front.luz}     style={{ position: "absolute", left: "49.55%", top: "3.86%",  width: "41.66%", height: "27.83%", mixBlendMode: "soft-light" }} />
+                        <BL src={imgs.front.matiz}   style={{ position: "absolute", left: "8.58%",  top: "3.85%",  width: "82.84%", height: "89.85%", mixBlendMode: "color" }} />
+                      </div>
+                    </div>
 
-                  {/* Back */}
-                  <div style={{ ...sharedStyle, transform: "rotateY(180deg)", padding: "0 18px" }}>
-                    <p
-                      className="text-[12px] text-center leading-snug"
-                      style={{ color: earned ? "rgba(255,255,255,0.92)" : "#a3a3a3" }}
+                    {/* ── Back ── */}
+                    <div
+                      style={{
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        position: "absolute",
+                        inset: 0,
+                        transform: "rotateY(180deg)",
+                        filter: earned ? "none" : "grayscale(1) opacity(0.35)",
+                      }}
                     >
-                      {badge.description}
-                    </p>
-                    {!earned && (
-                      <p className="text-[11px] mt-2 text-center" style={{ color: "#c4c4c4" }}>
-                        Not yet earned
-                      </p>
-                    )}
+                      <div style={{ position: "relative", width: "100%", height: "100%", isolation: "isolate" }}>
+                        <BL src={imgs.back.borda} style={{ position: "absolute", left: "8.58%", top: "3.85%", width: "82.84%", height: "89.85%" }} />
+                        <BL src={imgs.back.matiz} style={{ position: "absolute", left: "8.58%", top: "3.85%", width: "82.84%", height: "89.85%", mixBlendMode: "color" }} />
+                        <div style={{ position: "absolute", inset: "18% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(255,255,255,0.9)" : "#a3a3a3", margin: 0 }}>
+                            {badge.description}
+                          </p>
+                          {!earned && (
+                            <p style={{ fontSize: 10, textAlign: "center", color: "#c4c4c4", margin: 0 }}>Not yet earned</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Label */}
+                <span
+                  className="text-[12px] font-semibold text-center leading-tight"
+                  style={{ color: earned ? "#0a0a0a" : "#d4d4d4" }}
+                >
+                  {badge.label}
+                </span>
               </div>
             );
           })}
