@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -39,13 +40,22 @@ const AVATAR_COLORS = [
   "#34C759", "#AF52DE", "#FF3B30", "#00C7BE",
 ];
 
-const BADGE_CONFIG: Record<string, { gradient: string; emoji: string }> = {
-  champion:   { gradient: "linear-gradient(135deg, #FFD700, #FFA500)", emoji: "🏆" },
-  on_fire:    { gradient: "linear-gradient(135deg, #FF6B6B, #FF2D55)", emoji: "🔥" },
-  strategist: { gradient: "linear-gradient(135deg, #5856D6, #007AFF)", emoji: "🧠" },
-  wildcard:   { gradient: "linear-gradient(135deg, #34C759, #00C7BE)", emoji: "🃏" },
-  regular:    { gradient: "linear-gradient(135deg, #F59E0B, #F97316)", emoji: "🗓️" },
-  veteran:    { gradient: "linear-gradient(135deg, #1E3A5F, #3B82F6)", emoji: "⚔️" },
+const BADGE_GLOW: Record<string, string> = {
+  champion:   "rgba(245,158,11,0.4)",
+  on_fire:    "rgba(255,45,234,0.4)",
+  strategist: "rgba(0,122,255,0.4)",
+  wildcard:   "rgba(0,199,190,0.4)",
+  regular:    "rgba(245,158,11,0.4)",
+  veteran:    "rgba(75,85,99,0.4)",
+};
+
+const BADGE_IMAGES: Record<string, { front: string; back: string }> = {
+  champion:   { front: "/badges/champion-front.png",   back: "/badges/champion-back.png"   },
+  on_fire:    { front: "/badges/on_fire-front.png",    back: "/badges/on_fire-back.png"    },
+  strategist: { front: "/badges/strategist-front.png", back: "/badges/strategist-back.png" },
+  wildcard:   { front: "/badges/wildcard-front.png",   back: "/badges/wildcard-back.png"   },
+  regular:    { front: "/badges/regular-front.png",    back: "/badges/regular-back.png"    },
+  veteran:    { front: "/badges/veteran-front.png",    back: "/badges/veteran-back.png"    },
 };
 
 const CARD_SHADOW = "0px 4px 6px 0px rgba(0,0,0,0.1), 0px 2px 4px 0px rgba(0,0,0,0.1)";
@@ -462,85 +472,76 @@ export default function MemberProfilePage() {
         <div className="grid grid-cols-3 gap-3">
           {BADGES.map((badge: Badge) => {
             const earned = badges.some((b) => b.id === badge.id);
-            const config = BADGE_CONFIG[badge.type];
             const isFlipped = flippedBadge === badge.id;
-
-            const glowColor: Record<string, string> = {
-              champion:   "0 8px 28px rgba(255,165,0,0.45)",
-              on_fire:    "0 8px 28px rgba(255,45,85,0.4)",
-              strategist: "0 8px 28px rgba(88,86,214,0.4)",
-              wildcard:   "0 8px 28px rgba(52,199,89,0.4)",
-              regular:    "0 8px 28px rgba(249,115,22,0.4)",
-              veteran:    "0 8px 28px rgba(59,130,246,0.4)",
-            };
-
-            const sharedStyle = {
-              backfaceVisibility: "hidden" as const,
-              WebkitBackfaceVisibility: "hidden" as const,
-              position: "absolute" as const,
-              inset: 0,
-              borderRadius: "50%",
-              display: "flex",
-              flexDirection: "column" as const,
-              alignItems: "center" as const,
-              justifyContent: "center" as const,
-              background: earned ? config.gradient : "white",
-              boxShadow: earned
-                ? glowColor[badge.type]
-                : "0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 0.5px #f0f0f0",
-            };
+            const glow = BADGE_GLOW[badge.type];
+            const imgs = BADGE_IMAGES[badge.type];
 
             return (
               <div
                 key={badge.id}
-                className="aspect-square cursor-pointer"
-                style={{ perspective: "900px" }}
+                className="flex flex-col items-center gap-1.5 cursor-pointer select-none"
                 onClick={() => setFlippedBadge(isFlipped ? null : badge.id)}
               >
-                <div
-                  style={{
-                    transformStyle: "preserve-3d",
-                    transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
-                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                    position: "relative",
-                    width: "100%",
-                    height: "100%",
-                  }}
-                >
-                  {/* Front */}
-                  <div style={sharedStyle}>
-                    <span
-                      className="leading-none mb-2"
+                {/* Flip card */}
+                <div className="w-full aspect-square" style={{ perspective: "900px" }}>
+                  <div
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
+                      transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    {/* ── Front ── */}
+                    <div
                       style={{
-                        fontSize: 38,
-                        filter: earned ? "none" : "grayscale(1) opacity(0.22)",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        position: "absolute",
+                        inset: 0,
+                        filter: earned
+                          ? `drop-shadow(0 8px 20px ${glow})`
+                          : "grayscale(1) opacity(0.35)",
                       }}
                     >
-                      {config.emoji}
-                    </span>
-                    <span
-                      className="text-[13px] font-semibold text-center leading-tight px-3"
-                      style={{ color: earned ? "white" : "#d4d4d4" }}
-                    >
-                      {badge.label}
-                    </span>
-                  </div>
+                      <img src={imgs.front} alt={badge.label} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    </div>
 
-                  {/* Back */}
-                  <div style={{ ...sharedStyle, transform: "rotateY(180deg)", padding: "0 18px" }}>
-                    <p
-                      className="text-[12px] text-center leading-snug"
-                      style={{ color: earned ? "rgba(255,255,255,0.92)" : "#a3a3a3" }}
+                    {/* ── Back ── */}
+                    <div
+                      style={{
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        position: "absolute",
+                        inset: 0,
+                        transform: "rotateY(180deg)",
+                        filter: earned ? "none" : "grayscale(1) opacity(0.35)",
+                      }}
                     >
-                      {badge.description}
-                    </p>
-                    {!earned && (
-                      <p className="text-[11px] mt-2 text-center" style={{ color: "#c4c4c4" }}>
-                        Not yet earned
-                      </p>
-                    )}
+                      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                        <img src={imgs.back} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <div style={{ position: "absolute", inset: "20% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(0,0,0,0.75)" : "#1a1a1a", margin: 0 }}>
+                            {badge.description}
+                          </p>
+                          {!earned && (
+                            <p style={{ fontSize: 10, textAlign: "center", color: "#333333", margin: 0 }}>Not yet earned</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Label */}
+                <span
+                  className="text-[12px] font-semibold text-center leading-tight"
+                  style={{ color: earned ? "#0a0a0a" : "#d4d4d4" }}
+                >
+                  {badge.label}
+                </span>
               </div>
             );
           })}
