@@ -523,11 +523,11 @@ export default function MemberProfilePage() {
                       <div style={{ position: "relative", width: "100%", height: "100%" }}>
                         <img src={imgs.back} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                         <div style={{ position: "absolute", inset: "20% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                          <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(255,255,255,0.9)" : "#a3a3a3", margin: 0 }}>
+                          <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(0,0,0,0.75)" : "#a3a3a3", margin: 0 }}>
                             {badge.description}
                           </p>
                           {!earned && (
-                            <p style={{ fontSize: 10, textAlign: "center", color: "#c4c4c4", margin: 0 }}>Not yet earned</p>
+                            <p style={{ fontSize: 10, textAlign: "center", color: "#a3a3a3", margin: 0 }}>Not yet earned</p>
                           )}
                         </div>
                       </div>
