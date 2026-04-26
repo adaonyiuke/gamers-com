@@ -4,8 +4,10 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -44,7 +46,15 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [groups, setGroups] = useState<GroupMembership[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+
+  // Stable client reference — createClient() must not be called on every render
+  // because a new object reference in the effect deps causes loadGroups() to
+  // fire repeatedly, which triggers the auto-create race condition.
+  const supabase = useMemo(() => createClient(), []);
+
+  // Guard: track which user ID we've already loaded so re-renders never
+  // trigger a duplicate loadGroups() call for the same session.
+  const loadedForUserRef = useRef<string | null>(null);
 
   const switchGroup = useCallback(
     (id: string) => {
@@ -63,6 +73,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     if (authLoading) return;
 
     if (!user) {
+      loadedForUserRef.current = null;
       setGroupId(null);
       setGroups([]);
       setLoading(false);
@@ -71,13 +82,25 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Already loaded for this user — do not run again
+    if (loadedForUserRef.current === user.id) return;
+    loadedForUserRef.current = user.id;
+
     async function loadGroups() {
       // Fetch all memberships with group names
-      const { data: memberships } = await supabase
+      const { data: memberships, error } = await supabase
         .from("group_members")
         .select("group_id, role, groups:group_id(name)")
         .eq("user_id", user!.id)
         .order("joined_at", { ascending: true });
+
+      // If the query errored (e.g. network blip), bail out rather than
+      // accidentally triggering the auto-create path.
+      if (error) {
+        console.error("[GroupProvider] Failed to fetch memberships:", error);
+        setLoading(false);
+        return;
+      }
 
       if (memberships && memberships.length > 0) {
         const groupList: GroupMembership[] = memberships.map((m: any) => ({
@@ -96,7 +119,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
 
         setGroupId(validStored ? storedId! : groupList[0].group_id);
       } else {
-        // Auto-create a group for new users
+        // Auto-create a group for genuinely new users (no memberships at all)
         const displayName =
           user!.user_metadata?.display_name ||
           user!.email?.split("@")[0] ||
@@ -145,7 +168,8 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     }
 
     loadGroups();
-  }, [user, authLoading, supabase, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]);
 
   return (
     <Context.Provider value={{ groupId, loading, groups, setGroupId, switchGroup }}>
