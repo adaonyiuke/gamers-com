@@ -346,10 +346,10 @@ export default function SupportPage() {
       >
         <Link href="/dashboard" className="flex items-center gap-2.5 active:opacity-60 transition-opacity">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/welcome/clubplay-icon.svg" alt="Club Play" height={24} style={{ height: 24, width: "auto" }} />
+          <img src="/welcome/clubplay-icon.svg" alt="Club Play" style={{ height: 20, width: "auto" }} />
           <div className="h-4 w-px bg-black/15" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/game-night-wordmark.svg" alt="Game Night" height={16} style={{ height: 16, width: "auto" }} />
+          <img src="/game-night-wordmark.svg" alt="Game Night" style={{ height: 20, width: "auto" }} />
         </Link>
         <a
           href="mailto:hello@clubplay.io"
