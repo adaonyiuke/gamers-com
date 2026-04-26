@@ -49,21 +49,14 @@ const BADGE_GLOW: Record<string, string> = {
   veteran:    "rgba(75,85,99,0.4)",
 };
 
-const BADGE_IMAGES: Record<string, {
-  front: { d3: string; d3Matiz: string; borda: string; meio: string; icon: string; sombra: string; luz: string; matiz: string };
-  back: { borda: string; matiz: string };
-}> = {
-  champion:   { front: { d3: "/badges/champion-front-3d.png",   d3Matiz: "/badges/champion-front-3d-matiz.png",   borda: "/badges/champion-front-borda.png",   meio: "/badges/champion-front-meio.png",   icon: "/badges/champion-front-icon.png",   sombra: "/badges/champion-front-sombra.png",   luz: "/badges/champion-front-luz.png",   matiz: "/badges/champion-front-matiz.png"   }, back: { borda: "/badges/champion-back-borda.png",   matiz: "/badges/champion-back-matiz.png"   } },
-  on_fire:    { front: { d3: "/badges/on_fire-front-3d.png",    d3Matiz: "/badges/on_fire-front-3d-matiz.png",    borda: "/badges/on_fire-front-borda.png",    meio: "/badges/on_fire-front-meio.png",    icon: "/badges/on_fire-front-icon.png",    sombra: "/badges/on_fire-front-sombra.png",    luz: "/badges/on_fire-front-luz.png",    matiz: "/badges/on_fire-front-matiz.png"    }, back: { borda: "/badges/on_fire-back-borda.png",    matiz: "/badges/on_fire-back-matiz.png"    } },
-  strategist: { front: { d3: "/badges/strategist-front-3d.png", d3Matiz: "/badges/strategist-front-3d-matiz.png", borda: "/badges/strategist-front-borda.png", meio: "/badges/strategist-front-meio.png", icon: "/badges/strategist-front-icon.png", sombra: "/badges/strategist-front-sombra.png", luz: "/badges/strategist-front-luz.png", matiz: "/badges/strategist-front-matiz.png" }, back: { borda: "/badges/strategist-back-borda.png", matiz: "/badges/strategist-back-matiz.png" } },
-  wildcard:   { front: { d3: "/badges/wildcard-front-3d.png",   d3Matiz: "/badges/wildcard-front-3d-matiz.png",   borda: "/badges/wildcard-front-borda.png",   meio: "/badges/wildcard-front-meio.png",   icon: "/badges/wildcard-front-icon.png",   sombra: "/badges/wildcard-front-sombra.png",   luz: "/badges/wildcard-front-luz.png",   matiz: "/badges/wildcard-front-matiz.png"   }, back: { borda: "/badges/wildcard-back-borda.png",   matiz: "/badges/wildcard-back-matiz.png"   } },
-  regular:    { front: { d3: "/badges/regular-front-3d.png",    d3Matiz: "/badges/regular-front-3d-matiz.png",    borda: "/badges/regular-front-borda.png",    meio: "/badges/regular-front-meio.png",    icon: "/badges/regular-front-icon.png",    sombra: "/badges/regular-front-sombra.png",    luz: "/badges/regular-front-luz.png",    matiz: "/badges/regular-front-matiz.png"    }, back: { borda: "/badges/regular-back-borda.png",    matiz: "/badges/regular-back-matiz.png"    } },
-  veteran:    { front: { d3: "/badges/veteran-front-3d.png",    d3Matiz: "/badges/veteran-front-3d-matiz.png",    borda: "/badges/veteran-front-borda.png",    meio: "/badges/veteran-front-meio.png",    icon: "/badges/veteran-front-icon.png",    sombra: "/badges/veteran-front-sombra.png",    luz: "/badges/veteran-front-luz.png",    matiz: "/badges/veteran-front-matiz.png"    }, back: { borda: "/badges/veteran-back-borda.png",    matiz: "/badges/veteran-back-matiz.png"    } },
+const BADGE_IMAGES: Record<string, { front: string; back: string }> = {
+  champion:   { front: "/badges/champion-front.png",   back: "/badges/champion-back.png"   },
+  on_fire:    { front: "/badges/on_fire-front.png",    back: "/badges/on_fire-back.png"    },
+  strategist: { front: "/badges/strategist-front.png", back: "/badges/strategist-back.png" },
+  wildcard:   { front: "/badges/wildcard-front.png",   back: "/badges/wildcard-back.png"   },
+  regular:    { front: "/badges/regular-front.png",    back: "/badges/regular-back.png"    },
+  veteran:    { front: "/badges/veteran-front.png",    back: "/badges/veteran-back.png"    },
 };
-
-function BL({ src, style }: { src: string; style?: React.CSSProperties }) {
-  return <img src={src} alt="" style={style} />;
-}
 
 const CARD_SHADOW = "0px 4px 6px 0px rgba(0,0,0,0.1), 0px 2px 4px 0px rgba(0,0,0,0.1)";
 
@@ -513,16 +506,7 @@ export default function MemberProfilePage() {
                           : "grayscale(1) opacity(0.35)",
                       }}
                     >
-                      <div style={{ position: "relative", width: "100%", height: "100%", isolation: "isolate" }}>
-                        <BL src={imgs.front.d3}      style={{ position: "absolute", left: "8.56%",  top: "10.50%", width: "82.89%", height: "89.51%" }} />
-                        <BL src={imgs.front.d3Matiz} style={{ position: "absolute", left: "8.56%",  top: "10.50%", width: "82.89%", height: "89.51%", mixBlendMode: "color" }} />
-                        <BL src={imgs.front.borda}   style={{ position: "absolute", left: "8.58%",  top: "3.85%",  width: "82.84%", height: "89.85%" }} />
-                        <BL src={imgs.front.meio}    style={{ position: "absolute", left: "15.83%", top: "11.55%", width: "68.33%", height: "74.47%" }} />
-                        <BL src={imgs.front.icon}    style={{ position: "absolute", left: "32.60%", top: "31.51%", width: "34.80%", height: "34.80%" }} />
-                        <BL src={imgs.front.sombra}  style={{ position: "absolute", left: "8.40%",  top: "60.26%", width: "40.16%", height: "39.67%", mixBlendMode: "multiply" }} />
-                        <BL src={imgs.front.luz}     style={{ position: "absolute", left: "49.55%", top: "3.86%",  width: "41.66%", height: "27.83%", mixBlendMode: "soft-light" }} />
-                        <BL src={imgs.front.matiz}   style={{ position: "absolute", left: "8.58%",  top: "3.85%",  width: "82.84%", height: "89.85%", mixBlendMode: "color" }} />
-                      </div>
+                      <img src={imgs.front} alt={badge.label} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                     </div>
 
                     {/* ── Back ── */}
@@ -536,10 +520,9 @@ export default function MemberProfilePage() {
                         filter: earned ? "none" : "grayscale(1) opacity(0.35)",
                       }}
                     >
-                      <div style={{ position: "relative", width: "100%", height: "100%", isolation: "isolate" }}>
-                        <BL src={imgs.back.borda} style={{ position: "absolute", left: "8.58%", top: "3.85%", width: "82.84%", height: "89.85%" }} />
-                        <BL src={imgs.back.matiz} style={{ position: "absolute", left: "8.58%", top: "3.85%", width: "82.84%", height: "89.85%", mixBlendMode: "color" }} />
-                        <div style={{ position: "absolute", inset: "18% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                        <img src={imgs.back} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <div style={{ position: "absolute", inset: "20% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
                           <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(255,255,255,0.9)" : "#a3a3a3", margin: 0 }}>
                             {badge.description}
                           </p>
