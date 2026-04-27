@@ -52,7 +52,7 @@ export function BottomNav() {
 
   const avatarColor = currentMember?.avatar_url ?? "#7c3aed";
 
-  const profileActive = pathname.startsWith("/profiles") || pathname === "/profile";
+  const profileActive = pathname.startsWith("/profiles") || pathname === "/profile" || pathname.startsWith("/settings");
 
   return (
     <nav

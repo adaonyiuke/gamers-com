@@ -100,7 +100,7 @@ export default function SettingsHubPage() {
 
   return (
     <div className="pb-36">
-      <PageHeader title="Settings" backLabel="Players" backHref="/profiles" variant="large" />
+      <PageHeader title="Settings" backLabel="Profile" backHref="/profile" variant="large" />
 
       <div className="px-5 mt-2 space-y-3">
         {sections.map((section) => {

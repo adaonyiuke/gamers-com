@@ -23,7 +23,7 @@ export type RivalryPair = {
 export type FunStats = {
   longestLosingStreak: { name: string; avatarUrl: string | null; streak: number } | null;
   mostGamesInOneNight: { name: string; avatarUrl: string | null; count: number; meetupTitle: string } | null;
-  luckyFirstTimer: { name: string; avatarUrl: string | null; gameName: string } | null;
+  luckyFirstTimer: { players: { name: string; avatarUrl: string | null }[]; gameName: string } | null;
 };
 
 export type DashboardInsights = {
