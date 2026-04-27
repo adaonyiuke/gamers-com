@@ -290,7 +290,7 @@ export default function DashboardPage() {
               boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
             }}
           >
-            <span className="text-base leading-none">🎮</span>
+            <span className="text-base leading-none">{group?.emoji ?? "🎮"}</span>
             <span className="text-[16px] font-semibold text-gray-900 truncate">
               {group?.name ?? "Loading..."}
             </span>
@@ -341,7 +341,7 @@ export default function DashboardPage() {
                       style={isActive ? { background: "rgba(255,255,255,0.25)" } : undefined}
                     >
                       <div className="h-[38px] w-[38px] rounded-[4px] flex items-center justify-center shrink-0 text-[20px]" style={{ background: "rgba(255,255,255,0.6)" }}>
-                        🎮
+                        {g.group_emoji}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[14px] font-medium text-[#0a0a0a] truncate">{g.group_name}</p>
