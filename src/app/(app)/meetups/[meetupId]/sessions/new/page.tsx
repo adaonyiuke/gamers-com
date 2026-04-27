@@ -99,6 +99,7 @@ export default function NewSessionPage({
   const [manualWinnerId, setManualWinnerId] = useState<string | null>(null);
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showNextMeetupPrompt, setShowNextMeetupPrompt] = useState(false);
 
   // Placement state — maps participantId → placement number (1st, 2nd, 3rd…)
   const [placements, setPlacements] = useState<Record<string, number>>({});
@@ -341,9 +342,9 @@ export default function NewSessionPage({
         }
       }
 
-      // If no winner (e.g., no scores), navigate back
+      // If no winner (e.g., no scores), show next meetup prompt
       if (!winnerParticipantId) {
-        router.push(`/meetups/${meetupId}`);
+        setShowNextMeetupPrompt(true);
       }
     } catch (err) {
       // Rollback: delete the orphaned session if createSession succeeded but finalizeSession failed
@@ -405,10 +406,52 @@ export default function NewSessionPage({
       {winnerName && (settings?.winner_animation !== false) && (
         <WinnerReveal
           winnerName={winnerName}
-          onDismiss={() => router.push(`/meetups/${meetupId}`)}
+          onDismiss={() => setShowNextMeetupPrompt(true)}
           confettiIntensity={(settings?.confetti_intensity as any) ?? "medium"}
           reducedMotion={settings?.reduced_motion ?? false}
         />
+      )}
+
+      {/* Next Meetup Prompt */}
+      {showNextMeetupPrompt && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+          onClick={() => {
+            setShowNextMeetupPrompt(false);
+            router.push(`/meetups/${meetupId}`);
+          }}
+        >
+          <div
+            className="w-full max-w-[430px] bg-white rounded-t-[28px] px-6 pt-6 pb-10 flex flex-col gap-5"
+            style={{ boxShadow: "0 -4px 32px rgba(0,0,0,0.12)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto" />
+            <div className="flex flex-col items-center text-center gap-2 pt-1">
+              <span className="text-[40px] leading-none">📅</span>
+              <h2 className="text-[22px] font-bold text-[#0a0a0a] mt-2">Plan your next meetup</h2>
+              <p className="text-[15px] text-[#737373] leading-snug">
+                Great game! Keep the momentum going<br />and schedule your next game night.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/meetups/new")}
+              className="w-full py-4 rounded-[16px] bg-[#007AFF] text-white text-[17px] font-semibold active:opacity-80 transition-opacity"
+            >
+              Schedule a Meetup
+            </button>
+            <button
+              onClick={() => {
+                setShowNextMeetupPrompt(false);
+                router.push(`/meetups/${meetupId}`);
+              }}
+              className="w-full py-3 text-[15px] text-[#737373] font-medium active:opacity-60 transition-opacity"
+            >
+              Back to Meetup
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Glass header */}
