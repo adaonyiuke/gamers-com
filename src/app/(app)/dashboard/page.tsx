@@ -340,7 +340,7 @@ export default function DashboardPage() {
                       className="w-full flex items-center gap-2 px-2 py-1.5 text-left transition-colors"
                       style={isActive ? { background: "rgba(255,255,255,0.25)" } : undefined}
                     >
-                      <div className="h-[38px] w-[38px] rounded-[4px] flex items-center justify-center shrink-0 text-[20px]" style={{ background: "rgba(255,255,255,0.6)" }}>
+                      <div className="h-[38px] w-[38px] rounded-[4px] flex items-center justify-center shrink-0 text-[20px]" style={{ background: "rgba(0,0,0,0.05)" }}>
                         {g.group_emoji}
                       </div>
                       <div className="flex-1 min-w-0">
