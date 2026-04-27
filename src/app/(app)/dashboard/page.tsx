@@ -620,7 +620,7 @@ export default function DashboardPage() {
               <SectionHeader emoji="⭐️" label="Fun Facts" />
             </div>
             <div
-              className="flex gap-2 pl-4 overflow-x-auto"
+              className="flex gap-2 pl-4 pb-2 overflow-x-auto"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
             >
               {insights!.funStats!.longestLosingStreak && (

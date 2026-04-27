@@ -9,7 +9,6 @@ import {
   Calendar,
   Flame,
   Pencil,
-  LogOut,
   Settings,
   ChevronLeft,
   TrendingUp,
@@ -121,7 +120,6 @@ export default function MemberProfilePage() {
   );
   const updateMember = useUpdateMember();
 
-  const [signingOut, setSigningOut] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState("");
   const [editColor, setEditColor] = useState(AVATAR_COLORS[0]);
@@ -223,12 +221,6 @@ export default function MemberProfilePage() {
     } catch {}
   }
 
-  async function handleSignOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
   if (isLoading) {
@@ -371,14 +363,17 @@ export default function MemberProfilePage() {
         </svg>
 
         {/* Floating nav */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-14">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 active:opacity-60 transition-opacity"
-          >
-            <ChevronLeft className="h-6 w-6 text-white" />
-            <span className="text-[17px] text-white font-medium">Back</span>
-          </button>
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 pt-14">
+          {!isOwnProfile && (
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-1 active:opacity-60 transition-opacity"
+            >
+              <ChevronLeft className="h-6 w-6 text-white" />
+              <span className="text-[17px] text-white font-medium">Back</span>
+            </button>
+          )}
+          {isOwnProfile && <div />}
           {isOwnProfile && (
             <Link href="/settings" className="active:opacity-60 transition-opacity">
               <div
@@ -491,16 +486,16 @@ export default function MemberProfilePage() {
           style={{ boxShadow: CARD_SHADOW, border: "0.5px solid #f5f5f5" }}
         >
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#f5f5f5]">
-            <div className="h-9 w-9 rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
-              <Calendar className="h-5 w-5 text-blue-500" />
+            <div className="h-9 w-9 rounded-[10px] bg-purple-50 flex items-center justify-center shrink-0">
+              <Calendar className="h-5 w-5 text-purple-500" />
             </div>
             <span className="text-[15px] text-[#737373] flex-1">Meetups attended</span>
             <span className="text-[17px] font-bold text-[#0a0a0a]">{gameStats?.meetupsAttended ?? 0}</span>
           </div>
           {gameStats?.topGame && (
             <div className="flex items-center gap-3 px-4 py-3.5">
-              <div className="h-9 w-9 rounded-[10px] bg-purple-50 flex items-center justify-center shrink-0">
-                <span className="text-[18px]">🎮</span>
+              <div className="h-9 w-9 rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
+                <Gamepad2 className="h-5 w-5 text-blue-500" />
               </div>
               <span className="text-[15px] text-[#737373] flex-1">Top game</span>
               <span className="text-[15px] font-semibold text-[#0a0a0a] max-w-[140px] truncate text-right">{gameStats.topGame}</span>
@@ -659,19 +654,6 @@ export default function MemberProfilePage() {
         </div>
       </div>
 
-      {/* ── SIGN OUT ── */}
-      {isOwnProfile && (
-        <div className="px-4">
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="w-full flex items-center justify-center gap-2 py-3 text-[15px] text-red-500 font-medium active:opacity-60 transition-opacity disabled:opacity-40"
-          >
-            <LogOut className="h-4 w-4" />
-            {signingOut ? "Signing out…" : "Sign Out"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
