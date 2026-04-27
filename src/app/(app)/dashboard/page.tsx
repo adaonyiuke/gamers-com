@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { MeetupSessionCard } from "@/components/ui/meetup-session-card";
+import { GameTile } from "@/components/features/games/game-tile";
 import { useGroupId } from "@/components/providers/group-provider";
 import { useGroup } from "@/lib/queries/groups";
 import { useMemberStats, useAdjustedStreak } from "@/lib/queries/members";
@@ -430,34 +431,35 @@ export default function DashboardPage() {
 
       <InstallBanner />
 
-      <div className="flex flex-col gap-3">
-        {/* ── Featured Meetup Card ── */}
-        <div className="px-4">
-          {isLoading ? (
-            <div className="rounded-[16px] overflow-hidden" style={{ background: "linear-gradient(180.59deg, rgb(91,33,182) 5.5%, rgb(168,85,247) 114%)" }}>
-              <div className="p-4 space-y-3">
-                <SkeletonBlock className="h-6 w-16 rounded-[12px] bg-white/20" />
-                <SkeletonBlock className="h-6 w-48 bg-white/20" />
-                <SkeletonBlock className="h-4 w-32 bg-white/20" />
+      <div className="flex flex-col gap-4">
+        {/* ── Hero: Featured Meetup Card + Flash Stats ── */}
+        <div className="flex flex-col gap-3">
+          <div className="px-4">
+            {isLoading ? (
+              <div className="rounded-[16px] overflow-hidden" style={{ background: "linear-gradient(180.59deg, rgb(91,33,182) 5.5%, rgb(168,85,247) 114%)" }}>
+                <div className="p-4 space-y-3">
+                  <SkeletonBlock className="h-6 w-16 rounded-[12px] bg-white/20" />
+                  <SkeletonBlock className="h-6 w-48 bg-white/20" />
+                  <SkeletonBlock className="h-4 w-32 bg-white/20" />
+                </div>
               </div>
-            </div>
-          ) : featuredMeetup ? (
-            <FadeIn>
-              <MeetupSessionCard
-                href={`/meetups/${featuredMeetup.id}`}
-                title={featuredMeetup.title}
-                date={featuredMeetup.date}
-                status={featuredMeetup.status as "active" | "complete" | "planned"}
-                participantCount={featuredParticipants?.length}
-                winnerName={featuredWinner?.name}
-                gamesCount={featuredGamesPlayed}
-              />
-            </FadeIn>
-          ) : null}
-        </div>
+            ) : featuredMeetup ? (
+              <FadeIn>
+                <MeetupSessionCard
+                  href={`/meetups/${featuredMeetup.id}`}
+                  title={featuredMeetup.title}
+                  date={featuredMeetup.date}
+                  status={featuredMeetup.status as "active" | "complete" | "planned"}
+                  participantCount={featuredParticipants?.length}
+                  winnerName={featuredWinner?.name}
+                  gamesCount={featuredGamesPlayed}
+                />
+              </FadeIn>
+            ) : null}
+          </div>
 
-        {/* ── Flash Stats ── */}
-        <FadeIn delay={80} className="px-4">
+          {/* ── Flash Stats ── */}
+          <FadeIn delay={80} className="px-4">
           <div className="grid grid-cols-3 gap-3">
             {/* Win Rate */}
             <div
@@ -528,6 +530,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </FadeIn>
+        </div>
 
         {/* ── Top Rivalry ── */}
         {!isLoading && settings?.show_rivalry_stats && insights?.rivalry && (
@@ -807,8 +810,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="divide-y divide-[#f5f5f5]">
-                {recentSessions.map((session: any) => {
-                  const gameName = session.games?.name ?? "Unknown Game";
+                {recentSessions.map((session: any, idx: number) => {
+                  const game = session.games;
+                  const gameName = game?.name ?? "Unknown Game";
+                  const abbr = game?.abbreviation || gameName.substring(0, 2).toUpperCase();
                   const winnerEntry = session.score_entries?.find((e: any) => e.is_winner);
                   const winnerName = winnerEntry
                     ? winnerEntry.meetup_participants?.group_members?.display_name ??
@@ -821,9 +826,14 @@ export default function DashboardPage() {
                       href={`/meetups/${session.meetup_id}/sessions/${session.id}`}
                       className="flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
                     >
-                      <div className="h-10 w-10 rounded-[10px] bg-indigo-100 flex items-center justify-center shrink-0">
-                        <Gamepad2 className="h-5 w-5 text-indigo-600" />
-                      </div>
+                      <GameTile
+                        thumbnailUrl={game?.thumbnail_url}
+                        imageUrl={game?.image_url}
+                        imageStatus={game?.image_status}
+                        abbreviation={abbr}
+                        colorIndex={idx}
+                        size="sm"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-[15px] font-semibold text-[#0a0a0a] truncate">{gameName}</p>
                         <p className="text-[12px] text-[#737373]">
