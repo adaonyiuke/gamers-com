@@ -666,7 +666,15 @@ export default function DashboardPage() {
                   <div className="flex flex-col gap-0.5">
                     <p className="text-[14px] font-medium text-black leading-[20px]">Beginner&apos;s Luck</p>
                     <p className="text-[12px] text-[#737373]">
-                      {insights!.funStats!.luckyFirstTimer.name} won their first game of {insights!.funStats!.luckyFirstTimer.gameName}
+                      {(() => {
+                        const { players, gameName } = insights!.funStats!.luckyFirstTimer!;
+                        const names = players.length === 1
+                          ? players[0].name
+                          : players.length === 2
+                          ? `${players[0].name} & ${players[1].name}`
+                          : `${players.slice(0, -1).map(p => p.name).join(", ")} & ${players[players.length - 1].name}`;
+                        return `${names} won their first game of ${gameName}`;
+                      })()}
                     </p>
                   </div>
                 </div>
