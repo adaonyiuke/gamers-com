@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const AVATAR_COLORS = [
@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import {
   Copy,
   Check,
+  X,
   Users,
   Shield,
   Share2,
@@ -46,6 +47,7 @@ import {
   SettingSelect,
   SettingRow,
 } from "@/components/settings/setting-components";
+import { EmojiPicker } from "@/components/features/groups/emoji-picker";
 import { cn } from "@/lib/utils/cn";
 import { sendInviteEmail } from "@/lib/actions/send-invite-email";
 
@@ -78,7 +80,18 @@ export default function GroupSettingsPage() {
   const [editingGroup, setEditingGroup] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupDescription, setEditGroupDescription] = useState("");
-  const [editMeetupFormat, setEditMeetupFormat] = useState("");
+  const [editGroupEmoji, setEditGroupEmoji] = useState("🎮");
+  const [meetupFormatInput, setMeetupFormatInput] = useState("");
+  const [editingFormat, setEditingFormat] = useState(false);
+  const [formatDraft, setFormatDraft] = useState("");
+
+  useEffect(() => {
+    if (settings?.default_meetup_name_format) {
+      setMeetupFormatInput(
+        settings.default_meetup_name_format.replace(/\s*#\{n\}\s*$/, "").trim()
+      );
+    }
+  }, [settings?.default_meetup_name_format]);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog | null>(null);
   const [promoteError, setPromoteError] = useState<string | null>(null);
 
@@ -101,8 +114,22 @@ export default function GroupSettingsPage() {
   function startEditingGroup() {
     setEditGroupName(group?.name ?? "");
     setEditGroupDescription(group?.description ?? "");
-    setEditMeetupFormat(settings?.default_meetup_name_format ?? "Game Night #{n}");
+    setEditGroupEmoji(group?.emoji ?? "🎮");
     setEditingGroup(true);
+  }
+
+  async function handleConfirmFormat() {
+    if (!groupId) return;
+    const fullFormat = `${meetupFormatInput.trim() || "Game Night"} #{n}`;
+    if (fullFormat !== settings?.default_meetup_name_format) {
+      await updateSettings.mutateAsync({ groupId, updates: { default_meetup_name_format: fullFormat } });
+    }
+    setEditingFormat(false);
+  }
+
+  function handleCancelFormat() {
+    setMeetupFormatInput(formatDraft);
+    setEditingFormat(false);
   }
 
   async function handleSaveGroup() {
@@ -113,14 +140,9 @@ export default function GroupSettingsPage() {
         updates: {
           name: editGroupName.trim() || group?.name,
           description: editGroupDescription.trim() || null,
+          emoji: editGroupEmoji,
         },
       });
-      if (settings && editMeetupFormat !== settings.default_meetup_name_format) {
-        await updateSettings.mutateAsync({
-          groupId,
-          updates: { default_meetup_name_format: editMeetupFormat },
-        });
-      }
       setEditingGroup(false);
     } catch {
       // Error shown via mutation state
@@ -265,17 +287,9 @@ export default function GroupSettingsPage() {
               </div>
               <div>
                 <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
-                  Meetup Name Format
+                  Group Icon
                 </label>
-                <input
-                  value={editMeetupFormat}
-                  onChange={(e) => setEditMeetupFormat(e.target.value)}
-                  className="w-full bg-[#F2F2F7] rounded-[14px] px-4 py-3.5 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
-                  placeholder="Game Night #{n}"
-                />
-                <p className="text-[12px] text-gray-400 mt-1 px-1">
-                  Use {"#{n}"} for auto-incrementing number
-                </p>
+                <EmojiPicker value={editGroupEmoji} onChange={setEditGroupEmoji} />
               </div>
               <div className="flex gap-3">
                 <button
@@ -301,16 +315,11 @@ export default function GroupSettingsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[17px] font-semibold text-gray-900">
-                    {group?.name ?? "Loading..."}
+                    {group?.emoji ?? "🎮"} {group?.name ?? "Loading..."}
                   </p>
                   {group?.description && (
                     <p className="text-[15px] text-gray-500 mt-1">
                       {group.description}
-                    </p>
-                  )}
-                  {isAdmin && (
-                    <p className="text-[13px] text-gray-400 mt-2">
-                      Format: {settings?.default_meetup_name_format ?? "Game Night #{n}"}
                     </p>
                   )}
                 </div>
@@ -537,6 +546,49 @@ export default function GroupSettingsPage() {
         {/* ── Meetup Defaults (admin only) ──────────────────────── */}
         {isAdmin && (
           <SettingSection title="Meetup Defaults">
+            <div className="px-5 py-4">
+              {editingFormat ? (
+                <>
+                  <p className="text-[17px] text-gray-900 mb-3">Meetup Name Format</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={meetupFormatInput}
+                      onChange={(e) => setMeetupFormatInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleConfirmFormat(); if (e.key === "Escape") handleCancelFormat(); }}
+                      className="flex-1 bg-[#F2F2F7] rounded-[14px] px-4 py-3 text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                      placeholder="Game Night"
+                    />
+                    <button onClick={handleConfirmFormat} className="h-10 w-10 flex items-center justify-center rounded-full bg-[#34C759]/15 active:opacity-60 shrink-0">
+                      <Check className="h-5 w-5 text-[#34C759]" />
+                    </button>
+                    <button onClick={handleCancelFormat} className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 active:opacity-60 shrink-0">
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
+                  </div>
+                  {meetupFormatInput.trim() && (
+                    <p className="text-[13px] text-gray-400 mt-2">
+                      e.g. {meetupFormatInput.trim()} #1, {meetupFormatInput.trim()} #2
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[17px] text-gray-900">Meetup Name Format</p>
+                    <p className="text-[15px] text-gray-400 mt-0.5">
+                      {meetupFormatInput || "Game Night"} #1, #2, ...
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setFormatDraft(meetupFormatInput); setEditingFormat(true); }}
+                    className="text-[#007AFF] active:opacity-60 transition-opacity p-1"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
             <SettingToggle
               label="Auto-include all members"
               description="Pre-select all core members for new meetups"

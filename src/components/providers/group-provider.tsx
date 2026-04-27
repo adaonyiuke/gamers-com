@@ -18,6 +18,7 @@ import { useUser } from "./supabase-provider";
 interface GroupMembership {
   group_id: string;
   group_name: string;
+  group_emoji: string;
   role: string;
 }
 
@@ -90,7 +91,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       // Fetch all memberships with group names
       const { data: memberships, error } = await supabase
         .from("group_members")
-        .select("group_id, role, groups:group_id(name)")
+        .select("group_id, role, groups:group_id(name, emoji)")
         .eq("user_id", user!.id)
         .order("joined_at", { ascending: true });
 
@@ -106,6 +107,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
         const groupList: GroupMembership[] = memberships.map((m: any) => ({
           group_id: m.group_id,
           group_name: (m.groups as any)?.name ?? "Unknown Group",
+          group_emoji: (m.groups as any)?.emoji ?? "🎮",
           role: m.role,
         }));
         setGroups(groupList);
@@ -145,6 +147,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
             {
               group_id: group.id,
               group_name: group.name,
+              group_emoji: group.emoji ?? "🎮",
               role: "owner",
             },
           ]);

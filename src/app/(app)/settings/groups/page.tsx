@@ -24,6 +24,7 @@ import {
   SettingsHeader,
   SettingSection,
 } from "@/components/settings/setting-components";
+import { EmojiPicker } from "@/components/features/groups/emoji-picker";
 import { cn } from "@/lib/utils/cn";
 
 type View = "list" | "create" | "join" | "confirm-join";
@@ -48,6 +49,7 @@ export default function GroupsPage() {
   // Create group form
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newEmoji, setNewEmoji] = useState("🎮");
 
   // Join group form
   const [inviteCode, setInviteCode] = useState("");
@@ -63,10 +65,12 @@ export default function GroupsPage() {
       const group = await createGroup.mutateAsync({
         name: newName.trim(),
         description: newDescription.trim() || undefined,
+        emoji: newEmoji,
       });
       switchGroup(group.id);
       setNewName("");
       setNewDescription("");
+      setNewEmoji("🎮");
       setView("list");
     } catch {
       // Error shown via mutation state
@@ -241,6 +245,12 @@ export default function GroupsPage() {
         {view === "create" && (
           <SettingSection title="Create a Group">
             <div className="p-5 space-y-4">
+              <div>
+                <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                  Group Icon
+                </label>
+                <EmojiPicker value={newEmoji} onChange={setNewEmoji} />
+              </div>
               <div>
                 <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
                   Group Name
