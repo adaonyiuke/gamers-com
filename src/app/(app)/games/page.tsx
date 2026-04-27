@@ -97,52 +97,62 @@ export default function GamesPage() {
             Games
           </h1>
 
-          {/* Sort icon — only shown when games are loaded */}
-          {!isLoading && hasGames && (
-            <div className="relative">
-              <button
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className={cn(
-                  "h-9 w-9 rounded-full flex items-center justify-center transition-colors active:scale-[0.95]",
-                  showSortDropdown || activeQuickFilter !== null || sortMode !== "name"
-                    ? "bg-[#007AFF] text-white"
-                    : "bg-white text-gray-500 border border-gray-200"
+          <div className="flex items-center gap-2">
+            {/* Sort icon — only shown when games are loaded */}
+            {!isLoading && hasGames && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortDropdown(!showSortDropdown)}
+                  className={cn(
+                    "h-9 w-9 rounded-full flex items-center justify-center transition-colors active:scale-[0.95]",
+                    showSortDropdown || activeQuickFilter !== null || sortMode !== "name"
+                      ? "bg-[#007AFF] text-white"
+                      : "bg-white text-gray-500 border border-gray-200"
+                  )}
+                >
+                  <SlidersHorizontal className="h-[18px] w-[18px]" />
+                </button>
+                {showSortDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowSortDropdown(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-[16px] shadow-lg border border-gray-100 py-1.5 min-w-[190px]">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-4 pt-1 pb-2">
+                        Sort By
+                      </p>
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleSortChange(opt.value)}
+                          className={cn(
+                            "w-full text-left px-4 py-2.5 text-[15px] flex items-center justify-between transition-colors active:bg-gray-50",
+                            sortMode === opt.value
+                              ? "text-[#007AFF] font-semibold"
+                              : "text-gray-700"
+                          )}
+                        >
+                          {opt.label}
+                          {sortMode === opt.value && (
+                            <Check className="h-4 w-4 text-[#007AFF]" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
-              >
-                <SlidersHorizontal className="h-[18px] w-[18px]" />
-              </button>
-              {showSortDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowSortDropdown(false)}
-                  />
-                  <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-[16px] shadow-lg border border-gray-100 py-1.5 min-w-[190px]">
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-4 pt-1 pb-2">
-                      Sort By
-                    </p>
-                    {SORT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleSortChange(opt.value)}
-                        className={cn(
-                          "w-full text-left px-4 py-2.5 text-[15px] flex items-center justify-between transition-colors active:bg-gray-50",
-                          sortMode === opt.value
-                            ? "text-[#007AFF] font-semibold"
-                            : "text-gray-700"
-                        )}
-                      >
-                        {opt.label}
-                        {sortMode === opt.value && (
-                          <Check className="h-4 w-4 text-[#007AFF]" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+
+            {/* Add game button */}
+            <Link
+              href="/games/new"
+              className="h-9 w-9 rounded-full bg-[#161719] flex items-center justify-center active:scale-[0.95] transition-transform"
+            >
+              <Plus className="h-[18px] w-[18px] text-white" />
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -188,17 +198,20 @@ export default function GamesPage() {
               />
             </div>
 
-            {/* Quick Filters */}
-            <div className="flex gap-2 mb-4">
+            {/* Quick Filters — bleeds out of px-5 header so scroll uses % padding */}
+            <div
+              className="-mx-5 flex gap-2 mb-4 overflow-x-auto px-[5%]"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+            >
               {QUICK_FILTERS.map((f) => (
                 <button
                   key={f.key}
                   onClick={() => handleQuickFilter(f.key)}
                   className={cn(
-                    "flex-1 py-1.5 rounded-full text-[13px] font-medium transition-all active:scale-[0.97] text-center",
+                    "shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all active:scale-[0.97] whitespace-nowrap",
                     activeQuickFilter === f.key
                       ? "bg-[#007AFF] text-white"
-                      : "bg-white text-gray-600 border border-gray-200"
+                      : "bg-black/[0.06] text-gray-500"
                   )}
                 >
                   {f.label}
@@ -273,16 +286,6 @@ export default function GamesPage() {
         </div>
       )}
 
-      {/* FAB */}
-      <Link
-        href="/games/new"
-        className="fixed bottom-28 right-5 h-14 w-14 bg-[#161719] rounded-full flex items-center justify-center shadow-lg shadow-black/20 active:scale-[0.95] transition-transform z-30"
-        style={{
-          maxWidth: "430px",
-        }}
-      >
-        <Plus className="h-7 w-7 text-white" />
-      </Link>
     </div>
   );
 }

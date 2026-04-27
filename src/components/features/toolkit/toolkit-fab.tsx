@@ -16,7 +16,7 @@ export function ToolkitFab({ isOpen, onTap }: ToolkitFabProps) {
           onClick={onTap}
           aria-label="Game tools"
           aria-expanded={isOpen}
-          className="pointer-events-auto absolute right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+76px)] w-14 h-14 rounded-full bg-[#842AEB] text-white shadow-lg shadow-purple-500/25 flex items-center justify-center active:scale-[0.92] transition-transform"
+          className="pointer-events-auto absolute right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+76px)] w-14 h-14 rounded-full bg-[#842AEB] text-white shadow-lg shadow-black/20 flex items-center justify-center active:scale-[0.92] transition-transform"
         >
           <AnimatePresence mode="wait" initial={false}>
             {isOpen ? (
