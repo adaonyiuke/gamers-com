@@ -68,7 +68,7 @@ export function useRecentSessions(groupId: string | null) {
         .from("sessions")
         .select(
           `*,
-          games:game_id(id, name, icon, scoring_type),
+          games:game_id(id, name, abbreviation, icon, scoring_type, image_url, thumbnail_url, image_status),
           meetups:meetup_id!inner(id, group_id, title),
           score_entries(
             id, score, is_winner, participant_id,
@@ -115,7 +115,7 @@ export function useRecentMeetupSessions(groupId: string | null) {
         .from("sessions")
         .select(
           `*,
-          games:game_id(id, name, icon, scoring_type),
+          games:game_id(id, name, abbreviation, icon, scoring_type, image_url, thumbnail_url, image_status),
           meetups:meetup_id(id, title, date),
           score_entries(
             id, score, is_winner, participant_id,

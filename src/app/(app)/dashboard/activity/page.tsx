@@ -7,6 +7,7 @@ import { useGroupId } from "@/components/providers/group-provider";
 import { useRecentMeetupSessions } from "@/lib/queries/sessions";
 import { formatDate, getRelativeTime } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
+import { GameTile } from "@/components/features/games/game-tile";
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
@@ -74,7 +75,7 @@ export default function ActivityPage() {
                 </div>
                 <div className="bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="divide-y divide-gray-100">
-                    {group.sessions.map((session: any) => {
+                    {group.sessions.map((session: any, idx: number) => {
                       const gameName =
                         session.games?.name ?? "Unknown Game";
                       const winnerEntry = session.score_entries?.find(
@@ -86,15 +87,22 @@ export default function ActivityPage() {
                           winnerEntry.meetup_participants?.guests?.name ??
                           "Unknown"
                         : null;
+                      const game = session.games;
+                      const abbr = game?.abbreviation || gameName.substring(0, 2).toUpperCase();
                       return (
                         <Link
                           key={session.id}
                           href={`/meetups/${session.meetup_id}/sessions/${session.id}`}
                           className="flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
                         >
-                          <div className="h-10 w-10 rounded-[10px] bg-indigo-100 flex items-center justify-center shrink-0">
-                            <Gamepad2 className="h-5 w-5 text-indigo-600" />
-                          </div>
+                          <GameTile
+                            thumbnailUrl={game?.thumbnail_url}
+                            imageUrl={game?.image_url}
+                            imageStatus={game?.image_status}
+                            abbreviation={abbr}
+                            colorIndex={idx}
+                            size="sm"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="text-[15px] font-semibold text-gray-900 truncate">
                               {gameName}
