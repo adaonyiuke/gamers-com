@@ -188,14 +188,17 @@ export default function GamesPage() {
               />
             </div>
 
-            {/* Quick Filters */}
-            <div className="flex gap-2 mb-4" style={{ scrollbarWidth: "none" }}>
+            {/* Quick Filters — bleeds out of px-5 header so scroll uses % padding */}
+            <div
+              className="-mx-5 flex gap-2 mb-4 overflow-x-auto px-[5%]"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+            >
               {QUICK_FILTERS.map((f) => (
                 <button
                   key={f.key}
                   onClick={() => handleQuickFilter(f.key)}
                   className={cn(
-                    "flex-1 shrink-0 py-1.5 rounded-full text-[13px] font-medium transition-all active:scale-[0.97] text-center whitespace-nowrap",
+                    "shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all active:scale-[0.97] whitespace-nowrap",
                     activeQuickFilter === f.key
                       ? "bg-[#007AFF] text-white"
                       : "bg-white text-gray-600 border border-gray-200"
