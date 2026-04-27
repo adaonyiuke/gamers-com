@@ -13,6 +13,7 @@ import {
   Settings,
   ChevronLeft,
   TrendingUp,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import { useGroupId } from "@/components/providers/group-provider";
@@ -32,6 +33,7 @@ import {
   type MemberBadgeInput,
   type Badge,
 } from "@/lib/utils/badges";
+import { useBadgeNotificationDates } from "@/lib/queries/badges";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 
@@ -48,6 +50,24 @@ const BADGE_GLOW: Record<string, string> = {
   regular:    "rgba(245,158,11,0.4)",
   veteran:    "rgba(75,85,99,0.4)",
 };
+
+// Solid accent colours used for the stat text on the badge back
+const BADGE_COLOR: Record<string, string> = {
+  champion:   "#D97706",
+  on_fire:    "#DB2777",
+  strategist: "#2563EB",
+  wildcard:   "#0891B2",
+  regular:    "#D97706",
+  veteran:    "#4B5563",
+};
+
+function formatEarnedDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 const BADGE_IMAGES: Record<string, { front: string; back: string }> = {
   champion:   { front: "/badges/champion-front.png",   back: "/badges/champion-back.png"   },
@@ -107,6 +127,7 @@ export default function MemberProfilePage() {
   const [editColor, setEditColor] = useState(AVATAR_COLORS[0]);
   const [editName, setEditName] = useState("");
   const [flippedBadge, setFlippedBadge] = useState<string | null>(null);
+  const [openTooltip, setOpenTooltip] = useState<string | null>(null);
 
   const isOwnProfile = useMemo(() => {
     if (!profile || !user) return false;
@@ -147,6 +168,28 @@ export default function MemberProfilePage() {
     };
     return computeBadges(input);
   }, [memberStat, gameStats, adjustedStreak, isTopWinRate]);
+
+  // Badge notification dates — only fetched for your own profile
+  const { data: badgeDates } = useBadgeNotificationDates(
+    isOwnProfile ? groupId : null
+  );
+
+  // Per-badge stat shown on the back of earned badges
+  const badgeStatMap = useMemo(() => {
+    const winRatePct = Math.round((memberStat?.win_rate ?? 0) * 100);
+    const streak = adjustedStreak ?? memberStat?.current_streak ?? 0;
+    const sessions = memberStat?.total_sessions ?? 0;
+    const meetups = gameStats?.meetupsAttended ?? 0;
+    const uniqueWins = gameStats?.uniqueGameWins ?? 0;
+    return {
+      champion:   { count: `${winRatePct}%`, label: "win rate"       },
+      on_fire:    { count: `${streak}×`,     label: "win streak"     },
+      strategist: { count: `${uniqueWins}×`, label: "games won"      },
+      wildcard:   { count: "1×",             label: "first play win" },
+      regular:    { count: `${meetups}×`,    label: "meetups"        },
+      veteran:    { count: `${sessions}×`,   label: "sessions"       },
+    } as Record<string, { count: string; label: string }>;
+  }, [memberStat, gameStats, adjustedStreak]);
 
   const isLoading = groupLoading || profileLoading || statsLoading;
 
@@ -473,14 +516,21 @@ export default function MemberProfilePage() {
           {BADGES.map((badge: Badge) => {
             const earned = badges.some((b) => b.id === badge.id);
             const isFlipped = flippedBadge === badge.id;
+            const isTooltipOpen = openTooltip === badge.id;
             const glow = BADGE_GLOW[badge.type];
+            const color = BADGE_COLOR[badge.type];
             const imgs = BADGE_IMAGES[badge.type];
+            const stat = badgeStatMap[badge.type];
+            const earnedDate = badgeDates?.[badge.id];
 
             return (
               <div
                 key={badge.id}
-                className="flex flex-col items-center gap-1.5 cursor-pointer select-none"
-                onClick={() => setFlippedBadge(isFlipped ? null : badge.id)}
+                className="flex flex-col items-center gap-1.5 cursor-pointer select-none relative"
+                onClick={() => {
+                  setOpenTooltip(null);
+                  setFlippedBadge(isFlipped ? null : badge.id);
+                }}
               >
                 {/* Flip card */}
                 <div className="w-full aspect-square" style={{ perspective: "900px" }}>
@@ -522,12 +572,25 @@ export default function MemberProfilePage() {
                     >
                       <div style={{ position: "relative", width: "100%", height: "100%" }}>
                         <img src={imgs.back} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                        <div style={{ position: "absolute", inset: "20% 12%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                          <p style={{ fontSize: 11, textAlign: "center", lineHeight: 1.35, color: earned ? "rgba(0,0,0,0.75)" : "#1a1a1a", margin: 0 }}>
-                            {badge.description}
-                          </p>
-                          {!earned && (
-                            <p style={{ fontSize: 10, textAlign: "center", color: "#333333", margin: 0 }}>Not yet earned</p>
+                        <div style={{ position: "absolute", inset: "15% 8%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                          {earned ? (
+                            <>
+                              <span style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>
+                                {stat.count}
+                              </span>
+                              <span style={{ fontSize: 9, fontWeight: 600, color: "rgba(0,0,0,0.45)", textAlign: "center", lineHeight: 1.2 }}>
+                                {stat.label}
+                              </span>
+                              {earnedDate && (
+                                <span style={{ fontSize: 8, color: "rgba(0,0,0,0.35)", marginTop: 4, textAlign: "center" }}>
+                                  {formatEarnedDate(earnedDate)}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <p style={{ fontSize: 10, textAlign: "center", color: "#555", margin: 0, lineHeight: 1.3 }}>
+                              Not yet earned
+                            </p>
                           )}
                         </div>
                       </div>
@@ -535,13 +598,61 @@ export default function MemberProfilePage() {
                   </div>
                 </div>
 
-                {/* Label */}
-                <span
-                  className="text-[12px] font-semibold text-center leading-tight"
-                  style={{ color: earned ? "#0a0a0a" : "#d4d4d4" }}
-                >
-                  {badge.label}
-                </span>
+                {/* Label + info icon */}
+                <div className="flex items-center justify-center gap-1 w-full">
+                  <span
+                    className="text-[12px] font-semibold text-center leading-tight"
+                    style={{ color: earned ? "#0a0a0a" : "#d4d4d4" }}
+                  >
+                    {badge.label}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenTooltip(isTooltipOpen ? null : badge.id);
+                    }}
+                    style={{ display: "flex", alignItems: "center", padding: 2, color: earned ? "#a3a3a3" : "#d4d4d4" }}
+                  >
+                    <Info size={11} />
+                  </button>
+                </div>
+
+                {/* Tooltip */}
+                {isTooltipOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "calc(100% + 6px)",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: "#1a1a1a",
+                      color: "#fff",
+                      fontSize: 11,
+                      lineHeight: 1.35,
+                      padding: "7px 10px",
+                      borderRadius: 10,
+                      width: 130,
+                      textAlign: "center",
+                      zIndex: 20,
+                      pointerEvents: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {badge.description}
+                    {/* Arrow */}
+                    <span style={{
+                      position: "absolute",
+                      bottom: -5,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: 0,
+                      height: 0,
+                      borderLeft: "5px solid transparent",
+                      borderRight: "5px solid transparent",
+                      borderTop: "5px solid #1a1a1a",
+                    }} />
+                  </div>
+                )}
               </div>
             );
           })}

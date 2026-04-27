@@ -5,6 +5,32 @@ import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/components/providers/supabase-provider";
 
 /**
+ * Returns a map of badge_id → ISO earned-at string for the current user in
+ * the given group. Only populated when viewing your own profile.
+ */
+export function useBadgeNotificationDates(groupId: string | null) {
+  const supabase = createClient();
+  const { user } = useUser();
+
+  return useQuery({
+    queryKey: ["badge_notification_dates", user?.id, groupId],
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("badge_notifications")
+        .select("badge_id, created_at")
+        .eq("user_id", user!.id)
+        .eq("group_id", groupId!);
+      if (error) throw error;
+      return Object.fromEntries(
+        (data ?? []).map((n: any) => [n.badge_id as string, n.created_at as string])
+      );
+    },
+    enabled: !!user?.id && !!groupId,
+    staleTime: 60_000,
+  });
+}
+
+/**
  * Returns the set of badge IDs that have already been shown to the current
  * user within the given group (i.e. they're stored in badge_notifications).
  */
