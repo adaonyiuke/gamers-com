@@ -211,7 +211,7 @@ export default function GamesPage() {
                     "shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all active:scale-[0.97] whitespace-nowrap",
                     activeQuickFilter === f.key
                       ? "bg-[#007AFF] text-white"
-                      : "bg-white text-gray-600 border border-gray-200"
+                      : "bg-black/[0.06] text-gray-500"
                   )}
                 >
                   {f.label}
